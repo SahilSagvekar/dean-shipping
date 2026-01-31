@@ -13,7 +13,7 @@ export default function Footer() {
       <div className="max-w-[1440px] mx-auto">
         {/* Logo */}
         <div className="mb-12">
-          <img alt="Dean's Shipping Ltd." className="h-[86px] w-[298px] object-cover" src={imgRectangle44} />
+          <img alt="Dean's Shipping Ltd." className="h-[86px] w-[298px] object-cover" src={imgRectangle44.src} />
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-12 mb-12">

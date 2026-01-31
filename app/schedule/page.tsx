@@ -16,7 +16,7 @@ function Header({ currentPage = 'schedule' }: { currentPage?: string }) {
       <div className="max-w-[1440px] mx-auto px-8 py-5 flex items-center justify-between">
         {/* Logo */}
         <div className="w-[339px] h-24">
-          <img alt="Dean's Shipping Ltd." className="w-full h-full object-cover" src={imgRectangle1} />
+          <img alt="Dean's Shipping Ltd." className="w-full h-full object-cover" src={imgRectangle1.src} />
         </div>
         
         {/* Navigation */}
@@ -54,7 +54,7 @@ function Header({ currentPage = 'schedule' }: { currentPage?: string }) {
 function Hero() {
   return (
     <section className="relative mt-[135px] h-[842px] overflow-hidden">
-      <img alt="" className="absolute inset-0 w-full h-full object-cover" src={imgRectangle4} />
+      <img alt="" className="absolute inset-0 w-full h-full object-cover" src={imgRectangle4.src} />
       <div className="absolute inset-0 bg-black/20" />
       
       <div className="relative max-w-[1440px] mx-auto px-8 h-full flex flex-col items-start justify-center text-white">
@@ -301,7 +301,7 @@ function ScheduleSection() {
 
   return (
     <section className="relative py-16 overflow-hidden">
-      <img alt="" className="absolute inset-0 w-full h-full object-cover" src={imgRectangle490} />
+      <img alt="" className="absolute inset-0 w-full h-full object-cover" src={imgRectangle490.src} />
       
       <div className="relative max-w-[1440px] mx-auto px-8">
         <div className="grid grid-cols-2 gap-16">
@@ -350,7 +350,7 @@ function Footer() {
       <div className="max-w-[1440px] mx-auto">
         {/* Logo */}
         <div className="mb-12">
-          <img alt="Dean's Shipping Ltd." className="h-[86px] w-[298px] object-cover" src={imgRectangle44} />
+          <img alt="Dean's Shipping Ltd." className="h-[86px] w-[298px] object-cover" src={imgRectangle44.src} />
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-12 mb-12">

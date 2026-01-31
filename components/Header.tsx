@@ -21,7 +21,7 @@ export function Header({ currentPage, onNavigate }: { currentPage: string; onNav
       <div className="max-w-[1440px] mx-auto px-8 py-5 flex items-center justify-between">
         {/* Logo */}
         <div className="w-[339px] h-24 cursor-pointer" onClick={() => router.push('/')}>
-          <img alt="Dean's Shipping Ltd." className="w-full h-full object-cover" src={imgRectangle1} />
+          <img alt="Dean's Shipping Ltd." className="w-full h-full object-cover" src={imgRectangle1.src} />
         </div>
         
         {/* Navigation */}

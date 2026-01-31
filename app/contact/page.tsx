@@ -30,7 +30,7 @@ export default function Contact() {
 
   return (
     <div className="bg-white min-h-screen">
-      <Header />
+      {/* <Header /> */}
 
       {/* Hero Section */}
       <section className="relative bg-[#296341] py-20">
@@ -273,7 +273,7 @@ export default function Contact() {
         </div>
       </section>
 
-      <Footer />
+      {/* <Footer /> */}
     </div>
   );
 }

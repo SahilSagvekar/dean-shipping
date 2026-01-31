@@ -20,7 +20,7 @@ export default function Login() {
 
   return (
     <div className="bg-white min-h-screen">
-      <Header />
+      {/* <Header /> */}
 
       {/* Login Form Section */}
       <section className="relative py-24 min-h-[calc(100vh-147px-446px)]">
@@ -272,7 +272,7 @@ export default function Login() {
         </div>
       </section>
 
-      <Footer />
+      {/* <Footer /> */}
     </div>
   );
 }

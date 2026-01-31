@@ -17,7 +17,7 @@ function Header({ currentPage, onNavigate }: { currentPage: string; onNavigate: 
       <div className="max-w-[1440px] mx-auto px-8 py-5 flex items-center justify-between">
         {/* Logo */}
         <div className="w-[339px] h-24 cursor-pointer" onClick={() => onNavigate('home')}>
-          <img alt="Dean's Shipping Ltd." className="w-full h-full object-cover" src={imgRectangle1} />
+          <img alt="Dean's Shipping Ltd." className="w-full h-full object-cover" src={imgRectangle1.src} />
         </div>
         
         {/* Navigation */}
@@ -60,7 +60,7 @@ function Header({ currentPage, onNavigate }: { currentPage: string; onNavigate: 
 function Hero() {
   return (
     <section className="relative mt-[135px] h-[842px] overflow-hidden">
-      <img alt="" className="absolute inset-0 w-full h-full object-cover" src={imgRectangle4} />
+      <img alt="" className="absolute inset-0 w-full h-full object-cover" src={imgRectangle4.src} />
       <div className="absolute inset-0 bg-black/20" />
       
       <div className="relative max-w-[1440px] mx-auto px-8 h-full flex flex-col items-center justify-center text-white">
@@ -337,7 +337,7 @@ function TeamSection() {
           {/* Ernest Dean Jr. */}
           <div className="flex gap-16 items-start">
             <div className="flex-shrink-0 w-[300px] h-[300px] rounded-full overflow-hidden">
-              <img alt="Ernest Dean Jr." className="w-full h-full object-cover" src={imgEllipse10} />
+              <img alt="Ernest Dean Jr." className="w-full h-full object-cover" src={imgEllipse10.src} />
             </div>
             <div className="flex-1">
               <h3 className="text-[40px] font-semibold text-[#296341] mb-8">Ernest Dean Jr. | Owner</h3>
@@ -353,7 +353,7 @@ function TeamSection() {
           {/* Ernest Dean */}
           <div className="flex gap-16 items-start">
             <div className="flex-shrink-0 w-[300px] h-[300px] rounded-full overflow-hidden">
-              <img alt="Ernest Dean" className="w-full h-full object-cover" src={imgEllipse11} />
+              <img alt="Ernest Dean" className="w-full h-full object-cover" src={imgEllipse11.src} />
             </div>
             <div className="flex-1">
               <h3 className="text-[40px] font-semibold text-[#296341] mb-8">Ernest Dean | Founder</h3>
@@ -425,7 +425,7 @@ function ServicesSection() {
           {/* Image */}
           <div className="relative">
             <div className="bg-[#5f8a71] absolute inset-[-24px] rounded-lg" />
-            <img alt="Shipping services" className="relative w-full h-[573px] object-cover rounded-lg shadow-lg" src={imgRectangle56} />
+            <img alt="Shipping services" className="relative w-full h-[573px] object-cover rounded-lg shadow-lg" src={imgRectangle56.src} />
           </div>
         </div>
       </div>
@@ -440,7 +440,7 @@ function Footer() {
       <div className="max-w-[1440px] mx-auto">
         {/* Logo */}
         <div className="mb-12">
-          <img alt="Dean's Shipping Ltd." className="h-[86px] w-[298px] object-cover" src={imgRectangle44} />
+          <img alt="Dean's Shipping Ltd." className="h-[86px] w-[298px] object-cover" src={imgRectangle44.src} />
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-12 mb-12">

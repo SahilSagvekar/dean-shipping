@@ -636,7 +636,7 @@ export default function AboutUs() {
   return (
     <div className="bg-white relative size-full" data-name="about us">
       <div className="absolute h-[842px] left-0 top-[135px] w-[1440px]">
-        <img alt="" className="absolute inset-0 max-w-none object-cover pointer-events-none size-full" src={imgRectangle4} />
+        <img alt="" className="absolute inset-0 max-w-none object-cover pointer-events-none size-full" src={imgRectangle4.src} />
       </div>
       <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Light',sans-serif] font-light justify-center leading-[0] left-[calc(50%-539px)] not-italic text-[28px] text-black top-[1178px] w-[1077px]">
         <p className="leading-[normal] whitespace-pre-wrap">We are a Bahamas-based company that specializes in mailboat services to North Abaco Bahamas. We also provide international aggregate charting services across the globe. With our fleet of two large shipping vessels, we are equipped to meet the transportation needs of businesses and individuals across different industries.</p>
@@ -657,7 +657,7 @@ export default function AboutUs() {
       </div>
       <div className="absolute bg-[#effaf6] h-[1427px] left-[-1px] top-[1555px] w-[1440px]" />
       <div className="absolute left-[177px] size-[300px] top-[2216px]">
-        <img alt="" className="block max-w-none size-full" height="300" src={imgEllipse10} width="300" />
+        <img alt="" className="block max-w-none size-full" height="300" src={imgEllipse10.src} width="300" />
       </div>
       <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Semi_Bold',sans-serif] font-semibold justify-center leading-[0] left-[543px] not-italic text-[#296341] text-[40px] top-[2240px] whitespace-nowrap">
         <p className="leading-[normal]">{`Ernest Dean Jr.  | Owner`}</p>
@@ -669,7 +669,7 @@ export default function AboutUs() {
         <p className="leading-[normal]">Learn More....</p>
       </div>
       <div className="absolute left-[177px] size-[300px] top-[2621px]">
-        <img alt="" className="block max-w-none size-full" height="300" src={imgEllipse11} width="300" />
+        <img alt="" className="block max-w-none size-full" height="300" src={imgEllipse11.src} width="300" />
       </div>
       <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Semi_Bold',sans-serif] font-semibold justify-center leading-[0] left-[543px] not-italic text-[#296341] text-[40px] top-[2645px] whitespace-nowrap">
         <p className="leading-[normal]">Ernest Dean | Founder</p>
@@ -689,7 +689,7 @@ export default function AboutUs() {
       </div>
       <Group1 />
       <div className="absolute h-[86px] left-[33px] top-[4816px] w-[298px]">
-        <img alt="" className="absolute inset-0 max-w-none object-cover pointer-events-none size-full" src={imgRectangle44} />
+        <img alt="" className="absolute inset-0 max-w-none object-cover pointer-events-none size-full" src={imgRectangle44.src} />
       </div>
       <div className="absolute bg-[#effaf6] h-[834px] left-[-4px] top-[3527px] w-[1440px]" />
       <div className="absolute bg-[#5f8a71] h-[569px] left-[822px] top-[3631px] w-[439px]" />
@@ -700,7 +700,7 @@ export default function AboutUs() {
         <p className="leading-[normal] whitespace-pre-wrap">{`We make tracking your parcels effortless. Our advanced real-time tracking system ensures you always know where your shipment is—from pickup to delivery. Whether it's local or global, small or oversized, our secure logistics network guarantees speed, reliability, and transparency. With 24/7 tracking updates, automated alerts, and dedicated customer support, we put you in control. Trust Shipping Cargo for seamless logistics, on-time deliveries, and peace of mind. Your cargo, our commitment—tracked, traced, and delivered.`}</p>
       </div>
       <div className="absolute h-[573px] left-[789px] top-[3655px] w-[443px]">
-        <img alt="" className="absolute inset-0 max-w-none object-cover pointer-events-none size-full" src={imgRectangle56} />
+        <img alt="" className="absolute inset-0 max-w-none object-cover pointer-events-none size-full" src={imgRectangle56.src} />
       </div>
       <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Regular',sans-serif] font-normal justify-center leading-[0] left-[180px] not-italic text-[#296341] text-[0px] top-[3919px] w-[536px] whitespace-pre-wrap">
         <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[normal] mb-0 text-[40px]">Our Services Include</p>
@@ -747,7 +747,7 @@ export default function AboutUs() {
         </div>
       </div>
       <div className="absolute h-[96px] left-[30px] top-[21px] w-[339px]">
-        <img alt="" className="absolute inset-0 max-w-none object-cover pointer-events-none size-full" src={imgRectangle1} />
+        <img alt="" className="absolute inset-0 max-w-none object-cover pointer-events-none size-full" src={imgRectangle1.src} />
       </div>
       <Group3 />
     </div>

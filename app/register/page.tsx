@@ -43,7 +43,7 @@ export default function Signup() {
 
   return (
     <div className="bg-white min-h-screen">
-      <Header />
+      {/* <Header /> */}
 
       {/* Signup Form Section */}
       <section className="relative py-24 min-h-[calc(100vh-147px-446px)]">
@@ -219,7 +219,7 @@ export default function Signup() {
         </div>
       </section>
 
-      <Footer />
+      {/* <Footer /> */}
     </div>
   );
 }
