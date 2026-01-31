@@ -97,7 +97,7 @@ function Hero() {
 }
 
 // Location Icon Component
-function LocationIcon({ className = "w-9 h-9" }: { className?: string }) {
+function LocationIcon({ className = "w-6 h-6" }: { className?: string }) {
   return (
     <svg className={className} fill="none" viewBox="0 0 35 35">
       <path d={svgPaths.p19951080} fill="white" />
@@ -117,46 +117,53 @@ function ScheduleCard({
   date, 
   day, 
   month, 
-  event 
+  event,
+  events
 }: { 
   date: string; 
   day: string; 
   month: string; 
-  event: ScheduleEvent | 'holiday';
+  event?: ScheduleEvent | 'holiday';
+  events?: ScheduleEvent[];
 }) {
+  const allEvents = events ? events : (event && event !== 'holiday' ? [event] : []);
+  const isHoliday = event === 'holiday';
+
   return (
-    <div className="flex items-start gap-6">
+    <div className="flex items-center gap-8 min-h-[140px]">
       {/* Date Card */}
-      <div className="flex-shrink-0 bg-white border-[5px] border-[#296341] rounded-lg shadow-lg w-[212px] h-[176px] flex flex-col items-center justify-center">
-        <div className="text-5xl font-bold text-black mb-2">{date}</div>
-        <div className="text-4xl font-medium text-black mb-1">{day}</div>
-        <div className="text-[35px] font-medium text-black">{month}</div>
+      <div className="flex-shrink-0 bg-white border-[3px] border-[#1B4D3E] rounded-none w-[110px] h-[110px] flex flex-col items-center justify-center">
+        <div className="text-3xl font-bold text-black leading-tight">{date}</div>
+        <div className="text-lg font-bold text-black uppercase leading-tight">{day}</div>
+        <div className="text-sm font-semibold text-black leading-tight">{month}</div>
       </div>
       
       {/* Event Details */}
-      <div className="flex-1 pt-4">
-        {event === 'holiday' ? (
-          <div className="text-[35px] font-extrabold text-white">
+      <div className="flex-1 flex flex-col justify-center">
+        {isHoliday ? (
+          <div className="text-[28px] font-bold text-white text-center w-full">
             Holiday
           </div>
         ) : (
-          <div className="space-y-2">
-            <div className="flex items-start gap-3">
-              <LocationIcon />
-              <div>
-                <div className="text-[35px] font-bold text-white mb-1">
-                  {event.location} {event.time}
-                </div>
-                <div className="text-[35px] font-bold text-white">
-                  {event.eventType}
-                </div>
-                {event.note && (
-                  <div className="text-[30px] font-medium text-white mt-1">
-                    {event.note}
+          <div className="space-y-3">
+            {allEvents.map((e, idx) => (
+              <div key={idx} className="flex items-start gap-2">
+                {e.location && <LocationIcon className="w-5 h-5 mt-1 flex-shrink-0" />}
+                <div>
+                  <div className="text-[20px] font-bold text-white leading-tight">
+                    {e.location} <span className="ml-2 font-semibold"> {e.time}</span>
                   </div>
-                )}
+                  <div className="text-[22px] font-extrabold text-white uppercase leading-tight">
+                    {e.eventType}
+                  </div>
+                  {e.note && (
+                    <div className="text-[17px] font-medium text-white opacity-90 leading-tight">
+                      {e.note}
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
+            ))}
           </div>
         )}
       </div>
@@ -210,12 +217,26 @@ function ScheduleSection() {
       date: "09",
       day: "FRI",
       month: "January",
-      event: {
-        location: "Marsh Harbour",
-        time: "(10am - 4pm)",
-        eventType: "Freight Drop Off",
-        note: ""
-      }
+      events: [
+        {
+          location: "Marsh Harbour",
+          time: "(10am - 4pm)",
+          eventType: "Freight Drop Off",
+          note: ""
+        },
+        {
+          location: "Green Turtle Cay",
+          time: "(9am - 2pm)",
+          eventType: "Freight Drop Off",
+          note: ""
+        },
+        {
+          location: "",
+          time: "(9am - 2pm)",
+          eventType: "Freight Drop Off",
+          note: ""
+        }
+      ]
     },
     {
       date: "10",
@@ -268,12 +289,20 @@ function ScheduleSection() {
       date: "08",
       day: "THU",
       month: "January",
-      event: {
-        location: "Marsh Harbour",
-        time: "(10am - 4pm)",
-        eventType: "Freight Drop Off",
-        note: ""
-      }
+      events: [
+        {
+          location: "Marsh Harbour",
+          time: "(10am - 4pm)",
+          eventType: "Freight Drop Off",
+          note: ""
+        },
+        {
+          location: "Green Turtle Cay",
+          time: "",
+          eventType: "Freight Drop Off",
+          note: "Freight Drop Off"
+        }
+      ]
     },
     {
       date: "09",
@@ -293,43 +322,37 @@ function ScheduleSection() {
       event: {
         location: "Nassau",
         time: "(8am - 3pm)",
-        eventType: "Freight Pick Up - The Berry Island",
-        note: ""
+        eventType: "Freight Pick-up",
+        note: "The Berry Island"
       }
     }
   ];
 
   return (
-    <section className="relative py-16 overflow-hidden">
-      <img alt="" className="absolute inset-0 w-full h-full object-cover" src={imgRectangle490.src} />
+    <section className="relative py-24 overflow-hidden">
+      <img alt="" className="absolute inset-0 w-full h-full object-cover filter brightness-50" src={imgRectangle490.src} />
       
-      <div className="relative max-w-[1440px] mx-auto px-8">
-        <div className="grid grid-cols-2 gap-16">
+      <div className="relative max-w-[1200px] mx-auto px-8">
+        <div className="grid grid-cols-2 gap-x-20">
           {/* Ship A */}
-          <div>
-            <h2 className="text-[60px] font-bold text-white text-center mb-12">SHIP A</h2>
-            <div className="space-y-6">
+          <div className="relative">
+            <h2 className="text-[50px] font-bold text-white text-center mb-16 tracking-wider">SHIP A</h2>
+            <div className="divide-y divide-white/60">
               {shipASchedule.map((schedule, index) => (
-                <div key={index}>
+                <div key={index} className="py-6 first:pt-0 last:pb-0">
                   <ScheduleCard {...schedule} />
-                  {index < shipASchedule.length - 1 && (
-                    <div className="h-[3px] bg-white my-6" />
-                  )}
                 </div>
               ))}
             </div>
           </div>
           
           {/* Ship B */}
-          <div>
-            <h2 className="text-[60px] font-bold text-white text-center mb-12">SHIP B</h2>
-            <div className="space-y-6">
+          <div className="relative">
+            <h2 className="text-[50px] font-bold text-white text-center mb-16 tracking-wider">SHIP B</h2>
+            <div className="divide-y divide-white/60">
               {shipBSchedule.map((schedule, index) => (
-                <div key={index}>
+                <div key={index} className="py-6 first:pt-0 last:pb-0">
                   <ScheduleCard {...schedule} />
-                  {index < shipBSchedule.length - 1 && (
-                    <div className="h-[3px] bg-white my-6" />
-                  )}
                 </div>
               ))}
             </div>
@@ -337,7 +360,7 @@ function ScheduleSection() {
         </div>
         
         {/* Vertical Divider */}
-        <div className="absolute left-1/2 top-32 bottom-16 w-[3px] bg-white -translate-x-1/2" />
+        <div className="absolute left-1/2 top-48 bottom-0 w-[2px] bg-white/60 -translate-x-1/2" />
       </div>
     </section>
   );
