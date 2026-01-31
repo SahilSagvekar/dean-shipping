@@ -19,7 +19,7 @@ export default function Login() {
   };
 
   return (
-    <div className="bg-white min-h-screen">
+    <div className="bg-white min-h-screen pt-[135px]">
       {/* <Header /> */}
 
       {/* Login Form Section */}
@@ -263,7 +263,7 @@ export default function Login() {
                 <a
                   href="/register"
                   className="text-[#4c6aff] hover:underline"
-                >   
+                >
                   Sign up
                 </a>
               </p>

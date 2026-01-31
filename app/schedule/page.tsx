@@ -7,7 +7,7 @@ import imgRectangle56 from "../assets/c65da6ab6f4bda8a2bd7648a2be4287c1ac755df.p
 import imgRectangle1 from "../assets/ffb62b7af25544291ca34f641dc70191ad198db6.png";
 import imgRectangle490 from "../assets/cf53a64ce492864216e5a9b357abee066ed01103.png";
 
-import { Truck, Ship, Package, Users } from 'lucide-react';
+import { Truck, Ship, Package, Users, Car, Bike, Bus, Boxes, Container, Archive, Layers, Wheat, Anchor } from 'lucide-react';
 
 // Header Component
 function Header({ currentPage = 'schedule' }: { currentPage?: string }) {
@@ -18,7 +18,7 @@ function Header({ currentPage = 'schedule' }: { currentPage?: string }) {
         <div className="w-[339px] h-24">
           <img alt="Dean's Shipping Ltd." className="w-full h-full object-cover" src={imgRectangle1.src} />
         </div>
-        
+
         {/* Navigation */}
         <nav className="flex items-center gap-12">
           <div className="relative">
@@ -55,41 +55,68 @@ function Hero() {
   return (
     <section className="relative mt-[135px] h-[842px] overflow-hidden">
       <img alt="" className="absolute inset-0 w-full h-full object-cover" src={imgRectangle4.src} />
-      <div className="absolute inset-0 bg-black/20" />
-      
-      <div className="relative max-w-[1440px] mx-auto px-8 h-full flex flex-col items-start justify-center text-white">
-        <h1 className="text-[70px] font-bold leading-tight mb-8">
-          "Fast Tracked,<br />
-          &nbsp;&nbsp;Securely Delivered."
-        </h1>
-        
-        {/* Service Icons */}
-        <div className="flex items-center gap-12 mt-8">
-          <div className="flex flex-col items-center gap-3">
-            <div className="flex items-center gap-4">
-              <Truck className="w-10 h-10" />
-              <Ship className="w-12 h-12" />
-              <Package className="w-10 h-10" />
+      <div className="absolute inset-0 bg-black/30" />
+
+      <div className="relative max-w-[1440px] mx-auto px-12 h-full flex flex-col justify-between py-24 text-white">
+        {/* Main Title - Positioned Top Left */}
+        <div className="mt-12 ml-4">
+          <h1 className="text-[75px] font-bold leading-[1.1] drop-shadow-2xl">
+            "Fast Tracked,<br />
+            &nbsp;&nbsp;Securely Delivered."
+          </h1>
+        </div>
+
+        {/* Service Groups - Bottom Navigation Style */}
+        <div className="flex items-end justify-center gap-10 w-full px-4">
+
+          {/* Vehicle Group */}
+          <div className="flex flex-col items-center flex-1 max-w-[280px]">
+            <div className="flex items-center gap-6 mb-8 h-12">
+              <Car className="w-10 h-10 hover:scale-110 transition-transform cursor-pointer" />
+              <Truck className="w-10 h-10 hover:scale-110 transition-transform cursor-pointer" />
+              <Bike className="w-10 h-10 hover:scale-110 transition-transform cursor-pointer" />
+              <Bus className="w-10 h-10 hover:scale-110 transition-transform cursor-pointer" />
             </div>
-            <span className="text-lg font-medium">Cargo</span>
-          </div>
-          
-          <div className="h-16 w-[2px] bg-white" />
-          
-          <div className="flex flex-col items-center gap-3">
-            <div className="flex items-center gap-4">
-              <Truck className="w-10 h-10" />
-              <Truck className="w-10 h-10" />
+            <div className="w-full flex items-center gap-3">
+              <div className="h-[2px] bg-white/80 flex-1" />
+              <span className="text-xl font-bold uppercase tracking-[0.2em] whitespace-nowrap">Vehicle</span>
+              <div className="h-[2px] bg-white/80 flex-1" />
             </div>
-            <span className="text-lg font-medium">Vehicle</span>
           </div>
-          
-          <div className="h-16 w-[2px] bg-white" />
-          
-          <div className="flex flex-col items-center gap-3">
-            <Users className="w-12 h-12" />
-            <span className="text-lg font-medium">Passenger</span>
+
+          {/* Vertical Divider */}
+          <div className="h-32 w-[2px] bg-white/60 mb-2" />
+
+          {/* Cargo Group */}
+          <div className="flex flex-col items-center flex-1 max-w-[400px]">
+            <div className="flex items-center gap-6 mb-8 h-12">
+              <Boxes className="w-9 h-9 hover:scale-110 transition-transform cursor-pointer" />
+              <Package className="w-9 h-9 hover:scale-110 transition-transform cursor-pointer" />
+              <Container className="w-9 h-9 hover:scale-110 transition-transform cursor-pointer" />
+              <Wheat className="w-9 h-9 hover:scale-110 transition-transform cursor-pointer" />
+              <Layers className="w-9 h-9 hover:scale-110 transition-transform cursor-pointer" />
+              <Anchor className="w-9 h-9 hover:scale-110 transition-transform cursor-pointer" />
+            </div>
+            <div className="w-full flex items-center gap-3">
+              <div className="h-[2px] bg-white/80 flex-1" />
+              <span className="text-xl font-bold uppercase tracking-[0.2em] whitespace-nowrap">Cargo</span>
+              <div className="h-[2px] bg-white/80 flex-1" />
+            </div>
           </div>
+
+          {/* Vertical Divider */}
+          <div className="h-32 w-[2px] bg-white/60 mb-2" />
+
+          {/* Passenger Group */}
+          <div className="flex flex-col items-center flex-1 max-w-[200px]">
+            <div className="flex items-center gap-4 mb-8 h-12">
+              <Users className="w-14 h-14 hover:scale-110 transition-transform cursor-pointer" />
+            </div>
+            <div className="w-full flex flex-col items-center">
+              <span className="text-xl font-bold uppercase tracking-[0.2em] whitespace-nowrap">Passenger</span>
+            </div>
+          </div>
+
         </div>
       </div>
     </section>
@@ -113,16 +140,16 @@ interface ScheduleEvent {
   note?: string;
 }
 
-function ScheduleCard({ 
-  date, 
-  day, 
-  month, 
+function ScheduleCard({
+  date,
+  day,
+  month,
   event,
   events
-}: { 
-  date: string; 
-  day: string; 
-  month: string; 
+}: {
+  date: string;
+  day: string;
+  month: string;
   event?: ScheduleEvent | 'holiday';
   events?: ScheduleEvent[];
 }) {
@@ -137,7 +164,7 @@ function ScheduleCard({
         <div className="text-lg font-bold text-black uppercase leading-tight">{day}</div>
         <div className="text-sm font-semibold text-black leading-tight">{month}</div>
       </div>
-      
+
       {/* Event Details */}
       <div className="flex-1 flex flex-col justify-center">
         {isHoliday ? (
@@ -331,7 +358,7 @@ function ScheduleSection() {
   return (
     <section className="relative py-24 overflow-hidden">
       <img alt="" className="absolute inset-0 w-full h-full object-cover filter brightness-50" src={imgRectangle490.src} />
-      
+
       <div className="relative max-w-[1200px] mx-auto px-8">
         <div className="grid grid-cols-2 gap-x-20">
           {/* Ship A */}
@@ -345,7 +372,7 @@ function ScheduleSection() {
               ))}
             </div>
           </div>
-          
+
           {/* Ship B */}
           <div className="relative">
             <h2 className="text-[50px] font-bold text-white text-center mb-16 tracking-wider">SHIP B</h2>
@@ -358,7 +385,7 @@ function ScheduleSection() {
             </div>
           </div>
         </div>
-        
+
         {/* Vertical Divider */}
         <div className="absolute left-1/2 top-48 bottom-0 w-[2px] bg-white/60 -translate-x-1/2" />
       </div>
@@ -375,12 +402,12 @@ function Footer() {
         <div className="mb-12">
           <img alt="Dean's Shipping Ltd." className="h-[86px] w-[298px] object-cover" src={imgRectangle44.src} />
         </div>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-12 mb-12">
           {/* Head Office */}
           <div>
             <h3 className="text-2xl font-semibold mb-6">Head office</h3>
-            
+
             <div className="space-y-6 text-xl">
               <div>
                 <p className="text-[22px] font-semibold mb-2">Nassau, The Bahamas</p>
@@ -388,12 +415,12 @@ function Footer() {
                 <p className="font-normal">P.O. Box EE-17318</p>
                 <p className="font-normal mt-2">CALL: 1.242.394.0245/6</p>
               </div>
-              
+
               <div>
                 <p className="text-[22px] font-semibold mb-2">Potter's Cay</p>
                 <p className="font-normal">CALL: 1.242.601.5121</p>
               </div>
-              
+
               <div>
                 <p className="text-[22px] font-semibold mb-2">Abaco, The Bahamas</p>
                 <p className="font-normal">Queen's Highway (at Port)</p>
@@ -401,7 +428,7 @@ function Footer() {
               </div>
             </div>
           </div>
-          
+
           {/* Quick Links */}
           <div>
             <h3 className="text-2xl font-semibold mb-6">Quick Links</h3>
@@ -413,11 +440,11 @@ function Footer() {
               <li><a href="#privacy" className="hover:underline">Privacy Policy</a></li>
             </ul>
           </div>
-          
+
           {/* Contact Us */}
           <div>
             <h3 className="text-2xl font-semibold mb-6">Contact Us</h3>
-            
+
             <div className="space-y-4">
               <div className="flex items-center gap-3">
                 <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24">
@@ -427,7 +454,7 @@ function Footer() {
                   contact@contact.com
                 </a>
               </div>
-              
+
               <div className="flex items-center gap-3">
                 <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24">
                   <path d={svgPaths.pe263670} fill="white" />
@@ -436,7 +463,7 @@ function Footer() {
                 <span className="text-xl font-light">+1 98765 43210</span>
               </div>
             </div>
-            
+
             <div className="mt-8">
               <p className="text-2xl font-medium mb-4">Follow us on</p>
               <div className="flex items-center gap-4">
@@ -460,14 +487,14 @@ function Footer() {
                     </defs>
                   </svg>
                 </a>
-                
+
                 <a href="#facebook" className="hover:opacity-80 transition-opacity" aria-label="Facebook">
                   <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24">
                     <path d={svgPaths.p1fdd2200} fill="#1877F2" />
                     <path d={svgPaths.p23faaa00} fill="white" />
                   </svg>
                 </a>
-                
+
                 <a href="#linkedin" className="hover:opacity-80 transition-opacity" aria-label="LinkedIn">
                   <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24">
                     <path d={svgPaths.p24edac00} fill="white" />
@@ -475,7 +502,7 @@ function Footer() {
                     <path d={svgPaths.pf9a8e00} fill="white" />
                   </svg>
                 </a>
-                
+
                 <a href="#twitter" className="hover:opacity-80 transition-opacity" aria-label="Twitter">
                   <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24">
                     <rect fill="white" height="16" width="18" x="3" y="4" />
@@ -486,7 +513,7 @@ function Footer() {
             </div>
           </div>
         </div>
-        
+
         {/* Copyright */}
         <div className="border-t border-white/30 pt-8 text-center">
           <p className="text-xl font-medium">Dean's Shipping Ltd. © 2025. All rights reserved</p>

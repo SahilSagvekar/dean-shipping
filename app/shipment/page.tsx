@@ -1,5 +1,5 @@
-// import Header from "../components/Header";
-// import Footer from "../components/Footer";
+import image1 from "../assets/5116e4be081f83018c8edb2f7af47539cf88e4f0.png";
+import image2 from "../assets/9f13ecadcbced4d19bc15f999dd464355f2ad1a6.png";
 
 export default function Home() {
   return (
@@ -11,7 +11,8 @@ export default function Home() {
         <img 
           alt="Cargo ship aerial view" 
           className="w-full h-full object-cover" 
-          src="../assets/5116e4be081f83018c8edb2f7af47539cf88e4f0.png"
+          src={image1.src}
+        //   src="../assets/5116e4be081f83018c8edb2f7af47539cf88e4f0.png"
         />
       </section>
 
@@ -43,7 +44,7 @@ export default function Home() {
             <img 
               alt="Shipment tracking map" 
               className="w-full h-[668px] object-cover rounded-lg" 
-              src="../assets/9f13ecadcbced4d19bc15f999dd464355f2ad1a6.png"
+              src={image2.src}
             />
           </div>
         </div>

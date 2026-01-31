@@ -29,9 +29,7 @@ export default function Contact() {
   };
 
   return (
-    <div className="bg-white min-h-screen">
-      {/* <Header /> */}
-
+    <div className="bg-white min-h-screen pt-[135px]">
       {/* Hero Section */}
       <section className="relative bg-[#296341] py-20">
         <div className="max-w-[1440px] mx-auto px-8">
@@ -171,8 +169,8 @@ export default function Contact() {
                       <h3 className="font-['Inter'] font-semibold text-[24px] text-[#296341] mb-2">
                         Email
                       </h3>
-                      <a 
-                        href="mailto:contact@contact.com" 
+                      <a
+                        href="mailto:contact@contact.com"
                         className="font-['Inter'] font-normal text-[20px] text-black hover:text-[#296341] transition-colors"
                       >
                         contact@contact.com
@@ -208,7 +206,7 @@ export default function Contact() {
                   <div className="flex items-start gap-4">
                     <div className="w-[40px] h-[40px] flex-shrink-0 mt-1">
                       <svg className="w-full h-full" fill="none" viewBox="0 0 24 24">
-                        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" fill="#296341"/>
+                        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" fill="#296341" />
                       </svg>
                     </div>
                     <div>
@@ -272,8 +270,6 @@ export default function Contact() {
           </div>
         </div>
       </section>
-
-      {/* <Footer /> */}
     </div>
   );
 }

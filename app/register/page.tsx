@@ -42,7 +42,7 @@ export default function Signup() {
   };
 
   return (
-    <div className="bg-white min-h-screen">
+    <div className="bg-white min-h-screen pt-[135px]">
       {/* <Header /> */}
 
       {/* Signup Form Section */}
@@ -53,7 +53,7 @@ export default function Signup() {
             <h1 className="font-['Inter'] font-bold text-[35px] text-[#296341] text-center mb-6">
               CREATE ACCOUNT
             </h1>
-            
+
             {/* Subtitle */}
             <p className="font-['Inter'] font-medium text-[21px] text-black text-center mb-12">
               Welcome To Dean's Shipping Ltd. | Please Enter Your Details To Sign Up
@@ -154,7 +154,7 @@ export default function Signup() {
                     />
                     {agreedToTerms && (
                       <svg className="w-4 h-4" viewBox="0 0 16 16" fill="none">
-                        <path d="M13.5 4L6 11.5L2.5 8" stroke="#296341" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M13.5 4L6 11.5L2.5 8" stroke="#296341" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                       </svg>
                     )}
                   </div>
