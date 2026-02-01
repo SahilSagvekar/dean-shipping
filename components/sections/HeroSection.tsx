@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { ServiceIcon } from '../ui';
+import heroImage from '../../app/assets/5116e4be081f83018c8edb2f7af47539cf88e4f0.png';
 
 interface HeroSectionProps {
   isLoaded: boolean;
@@ -22,7 +23,8 @@ export default function HeroSection({ isLoaded }: HeroSectionProps) {
       <div style={{
         position: 'absolute',
         inset: 0,
-        backgroundImage: 'url("https://images.unsplash.com/photo-1605281317010-fe5ffe798166?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80")',
+        backgroundImage: `url(${heroImage.src})`,
+        // backgroundImage: 'url("https://images.unsplash.com/photo-1605281317010-fe5ffe798166?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80")',
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         filter: 'brightness(0.7)',
