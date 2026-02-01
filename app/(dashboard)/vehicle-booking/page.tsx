@@ -1,16 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import { Camera, Paperclip, MapPin } from "lucide-react";
-import svgPaths from "../../imports/svg-ovt86v4kbr";
+import { Camera, Paperclip, MapPin, ChevronDown, Check, ArrowRight } from "lucide-react";
 import imgIllustration from "@/app/assets/fc4d24c0a5d260c8ee523edd7416ec133186b7d1.png";
 import imgVehicle1 from "@/app/assets/02796ddb2f2036972ad517fb13092086bfeaac04.png";
 import imgVehicle2 from "@/app/assets/cf53a64ce492864216e5a9b357abee066ed01103.png";
 import imgIDCard from "@/app/assets/10ad04e365367f2edb1a23ad5021caa2d9bfde6f.png";
 import imgLogo from "@/app/assets/0630bc807bbd9122cb449e66c33d18d13536d121.png";
 
-export default function VehicleBooking() {
-  const [menuOpen, setMenuOpen] = useState(false);
+// Import Sidebar components
+import { SidebarProvider, Sidebar, HamburgerButton } from '@/components/sidebar';
+
+function VehicleBookingContent() {
   const [make, setMake] = useState("Hundai");
   const [model, setModel] = useState("Creta");
   const [licensePlate, setLicensePlate] = useState("BD 2394");
@@ -28,7 +29,7 @@ export default function VehicleBooking() {
   const [idType, setIdType] = useState("DRIVER'S LICENCE");
   const [quantity, setQuantity] = useState("1");
   const [invoiceNo, setInvoiceNo] = useState("#56724");
-  const [invoiceDate, setInvoiceDate] = useState("20 /12 / 25");
+  const [invoiceDate, setInvoiceDate] = useState("20 / 12 / 25");
   const [voyage, setVoyage] = useState("Voyage 209");
   const [paymentStatus, setPaymentStatus] = useState("PAID");
   const [remark, setRemark] = useState("");
@@ -37,491 +38,368 @@ export default function VehicleBooking() {
   const idImages = [imgIDCard, imgIDCard, imgIDCard, imgIDCard];
 
   return (
-    <div className="bg-white min-h-screen pt-[135px]">
-      {/* Header with Hamburger Menu */}
-      <header className="relative h-[220px]">
-        <button
-          onClick={() => setMenuOpen(!menuOpen)}
-          className="absolute left-[50px] top-[35px] w-[50px] h-[50px] flex flex-col gap-2 items-center justify-center hover:opacity-80 transition-opacity"
-        >
-          <div className="w-[40px] h-[4px] bg-[#296341]"></div>
-          <div className="w-[40px] h-[4px] bg-[#296341]"></div>
-          <div className="w-[40px] h-[4px] bg-[#296341]"></div>
-        </button>
+    <div className="bg-white min-h-screen flex flex-col pt-[100px]">
+      <Sidebar logoSrc={imgLogo.src} />
 
-        {/* Illustration */}
-        <div className="absolute left-1/2 -translate-x-1/2 top-[20px] w-[1000px] h-[200px]">
-          <img
-            src={imgIllustration.src}
-            alt="Shipping illustration"
-            className="w-full h-full object-contain"
-          />
-        </div>
-      </header>
+      {/* Header with Hamburger */}
+      <div className="px-8 py-4">
+        <HamburgerButton iconSize={48} />
+      </div>
 
-      {/* Main Content */}
-      <div className="max-w-[1200px] mx-auto px-8 pb-12">
-        <div className="grid grid-cols-[1fr_380px] gap-8">
-          {/* Left Column */}
-          <div className="space-y-8">
-            {/* Title */}
-            <div>
-              <h1 className="font-['Inter'] font-medium text-[30px] text-black mb-2">
-                VEHICLE BOOKING
+      {/* Illustration */}
+      <div className="flex justify-center mb-8 px-8">
+        <img
+          src={imgIllustration.src}
+          alt="Vehicle Booking"
+          className="w-full max-w-[800px] h-auto"
+        />
+      </div>
+
+      {/* Main Content Area */}
+      <main className="max-w-[1400px] mx-auto px-8 pb-16 flex-1 w-full">
+        <div className="flex flex-col lg:flex-row gap-12">
+
+          {/* Left Column: Form Details */}
+          <div className="lg:w-[65%] space-y-10">
+            {/* Title with partial underline */}
+            <div className="mb-10">
+              <h1 className="text-[32px] font-bold text-black tracking-wide">
+                <span className="border-b-4 border-black pb-1">VEHICLE</span> BOOKING
               </h1>
-              <div className="w-[160px] h-[3px] bg-black"></div>
             </div>
 
-            {/* Make and Model Row */}
-            <div className="grid grid-cols-2 gap-6">
-              <div>
-                <label className="block font-['Inter'] font-normal text-[16px] text-black mb-2">
-                  Make
-                </label>
+            {/* Make / Model Grid */}
+            <div className="grid grid-cols-2 gap-8">
+              <div className="space-y-2">
+                <label className="text-[18px] font-bold text-gray-700">Make</label>
                 <input
                   type="text"
-                  value={make}
+                  value={make || ""}
                   onChange={(e) => setMake(e.target.value)}
-                  className="w-full h-[40px] px-3 border border-gray-300 rounded font-['Inter'] font-normal text-[16px] text-black focus:outline-none focus:ring-2 focus:ring-[#296341]"
+                  className="w-full h-[50px] bg-white border border-gray-200 rounded-md px-4 shadow-sm focus:ring-2 focus:ring-[#296341] outline-none text-[18px]"
                 />
               </div>
-              <div>
-                <label className="block font-['Inter'] font-normal text-[16px] text-black mb-2">
-                  Model
-                </label>
+              <div className="space-y-2">
+                <label className="text-[18px] font-bold text-gray-700">Model</label>
                 <input
                   type="text"
-                  value={model}
+                  value={model || ""}
                   onChange={(e) => setModel(e.target.value)}
-                  className="w-full h-[40px] px-3 border border-gray-300 rounded font-['Inter'] font-normal text-[16px] text-black focus:outline-none focus:ring-2 focus:ring-[#296341]"
+                  className="w-full h-[50px] bg-white border border-gray-200 rounded-md px-4 shadow-sm focus:ring-2 focus:ring-[#296341] outline-none text-[18px]"
                 />
               </div>
             </div>
 
-            {/* License Plate and Booking Date Row */}
-            <div className="grid grid-cols-2 gap-6">
-              <div>
-                <label className="block font-['Inter'] font-normal text-[16px] text-black mb-2">
-                  License Plate
-                </label>
+            {/* License Plate / Booking Date Grid */}
+            <div className="grid grid-cols-2 gap-8">
+              <div className="space-y-2">
+                <label className="text-[18px] font-bold text-gray-700">License Plate</label>
                 <input
                   type="text"
-                  value={licensePlate}
+                  value={licensePlate || ""}
                   onChange={(e) => setLicensePlate(e.target.value)}
-                  className="w-full h-[40px] px-3 border border-gray-300 rounded font-['Inter'] font-normal text-[16px] text-black focus:outline-none focus:ring-2 focus:ring-[#296341]"
+                  className="w-full h-[50px] bg-white border border-gray-200 rounded-md px-4 shadow-sm focus:ring-2 focus:ring-[#296341] outline-none text-[18px]"
                 />
               </div>
-              <div>
-                <label className="block font-['Inter'] font-normal text-[16px] text-black mb-2">
-                  Booking Date
-                </label>
+              <div className="space-y-2">
+                <label className="text-[18px] font-bold text-gray-700">Booking Date</label>
                 <input
                   type="text"
-                  value={bookingDate}
+                  value={bookingDate || ""}
                   onChange={(e) => setBookingDate(e.target.value)}
-                  className="w-full h-[40px] px-3 border border-gray-300 rounded font-['Inter'] font-normal text-[16px] text-black focus:outline-none focus:ring-2 focus:ring-[#296341]"
+                  className="w-full h-[50px] bg-white border border-gray-200 rounded-md px-4 shadow-sm focus:ring-2 focus:ring-[#296341] outline-none text-[18px]"
                 />
               </div>
             </div>
 
-            {/* From and To Location Row */}
-            <div className="grid grid-cols-2 gap-6">
-              <div>
-                <label className="flex items-center gap-2 font-['Inter'] font-normal text-[16px] text-black mb-2">
-                  <svg className="w-[30px] h-[30px]" fill="none" viewBox="0 0 30 30">
-                    <path d={svgPaths.p33fa4080} fill="#296341" />
-                  </svg>
-                  From
+            {/* From / To Dropdowns */}
+            <div className="grid grid-cols-2 gap-8">
+              <div className="space-y-2">
+                <label className="text-[18px] font-bold text-gray-700 flex items-center gap-2">
+                  <MapPin className="text-[#296341] w-5 h-5 fill-[#296341]/20" /> From
                 </label>
                 <div className="relative">
                   <select
                     value={fromLocation}
                     onChange={(e) => setFromLocation(e.target.value)}
-                    className="w-full h-[40px] px-3 pr-10 border border-gray-300 rounded font-['Inter'] font-normal text-[16px] text-black appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#296341]"
+                    className="w-full h-[50px] bg-white border border-gray-200 rounded-md px-4 shadow-sm appearance-none outline-none focus:ring-2 focus:ring-[#296341] text-[18px]"
                   >
                     <option value="NAS">NAS</option>
                     <option value="MAH">MAH</option>
-                    <option value="GTC">GTC</option>
                   </select>
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                    <svg className="w-[20px] h-[40px]" fill="none" viewBox="0 0 20 40">
-                      <path d={svgPaths.p28436f80} fill="#296341" />
-                    </svg>
-                  </div>
+                  <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-[#296341]" />
                 </div>
               </div>
-              <div>
-                <label className="flex items-center gap-2 font-['Inter'] font-normal text-[16px] text-black mb-2">
-                  <svg className="w-[36px] h-[36px]" fill="none" viewBox="0 0 36 36">
-                    <path d={svgPaths.p4420500} fill="#296341" />
-                  </svg>
-                  To
+              <div className="space-y-2">
+                <label className="text-[18px] font-bold text-gray-700 flex items-center gap-2">
+                  <MapPin className="text-[#296341] w-5 h-5 fill-[#296341]/20" /> To
                 </label>
                 <div className="relative">
                   <select
                     value={toLocation}
                     onChange={(e) => setToLocation(e.target.value)}
-                    className="w-full h-[40px] px-3 pr-10 border border-gray-300 rounded font-['Inter'] font-normal text-[16px] text-black appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#296341]"
+                    className="w-full h-[50px] bg-white border border-gray-200 rounded-md px-4 shadow-sm appearance-none outline-none focus:ring-2 focus:ring-[#296341] text-[18px]"
                   >
                     <option value="NAS">NAS</option>
                     <option value="MAH">MAH</option>
-                    <option value="GTC">GTC</option>
                   </select>
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                    <svg className="w-[20px] h-[40px]" fill="none" viewBox="0 0 20 40">
-                      <path d={svgPaths.p28436f80} fill="#296341" />
-                    </svg>
+                  <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-[#296341]" />
+                </div>
+              </div>
+            </div>
+
+            {/* Large Image Gallery UI */}
+            <div className="flex gap-4 items-start">
+              <div className="flex flex-col gap-4 mt-2">
+                <Camera className="w-8 h-8 text-[#296341] cursor-pointer hover:scale-110 transition-transform" />
+                <Paperclip className="w-8 h-8 text-[#296341] cursor-pointer hover:scale-110 transition-transform" />
+              </div>
+
+              <div className="flex gap-4 flex-1">
+                <div className="flex-[2] rounded-xl overflow-hidden shadow-md border border-gray-100">
+                  <img src={imgVehicle1.src} alt="Main vehicle" className="w-full h-full object-cover" />
+                </div>
+                <div className="flex-1 grid grid-cols-2 gap-2">
+                  <div className="rounded-lg overflow-hidden border border-gray-100 shadow-sm"><img src={imgVehicle2.src} className="w-full h-full object-cover" /></div>
+                  <div className="rounded-lg overflow-hidden border border-gray-100 shadow-sm"><img src={imgVehicle1.src} className="w-full h-full object-cover" /></div>
+                  <div className="rounded-lg overflow-hidden border border-gray-100 shadow-sm"><img src={imgVehicle2.src} className="w-full h-full object-cover" /></div>
+                  <div className="rounded-lg overflow-hidden relative group cursor-pointer shadow-sm">
+                    <img src={imgVehicle1.src} className="w-full h-full object-cover" />
+                    <div className="absolute inset-0 bg-black/60 flex items-center justify-center text-white text-[20px] font-bold">+2</div>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Vehicle Images */}
-            <div>
-              <div className="flex items-center gap-4 mb-3">
-                <svg className="w-[50px] h-[50px]" fill="none" viewBox="0 0 50 50">
-                  <path clipRule="evenodd" d={svgPaths.p3e4b7f00} fill="#296341" fillRule="evenodd" />
-                </svg>
-                <div className="grid grid-cols-4 gap-2 flex-1">
-                  {vehicleImages.map((img, i) => (
-                    <div key={i} className="relative aspect-square rounded overflow-hidden border border-gray-300">
-                      <img src={img.src} alt={`Vehicle ${i + 1}`} className="w-full h-full object-cover" />
-                      {i === 3 && (
-                        <div className="absolute inset-0 bg-black bg-opacity-70 flex items-center justify-center">
-                          <span className="font-['Inter'] font-bold text-white text-[24px]">+2</span>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <div className="flex items-center gap-4">
-                <svg className="w-[50px] h-[50px]" fill="none" viewBox="0 0 50 50">
-                  <path d={svgPaths.p2b4a59a0} stroke="#296341" strokeLinecap="round" strokeLinejoin="round" strokeWidth="3.33333" />
-                </svg>
-              </div>
-            </div>
-
-            {/* Non-Running Vehicle */}
+            {/* Checkbox for Non-Running */}
             <div className="flex items-center gap-3">
-              <label className="flex items-center gap-3 cursor-pointer">
-                <div className="w-[20px] h-[20px] rounded-full border-2 border-gray-400 flex items-center justify-center">
-                  <input
-                    type="radio"
-                    checked={nonRunning}
-                    onChange={() => setNonRunning(!nonRunning)}
-                    className="sr-only"
-                  />
-                  {nonRunning && <div className="w-[12px] h-[12px] rounded-full bg-[#296341]"></div>}
-                </div>
-                <span className="font-['Inter'] font-normal text-[16px] text-black">
-                  Non-Running Vehicle
-                </span>
-              </label>
-              <span className="font-['Inter'] font-normal text-[14px] text-gray-600">
-                (Fees Added)
-              </span>
+              <div
+                className={`w-6 h-6 rounded-full border-2 flex items-center justify-center cursor-pointer transition-colors ${nonRunning ? 'border-[#296341] bg-[#296341]' : 'border-gray-300'}`}
+                onClick={() => setNonRunning(!nonRunning)}
+              >
+                {nonRunning && <div className="w-2 h-2 rounded-full bg-white" />}
+              </div>
+              <span className="text-[18px] font-medium">Non-Running Vehicle <span className="text-gray-500 font-normal ml-2">(Fees Added)</span></span>
             </div>
 
-            {/* Comments */}
-            <div>
+            {/* Comments Box */}
+            <div className="bg-[#f0f0f0] rounded-xl p-4 shadow-inner">
               <textarea
-                value={comments}
+                value={comments || ""}
                 onChange={(e) => setComments(e.target.value)}
                 placeholder="Comments / Details..."
-                rows={3}
-                className="w-full px-3 py-2 bg-[#f0f0f0] border border-gray-300 rounded font-['Inter'] font-normal text-[16px] text-black placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#296341] resize-none"
+                className="w-full bg-transparent border-none outline-none text-[18px] text-gray-700 min-h-[80px] resize-none"
               />
             </div>
 
-            {/* Contact Details */}
-            <div>
-              <h3 className="font-['Inter'] font-semibold text-[18px] text-black mb-4">
-                Contact Details
-              </h3>
-              <div className="space-y-4">
-                <div className="grid grid-cols-[80px_1fr] gap-4 items-center">
-                  <label className="font-['Inter'] font-normal text-[16px] text-black">
-                    Name
-                  </label>
+            {/* Contact Details Section */}
+            <div className="space-y-6 pt-6">
+              <h2 className="text-[22px] font-bold border-b border-gray-100 pb-2">Contact Details</h2>
+              <div className="space-y-4 max-w-[500px]">
+                <div className="flex items-center gap-8">
+                  <label className="w-20 font-bold text-gray-600">Name</label>
                   <input
-                    type="text"
-                    value={contactName}
+                    value={contactName || ""}
                     onChange={(e) => setContactName(e.target.value)}
-                    className="h-[40px] px-3 border border-gray-300 rounded font-['Inter'] font-normal text-[16px] text-black focus:outline-none focus:ring-2 focus:ring-[#296341]"
+                    className="flex-1 h-[45px] bg-[#f9fafb] border border-gray-100 rounded-md px-4 shadow-sm outline-none focus:ring-2 focus:ring-[#296341]"
                   />
                 </div>
-                <div className="grid grid-cols-[80px_1fr] gap-4 items-center">
-                  <label className="font-['Inter'] font-normal text-[16px] text-black">
-                    Mail
-                  </label>
+                <div className="flex items-center gap-8">
+                  <label className="w-20 font-bold text-gray-600">Mail</label>
                   <input
-                    type="email"
-                    value={contactEmail}
+                    value={contactEmail || ""}
                     onChange={(e) => setContactEmail(e.target.value)}
-                    className="h-[40px] px-3 border border-gray-300 rounded font-['Inter'] font-normal text-[16px] text-black focus:outline-none focus:ring-2 focus:ring-[#296341]"
+                    className="flex-1 h-[45px] bg-[#f9fafb] border border-gray-100 rounded-md px-4 shadow-sm outline-none focus:ring-2 focus:ring-[#296341]"
                   />
                 </div>
-                <div className="grid grid-cols-[80px_1fr] gap-4 items-center">
-                  <label className="font-['Inter'] font-normal text-[16px] text-black">
-                    Contact
-                  </label>
+                <div className="flex items-center gap-8">
+                  <label className="w-20 font-bold text-gray-600">Contact</label>
                   <input
-                    type="text"
-                    value={contactPhone}
+                    value={contactPhone || ""}
                     onChange={(e) => setContactPhone(e.target.value)}
-                    className="h-[40px] px-3 border border-gray-300 rounded font-['Inter'] font-normal text-[16px] text-black focus:outline-none focus:ring-2 focus:ring-[#296341]"
+                    className="flex-1 h-[45px] bg-[#f9fafb] border border-gray-100 rounded-md px-4 shadow-sm outline-none focus:ring-2 focus:ring-[#296341]"
                   />
                 </div>
-              </div>
-            </div>
-
-            {/* ID Type */}
-            <div>
-              <div className="grid grid-cols-[80px_1fr] gap-4 items-center mb-3">
-                <label className="font-['Inter'] font-normal text-[16px] text-black">
-                  ID Type :
-                </label>
-                <div className="relative">
-                  <select
-                    value={idType}
-                    onChange={(e) => setIdType(e.target.value)}
-                    className="w-full h-[40px] px-3 pr-10 border border-gray-300 rounded font-['Inter'] font-normal text-[16px] text-black appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#296341]"
-                  >
-                    <option value="DRIVER'S LICENCE">DRIVER'S LICENCE</option>
-                    <option value="PASSPORT">PASSPORT</option>
-                    <option value="NATIONAL ID">NATIONAL ID</option>
-                  </select>
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                    <svg className="w-[20px] h-[40px]" fill="none" viewBox="0 0 20 40">
-                      <path d={svgPaths.p28436f80} fill="#296341" />
-                    </svg>
+                <div className="flex items-center gap-8">
+                  <label className="w-20 font-bold text-gray-600 whitespace-nowrap">ID Type :</label>
+                  <div className="relative flex-1">
+                    <select
+                      value={idType || ""}
+                      onChange={(e) => setIdType(e.target.value)}
+                      className="w-full h-[45px] bg-white border border-gray-100 rounded-md px-4 shadow-sm appearance-none outline-none focus:ring-2 focus:ring-[#296341]"
+                    >
+                      <option value="DRIVER'S LICENCE">DRIVER&apos;S LICENCE</option>
+                      <option value="PASSPORT">PASSPORT</option>
+                      <option value="NATIONAL ID">NATIONAL ID</option>
+                    </select>
+                    <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-[#296341]" />
                   </div>
                 </div>
               </div>
+            </div>
 
-              {/* ID Images */}
-              <div className="flex items-center gap-4">
-                <svg className="w-[50px] h-[50px]" fill="none" viewBox="0 0 50 50">
-                  <path clipRule="evenodd" d={svgPaths.p3e4b7f00} fill="#296341" fillRule="evenodd" />
-                </svg>
-                <div className="grid grid-cols-4 gap-2 flex-1">
-                  {idImages.map((img, i) => (
-                    <div key={i} className="relative aspect-[3/2] rounded overflow-hidden border border-gray-300">
-                      <img src={img.src} alt={`ID ${i + 1}`} className="w-full h-full object-cover" />
-                      {i === 3 && (
-                        <div className="absolute inset-0 bg-black bg-opacity-70 flex items-center justify-center">
-                          <span className="font-['Inter'] font-bold text-white text-[20px]">+21</span>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
+            {/* ID Images Gallery */}
+            <div className="flex gap-4 items-start">
+              <div className="flex flex-col gap-4 mt-2">
+                <Camera className="w-8 h-8 text-[#296341] opacity-60" />
+                <Paperclip className="w-8 h-8 text-[#296341] opacity-60" />
               </div>
-              <div className="flex items-center gap-4 mt-3">
-                <svg className="w-[50px] h-[50px]" fill="none" viewBox="0 0 50 50">
-                  <path d={svgPaths.p2b4a59a0} stroke="#296341" strokeLinecap="round" strokeLinejoin="round" strokeWidth="3.33333" />
-                </svg>
+              <div className="flex gap-4 flex-1 items-center">
+                <div className="w-[200px] h-[120px] rounded-xl overflow-hidden border-2 border-emerald-100 shadow-md">
+                  <img src={imgIDCard.src} className="w-full h-full object-cover" />
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="w-[80px] h-[50px] rounded-lg overflow-hidden shadow-sm border border-gray-100"><img src={imgIDCard.src} className="w-full h-full object-cover" /></div>
+                  <div className="w-[80px] h-[50px] rounded-lg overflow-hidden shadow-sm border border-gray-100"><img src={imgIDCard.src} className="w-full h-full object-cover" /></div>
+                  <div className="w-[80px] h-[50px] rounded-lg overflow-hidden shadow-sm border border-gray-100"><img src={imgIDCard.src} className="w-full h-full object-cover" /></div>
+                  <div className="w-[80px] h-[50px] rounded-lg overflow-hidden shadow-sm border border-gray-100 relative">
+                    <img src={imgIDCard.src} className="w-full h-full object-cover" />
+                    <div className="absolute inset-0 bg-black/60 flex items-center justify-center text-white text-xs font-bold font-['Inter']">+21</div>
+                  </div>
+                </div>
               </div>
             </div>
 
-            {/* Add New Vehicle Button */}
+            {/* Add New Button */}
             <div className="flex justify-center pt-4">
-              <button className="bg-[#296341] hover:bg-[#1e4d30] transition-colors text-white font-['Inter'] font-normal text-[16px] px-6 py-2 rounded">
+              <button className="bg-[#296341]/80 hover:bg-[#296341] text-white px-8 py-3 rounded-lg font-bold text-[18px] transition-all shadow-md active:scale-95 flex items-center gap-2">
                 + Add New Vehicle
               </button>
             </div>
           </div>
 
-          {/* Right Column - Summary */}
-          <div className="bg-[#c2d9d1] rounded-lg px-6 py-6 h-fit">
-            {/* Deficiency */}
-            <div className="mb-6">
-              <h3 className="font-['Inter'] font-semibold text-[18px] text-black mb-3">
-                DEFICIENCY
-              </h3>
-              <div className="space-y-3">
-                <div>
-                  <label className="block font-['Inter'] font-normal text-[14px] text-black mb-2">
-                    Damage Found
-                  </label>
-                  <div className="relative">
-                    <select
-                      value={deficiency}
-                      onChange={(e) => setDeficiency(e.target.value)}
-                      className="w-full h-[36px] px-3 pr-10 bg-white border border-gray-300 rounded font-['Inter'] font-normal text-[14px] text-black appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#296341]"
-                    >
-                      <option value="Broken">Broken</option>
-                      <option value="Dented">Dented</option>
-                      <option value="Scratched">Scratched</option>
-                    </select>
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                      <svg className="w-[16px] h-[32px]" fill="none" viewBox="0 0 20 40">
-                        <path d={svgPaths.p28436f80} fill="#296341" />
-                      </svg>
+          {/* Right Column: Summary Card */}
+          <div className="lg:w-[35%]">
+            <div className="bg-[#c2dccf] rounded-3xl p-8 shadow-xl border-b-8 border-[#296341]/20 relative">
+              {/* Deficiency Section */}
+              <div className="space-y-6 mb-12">
+                <h3 className="text-[20px] font-bold tracking-widest text-[#244234] border-b border-[#244234]/10 pb-2">DEFICIENCY</h3>
+                <div className="space-y-4">
+                  <div className="space-y-1">
+                    <label className="text-[14px] font-bold text-gray-600">Damage Found</label>
+                    <div className="relative">
+                      <select
+                        value={deficiency || ""}
+                        onChange={(e) => setDeficiency(e.target.value)}
+                        className="w-full h-[40px] bg-white rounded-lg appearance-none px-4 shadow-sm outline-none focus:ring-2 focus:ring-[#296341]"
+                      >
+                        <option value="Broken">Broken</option>
+                        <option value="Dented">Dented</option>
+                        <option value="Scratched">Scratched</option>
+                      </select>
+                      <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-[#296341] w-4 h-4" />
                     </div>
                   </div>
-                </div>
-                <div>
-                  <label className="block font-['Inter'] font-normal text-[14px] text-black mb-2">
-                    Damage Location
-                  </label>
-                  <div className="relative">
-                    <select
-                      value={damageLocation}
-                      onChange={(e) => setDamageLocation(e.target.value)}
-                      className="w-full h-[36px] px-3 pr-10 bg-white border border-gray-300 rounded font-['Inter'] font-normal text-[14px] text-black appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#296341]"
-                    >
-                      <option value="Upper Back">Upper Back</option>
-                      <option value="Front">Front</option>
-                      <option value="Side">Side</option>
-                    </select>
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                      <svg className="w-[16px] h-[32px]" fill="none" viewBox="0 0 20 40">
-                        <path d={svgPaths.p28436f80} fill="#296341" />
-                      </svg>
+                  <div className="space-y-1">
+                    <label className="text-[14px] font-bold text-gray-600">Damage Location</label>
+                    <div className="relative">
+                      <select
+                        value={damageLocation || ""}
+                        onChange={(e) => setDamageLocation(e.target.value)}
+                        className="w-full h-[40px] bg-white rounded-lg appearance-none px-4 shadow-sm outline-none focus:ring-2 focus:ring-[#296341]"
+                      >
+                        <option value="Upper Back">Upper Back</option>
+                        <option value="Front">Front</option>
+                        <option value="Side">Side</option>
+                      </select>
+                      <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-[#296341] w-4 h-4" />
                     </div>
                   </div>
-                </div>
-                <div>
-                  <label className="block font-['Inter'] font-normal text-[14px] text-black mb-2">
-                    Comment Details
-                  </label>
-                  <input
-                    type="text"
-                    value={commentDetails}
-                    onChange={(e) => setCommentDetails(e.target.value)}
-                    className="w-full h-[36px] px-3 bg-white border border-gray-300 rounded font-['Inter'] font-normal text-[14px] text-black focus:outline-none focus:ring-2 focus:ring-[#296341]"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Total Amount Section */}
-            <div className="mb-6">
-              <h3 className="font-['Inter'] font-semibold text-[18px] text-black mb-4 text-center">
-                TOTAL AMOUNT
-              </h3>
-              <div className="grid grid-cols-2 gap-y-3 mb-4">
-                <div>
-                  <div className="font-['Inter'] font-normal text-[14px] text-black mb-1">
-                    Quantity
-                  </div>
-                  <div className="font-['Inter'] font-semibold text-[16px] text-black">
-                    {quantity}
-                  </div>
-                </div>
-                <div>
-                  <div className="font-['Inter'] font-normal text-[14px] text-black mb-1">
-                    Licence plate
-                  </div>
-                  <div className="font-['Inter'] font-semibold text-[16px] text-black">
-                    {licensePlate}
-                  </div>
-                </div>
-                <div>
-                  <div className="font-['Inter'] font-normal text-[14px] text-black mb-1">
-                    Location
-                  </div>
-                  <div className="font-['Inter'] font-semibold text-[16px] text-black">
-                    {fromLocation} → {toLocation}
-                  </div>
-                </div>
-                <div>
-                  <div className="font-['Inter'] font-normal text-[14px] text-black mb-1">
-                    Invoice no.
-                  </div>
-                  <div className="font-['Inter'] font-semibold text-[16px] text-black">
-                    {invoiceNo}
-                  </div>
-                </div>
-                <div>
-                  <div className="font-['Inter'] font-normal text-[14px] text-black mb-1">
-                    {voyage}
-                  </div>
-                </div>
-                <div>
-                  <div className="font-['Inter'] font-normal text-[14px] text-black mb-1">
-                    Invoice Date
-                  </div>
-                  <div className="font-['Inter'] font-semibold text-[16px] text-black">
-                    {invoiceDate}
+                  <div className="space-y-1">
+                    <label className="text-[14px] font-bold text-gray-600">Comment Details</label>
+                    <input
+                      value={commentDetails || ""}
+                      onChange={(e) => setCommentDetails(e.target.value)}
+                      className="w-full h-[45px] bg-white rounded-lg px-4 shadow-sm outline-none focus:ring-2 focus:ring-[#296341]"
+                    />
                   </div>
                 </div>
               </div>
 
-              {/* Payment Status */}
-              <div className="flex gap-2 mb-4">
-                <button
-                  onClick={() => setPaymentStatus("PAID")}
-                  className={`flex-1 h-[32px] rounded-full font-['Inter'] font-normal text-[14px] transition-colors ${
-                    paymentStatus === "PAID"
-                      ? "bg-[#00a651] text-white"
-                      : "bg-gray-200 text-black"
-                  }`}
-                >
-                  PAID
-                </button>
-                <button
-                  onClick={() => setPaymentStatus("UNPAID")}
-                  className={`flex-1 h-[32px] rounded-full font-['Inter'] font-normal text-[14px] transition-colors ${
-                    paymentStatus === "UNPAID"
-                      ? "bg-gray-400 text-white"
-                      : "bg-gray-200 text-black"
-                  }`}
-                >
-                  UNPAID
-                </button>
-              </div>
+              {/* Total Amount Grid */}
+              <div className="space-y-8 pb-32">
+                <h3 className="text-center font-bold text-[18px] tracking-widest">TOTAL AMOUNT</h3>
+                <div className="grid grid-cols-2 gap-y-6 gap-x-4">
+                  <div>
+                    <p className="text-[12px] font-bold text-gray-500 uppercase">Quantity</p>
+                    <p className="text-[20px] font-bold">{quantity}</p>
+                  </div>
+                  <div>
+                    <p className="text-[12px] font-bold text-gray-500 uppercase">Licence plate</p>
+                    <p className="text-[20px] font-bold">{licensePlate}</p>
+                  </div>
+                  <div>
+                    <p className="text-[12px] font-bold text-gray-500 uppercase">Location</p>
+                    <p className="text-[18px] font-bold flex items-center gap-1">{fromLocation} <ArrowRight className="w-3 h-3" /> {toLocation}</p>
+                  </div>
+                  <div>
+                    <p className="text-[12px] font-bold text-gray-500 uppercase">Invoice no.</p>
+                    <p className="text-[20px] font-bold">{invoiceNo}</p>
+                  </div>
+                  <div>
+                    <p className="text-[20px] font-bold text-[#132540]">{voyage}</p>
+                  </div>
+                  <div>
+                    <p className="text-[12px] font-bold text-gray-500 uppercase">Invoice Date</p>
+                    <p className="text-[20px] font-bold">{invoiceDate}</p>
+                  </div>
+                </div>
 
-              {/* Remark */}
-              <div className="mb-4">
+                {/* Paid / Unpaid Toggle UI */}
+                <div className="flex gap-2 bg-gray-200/50 p-1 rounded-full border border-white/40">
+                  <button className="flex-1 py-1 bg-[#2ecc71] text-white rounded-full font-bold text-sm flex items-center justify-center gap-1 shadow-sm">
+                    PAID
+                  </button>
+                  <button className="flex-1 py-1 text-gray-400 font-bold text-sm">
+                    UNPAID
+                  </button>
+                </div>
+
                 <input
-                  type="text"
-                  value={remark}
-                  onChange={(e) => setRemark(e.target.value)}
                   placeholder="Remark"
-                  className="w-full h-[36px] px-3 bg-[#e8e8e8] border border-gray-300 rounded font-['Inter'] font-normal text-[14px] text-black placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#296341]"
+                  value={remark || ""}
+                  onChange={(e) => setRemark(e.target.value)}
+                  className="w-full h-[40px] bg-gray-100/50 rounded-lg px-4 shadow-inner outline-none text-sm font-['Inter']"
                 />
               </div>
 
-              {/* Total Amount Display */}
-              <div className="bg-white border-2 border-black rounded-lg px-4 py-3 text-center mb-6">
-                <div className="font-['Inter'] font-normal text-[14px] text-black mb-1">
-                  Total Amount
-                </div>
-                <div className="font-['Inter'] font-bold text-[28px] text-black">
-                  $375.60
-                </div>
-                <div className="font-['Inter'] font-normal text-[12px] text-gray-600">
-                  (excluding 25% VAT)
-                </div>
+              {/* Overlapping Total Card */}
+              <div className="absolute left-[10%] right-[10%] -bottom-12 bg-white rounded-2xl p-6 shadow-[0_10px_25px_-5px_rgba(0,0,0,0.1)] border-2 border-gray-50 flex flex-col items-center">
+                <p className="text-[14px] font-bold text-gray-400">Total Amount</p>
+                <p className="text-[36px] font-black text-black leading-tight">$375.60</p>
+                <p className="text-[10px] text-gray-400 font-semibold tracking-tighter uppercase">(Including 12% VAT)</p>
               </div>
+            </div>
 
-              {/* Submit Button */}
-              <button className="w-full h-[48px] bg-[#132540] hover:bg-[#0d1a2d] transition-colors text-white font-['Inter'] font-semibold text-[18px] rounded">
+            {/* Submit Button */}
+            <div className="mt-20">
+              <button className="w-full bg-[#132540] py-4 rounded-xl text-white text-[20px] font-bold tracking-widest hover:bg-[#1a3254] transition-all shadow-lg active:scale-95">
                 SUBMIT
               </button>
             </div>
           </div>
         </div>
-      </div>
+      </main>
 
-      {/* Footer */}
-      <footer className="bg-[#296341] h-[100px] flex items-center justify-between px-12">
-        <div className="w-[200px] h-[60px]">
-          <img
-            src={imgLogo.src}
-            alt="Dean's Shipping Ltd."
-            className="w-full h-full object-contain"
-          />
-        </div>
-        <div className="font-['Inter'] text-[24px] text-white">
-          <span className="font-semibold">Freight Agent</span>
-          <span className="mx-3">|</span>
-          <span className="font-normal">Smith Frank</span>
+      {/* Brand Footer */}
+      <footer className="bg-[#296341] py-8 mt-auto">
+        <div className="max-w-[1400px] mx-auto px-8 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <img src={imgLogo.src} alt="Dean's Shipping Ltd" className="h-[70px]" />
+          </div>
+          <div className="text-white text-[28px] font-semibold">
+            Freight Agent | <span className="font-normal">Smith Frank</span>
+          </div>
         </div>
       </footer>
     </div>
+  );
+}
+
+export default function VehicleBooking() {
+  return (
+    <SidebarProvider>
+      <VehicleBookingContent />
+    </SidebarProvider>
   );
 }

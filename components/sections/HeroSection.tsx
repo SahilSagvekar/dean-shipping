@@ -51,6 +51,7 @@ export default function HeroSection({ isLoaded }: HeroSectionProps) {
           marginBottom: '1rem',
           fontStyle: 'italic',
           letterSpacing: '3px',
+          // text-color: 'var(--accent-gold)',         
         }}>Welcome to</p>
         
         <h1 style={{
