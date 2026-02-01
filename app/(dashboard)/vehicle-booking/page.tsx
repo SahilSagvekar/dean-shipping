@@ -1,11 +1,13 @@
+"use client";
+
 import { useState } from "react";
 import { Camera, Paperclip, MapPin } from "lucide-react";
-import svgPaths from "../imports/svg-ovt86v4kbr";
-import imgIllustration from "figma:asset/fc4d24c0a5d260c8ee523edd7416ec133186b7d1.png";
-import imgVehicle1 from "figma:asset/02796ddb2f2036972ad517fb13092086bfeaac04.png";
-import imgVehicle2 from "figma:asset/cf53a64ce492864216e5a9b357abee066ed01103.png";
-import imgIDCard from "figma:asset/10ad04e365367f2edb1a23ad5021caa2d9bfde6f.png";
-import imgLogo from "figma:asset/0630bc807bbd9122cb449e66c33d18d13536d121.png";
+import svgPaths from "../../imports/svg-ovt86v4kbr";
+import imgIllustration from "@/app/assets/fc4d24c0a5d260c8ee523edd7416ec133186b7d1.png";
+import imgVehicle1 from "@/app/assets/02796ddb2f2036972ad517fb13092086bfeaac04.png";
+import imgVehicle2 from "@/app/assets/cf53a64ce492864216e5a9b357abee066ed01103.png";
+import imgIDCard from "@/app/assets/10ad04e365367f2edb1a23ad5021caa2d9bfde6f.png";
+import imgLogo from "@/app/assets/0630bc807bbd9122cb449e66c33d18d13536d121.png";
 
 export default function VehicleBooking() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -35,7 +37,7 @@ export default function VehicleBooking() {
   const idImages = [imgIDCard, imgIDCard, imgIDCard, imgIDCard];
 
   return (
-    <div className="bg-white min-h-screen">
+    <div className="bg-white min-h-screen pt-[135px]">
       {/* Header with Hamburger Menu */}
       <header className="relative h-[220px]">
         <button
@@ -48,9 +50,9 @@ export default function VehicleBooking() {
         </button>
 
         {/* Illustration */}
-        <div className="absolute left-1/2 -translate-x-1/2 top-[20px] w-[300px] h-[200px]">
+        <div className="absolute left-1/2 -translate-x-1/2 top-[20px] w-[1000px] h-[200px]">
           <img
-            src={imgIllustration}
+            src={imgIllustration.src}
             alt="Shipping illustration"
             className="w-full h-full object-contain"
           />
@@ -183,7 +185,7 @@ export default function VehicleBooking() {
                 <div className="grid grid-cols-4 gap-2 flex-1">
                   {vehicleImages.map((img, i) => (
                     <div key={i} className="relative aspect-square rounded overflow-hidden border border-gray-300">
-                      <img src={img} alt={`Vehicle ${i + 1}`} className="w-full h-full object-cover" />
+                      <img src={img.src} alt={`Vehicle ${i + 1}`} className="w-full h-full object-cover" />
                       {i === 3 && (
                         <div className="absolute inset-0 bg-black bg-opacity-70 flex items-center justify-center">
                           <span className="font-['Inter'] font-bold text-white text-[24px]">+2</span>
@@ -306,7 +308,7 @@ export default function VehicleBooking() {
                 <div className="grid grid-cols-4 gap-2 flex-1">
                   {idImages.map((img, i) => (
                     <div key={i} className="relative aspect-[3/2] rounded overflow-hidden border border-gray-300">
-                      <img src={img} alt={`ID ${i + 1}`} className="w-full h-full object-cover" />
+                      <img src={img.src} alt={`ID ${i + 1}`} className="w-full h-full object-cover" />
                       {i === 3 && (
                         <div className="absolute inset-0 bg-black bg-opacity-70 flex items-center justify-center">
                           <span className="font-['Inter'] font-bold text-white text-[20px]">+21</span>
@@ -509,7 +511,7 @@ export default function VehicleBooking() {
       <footer className="bg-[#296341] h-[100px] flex items-center justify-between px-12">
         <div className="w-[200px] h-[60px]">
           <img
-            src={imgLogo}
+            src={imgLogo.src}
             alt="Dean's Shipping Ltd."
             className="w-full h-full object-contain"
           />

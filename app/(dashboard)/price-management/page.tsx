@@ -1,10 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { Trash2, Edit2, Menu } from "lucide-react";
-import svgPaths from "../../imports/svg-84cwhtcp7h";
+import { Trash2, Edit2, ChevronDown, Plus, Search, ArrowRight } from "lucide-react";
 import imgDesk from "@/app/assets/ab576223d2665babdbfbcf0c2c488ca622b1efd4.png";
 import imgLogo from "@/app/assets/0630bc807bbd9122cb449e66c33d18d13536d121.png";
+
+// Import Sidebar pieces
+import { SidebarProvider, Sidebar, HamburgerButton } from '@/components/sidebar';
 
 type Category = "DRY_BOX" | "FROZEN_BOX" | "COOLER_BOX" | "ENVELOPE" | "CONTAINER" | "LUGGAGE" | "PALLET" | "VEHICLE" | "BUNDLE" | "PESSENGER";
 
@@ -25,9 +27,8 @@ interface ContainerPrice {
   to: string;
 }
 
-export default function PriceManagement() {
+function PriceManagementContent() {
   const [selectedCategory, setSelectedCategory] = useState<Category>("DRY_BOX");
-  const [menuOpen, setMenuOpen] = useState(false);
 
   // Dry Box State
   const [dryBoxSize, setDryBoxSize] = useState("");
@@ -109,404 +110,292 @@ export default function PriceManagement() {
   ] as const;
 
   return (
-    <div className="bg-white min-h-screen">
-      {/* Header with Hamburger Menu */}
-      <header className="relative h-[200px]">
-        <button
-          onClick={() => setMenuOpen(!menuOpen)}
-          className="absolute left-[94px] top-[50px] w-[95px] h-[95px] flex items-center justify-center hover:opacity-80 transition-opacity"
-        >
-          <svg className="w-full h-full" fill="none" viewBox="0 0 95 95">
-            <path d={svgPaths.pdb84a00} fill="#296341" />
-          </svg>
-        </button>
+    <div className="bg-white min-h-screen flex flex-col pt-[80px]">
+      {/* Sidebar Drop-in */}
+      <Sidebar logoSrc={imgLogo.src} />
 
-        {/* Illustration */}
-        <div className="absolute left-[353px] top-[-132px] w-[716px] h-[716px]">
+      {/* Header with Hamburger */}
+      <div className="px-8 py-4">
+        <HamburgerButton iconSize={48} />
+      </div>
+
+      {/* Hero Illustration */}
+      <div className="flex justify-center mb-12 px-8">
+        <div className="relative w-full max-w-[800px] aspect-[800/500] overflow-hidden rounded-xl">
           <img
-            src={imgDesk}
-            alt="Admin illustration"
-            className="w-full h-full object-cover"
+            src={imgDesk.src}
+            alt="Price Management illustration"
+            className="w-full h-full object-contain"
           />
         </div>
-      </header>
+      </div>
 
-      {/* Title */}
-      <div className="max-w-[1440px] mx-auto px-[120px]">
-        <h1 className="font-['Inter'] font-medium text-[40px] text-black mb-2">
-          PRICE MANAGEMENT
-        </h1>
-        <div className="w-[202px] h-[5px] rounded-full bg-black mb-12" />
+      <main className="max-w-[1400px] mx-auto px-8 pb-12 flex-1 w-full">
+        {/* Title Section */}
+        <div className="mb-12">
+          <h1 className="text-[36px] font-bold text-black mb-1">PRICE MANAGEMENT</h1>
+          <div className="h-[4px] bg-black w-[180px]" />
+        </div>
 
-        {/* Category Buttons Grid */}
-        <div className="grid grid-cols-3 gap-x-[150px] gap-y-4 mb-12 max-w-[1204px]">
+        {/* Category Selection Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mb-16">
           {categories.map((cat) => (
             <button
               key={cat.id}
               onClick={() => setSelectedCategory(cat.id as Category)}
-              className={`h-[50px] rounded-[5px] font-['Inter'] font-medium text-[30px] transition-all ${
-                selectedCategory === cat.id
-                  ? "bg-[#296341] text-white shadow-[4px_4px_4px_0px_rgba(0,0,0,0.25)]"
-                  : "bg-white text-[#296341] shadow-[0px_3px_4px_0px_rgba(0,0,0,0.25)]"
-              }`}
+              className={`py-3 rounded-[8px] text-[22px] font-semibold border-2 transition-all shadow-sm ${selectedCategory === cat.id
+                  ? "bg-[#296341] text-white border-[#296341]"
+                  : "bg-white text-[#296341] border-gray-100 hover:border-[#296341]/30"
+                }`}
             >
               {cat.label}
             </button>
           ))}
         </div>
 
-        {/* DRY BOX Section */}
-        {selectedCategory === "DRY_BOX" && (
-          <div className="bg-[#c2d9d1] shadow-[0px_4px_4px_0px_#296341] px-[119px] py-12 mb-12 -mx-[120px]">
-            <div className="max-w-[1205px]">
-              {/* Section Header */}
-              <div className="bg-[#296341] h-[57px] rounded-[10px] shadow-[4px_4px_4px_0px_rgba(0,0,0,0.25)] flex items-center justify-center mb-12">
-                <h2 className="font-['Inter'] font-medium text-[30px] text-white">
-                  DRY BOX
-                </h2>
-              </div>
+        {/* Dynamic Category Section */}
+        <div className="bg-[#c2dcd1] rounded-2xl p-10 shadow-lg mb-12 border-b-4 border-[#296341]">
+          {/* Section Header */}
+          <div className="bg-[#296341] py-3 rounded-lg text-center mb-10 shadow-md">
+            <h2 className="text-[28px] font-bold text-white tracking-widest uppercase">
+              {categories.find(c => c.id === selectedCategory)?.label}
+            </h2>
+          </div>
 
-              {/* Input Fields Row 1 */}
-              <div className="grid grid-cols-2 gap-[150px] mb-8">
-                {/* Size */}
+          {/* Form Content based on category */}
+          {selectedCategory === "DRY_BOX" && (
+            <div className="space-y-10">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
                 <div>
-                  <label className="block font-['Inter'] font-medium text-[30px] text-black mb-4">
-                    Size
-                  </label>
+                  <label className="block text-[24px] font-bold mb-3">Size</label>
                   <input
                     type="text"
                     value={dryBoxSize}
                     onChange={(e) => setDryBoxSize(e.target.value)}
-                    className="w-full h-[50px] bg-white border-none rounded-none px-4 font-['Inter'] font-normal text-[20px] text-black focus:outline-none focus:ring-2 focus:ring-[#296341]"
+                    className="w-full h-[54px] bg-white rounded-md border-none px-6 text-[20px] shadow-sm outline-none focus:ring-2 focus:ring-[#296341]"
                   />
                 </div>
-
-                {/* Location */}
                 <div>
-                  <label className="block font-['Inter'] font-medium text-[30px] text-black mb-4">
-                    Location
-                  </label>
+                  <label className="block text-[24px] font-bold mb-3">Location</label>
                   <div className="flex items-center gap-4">
                     <div className="relative flex-1">
                       <select
                         value={dryBoxFrom}
                         onChange={(e) => setDryBoxFrom(e.target.value)}
-                        className="w-full h-[50px] bg-white border-none rounded-none px-4 font-['Inter'] font-normal text-[20px] text-black appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#296341]"
+                        className="w-full h-[54px] bg-white rounded-md appearance-none px-6 text-[20px] shadow-sm outline-none cursor-pointer focus:ring-2 focus:ring-[#296341]"
                       >
                         <option value="NAS">NAS</option>
                         <option value="GTC">GTC</option>
                         <option value="MH">MH</option>
                       </select>
-                      <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
-                        <svg className="w-[23px] h-[41px] -rotate-90" fill="none" viewBox="0 0 22.5908 40.5312">
-                          <path d={svgPaths.p640e000} fill="#296341" />
-                        </svg>
-                      </div>
+                      <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-[#296341] pointer-events-none" />
                     </div>
-
-                    <span className="font-['Inter'] font-medium text-[30px] text-black">
-                      ---&gt;
-                    </span>
-
+                    <ArrowRight className="w-8 h-8 text-gray-700" />
                     <div className="relative flex-1">
                       <select
                         value={dryBoxTo}
                         onChange={(e) => setDryBoxTo(e.target.value)}
-                        className="w-full h-[50px] bg-white border-none rounded-none px-4 font-['Inter'] font-normal text-[20px] text-black appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#296341]"
+                        className="w-full h-[54px] bg-white rounded-md appearance-none px-6 text-[20px] shadow-sm outline-none cursor-pointer focus:ring-2 focus:ring-[#296341]"
                       >
                         <option value="NAS">NAS</option>
                         <option value="GTC">GTC</option>
                         <option value="MH">MH</option>
                       </select>
-                      <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
-                        <svg className="w-[23px] h-[41px] -rotate-90" fill="none" viewBox="0 0 22.5908 40.5312">
-                          <path d={svgPaths.p640e000} fill="#296341" />
-                        </svg>
-                      </div>
+                      <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-[#296341] pointer-events-none" />
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* Input Fields Row 2 */}
-              <div className="flex items-end gap-[150px] mb-12">
-                {/* Value */}
+              <div className="flex items-end gap-12">
                 <div className="flex-1">
-                  <label className="block font-['Inter'] font-medium text-[30px] text-black mb-4">
-                    Value
-                  </label>
+                  <label className="block text-[24px] font-bold mb-3">Value</label>
                   <input
                     type="text"
                     value={dryBoxValue}
                     onChange={(e) => setDryBoxValue(e.target.value)}
-                    className="w-full h-[50px] bg-white border-none rounded-none px-4 font-['Inter'] font-normal text-[20px] text-black focus:outline-none focus:ring-2 focus:ring-[#296341]"
+                    className="w-full h-[54px] bg-white rounded-md border-none px-6 text-[20px] shadow-sm outline-none focus:ring-2 focus:ring-[#296341]"
                   />
                 </div>
-
-                {/* ADD Button */}
-                <div className="flex-1 flex justify-start">
-                  <button
-                    onClick={handleAddDryBox}
-                    className="bg-[#132540] border border-black h-[49px] w-[166px] rounded-full font-['Inter'] font-semibold text-[26px] text-white hover:bg-[#0d1a2d] transition-colors"
-                  >
-                    ADD
-                  </button>
-                </div>
+                <button
+                  onClick={handleAddDryBox}
+                  className="bg-[#132540] text-white px-12 py-3 rounded-md text-[24px] font-bold hover:bg-[#1a3254] transition-all shadow-md active:scale-95"
+                >
+                  ADD
+                </button>
               </div>
 
-              {/* Table */}
+              {/* Data Table */}
               <div className="space-y-4">
-                {dryBoxPrices.slice(0, 5).map((price) => (
-                  <div
-                    key={price.id}
-                    className="bg-white border border-[#296341] h-[50px] shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] flex items-center px-6"
-                  >
-                    <div className="font-['Inter'] font-semibold text-[26px] text-black w-[275px]">
-                      {price.size}
+                {dryBoxPrices.map((price) => (
+                  <div key={price.id} className="bg-white rounded-md border border-[#296341]/30 p-2 flex items-center shadow-sm group">
+                    <div className="w-[150px] font-bold text-[22px] px-4 border-r border-gray-100">{price.size}</div>
+                    <div className="w-[150px] font-bold text-[22px] px-4 border-r border-gray-100">{price.value}</div>
+                    <div className="flex-1 font-bold text-[22px] px-4 flex items-center gap-4">
+                      {price.from} <ArrowRight className="w-5 h-5 opacity-40" /> {price.to}
                     </div>
-                    <div className="font-['Inter'] font-semibold text-[26px] text-black w-[275px]">
-                      {price.value}
-                    </div>
-                    <div className="font-['Inter'] font-semibold text-[26px] text-black flex-1">
-                      {price.from} ---&gt; {price.to}
-                    </div>
-                    <div className="flex gap-2">
-                      <button className="w-[40px] h-[40px] hover:opacity-70 transition-opacity">
-                        <svg className="w-full h-full" fill="none" viewBox="0 0 40 40">
-                          <path d={svgPaths.p265e7200} fill="black" />
-                          <path d={svgPaths.p2dd0b00} fill="black" />
-                        </svg>
+                    <div className="flex gap-2 px-4">
+                      <button className="p-2 hover:bg-gray-100 rounded-md transition-colors">
+                        <Edit2 className="w-5 h-5 text-gray-600" />
                       </button>
                       <button
                         onClick={() => handleDeleteDryBox(price.id)}
-                        className="w-[40px] h-[40px] hover:opacity-70 transition-opacity"
+                        className="p-2 hover:bg-red-50 rounded-md transition-colors"
                       >
-                        <svg className="w-full h-full" fill="none" viewBox="0 0 40 40">
-                          <path d={svgPaths.p3925c600} fill="black" />
-                        </svg>
+                        <Trash2 className="w-5 h-5 text-[#296341] group-hover:text-red-500" />
                       </button>
                     </div>
                   </div>
                 ))}
               </div>
-
-              {/* Pagination */}
-              <div className="flex gap-4 mt-6">
-                <span className="font-['Inter'] font-normal text-[20px] text-[#2450e0]">
-                  5 of 20
-                </span>
-                <button className="font-['Inter'] font-normal text-[20px] text-[#2450e0] hover:underline">
-                  Load more...
-                </button>
+              <div className="pt-4 flex items-center gap-4">
+                <span className="text-blue-600 text-[18px]">5 of 20</span>
+                <button className="text-blue-600 text-[18px] hover:underline font-medium">Load more...</button>
               </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* CONTAINER Section */}
-        {selectedCategory === "CONTAINER" && (
-          <div className="bg-[#c2d9d1] shadow-[0px_4px_4px_0px_#296341] px-[119px] py-12 mb-12 -mx-[120px]">
-            <div className="max-w-[1205px]">
-              {/* Section Header */}
-              <div className="bg-[#296341] h-[57px] rounded-[10px] shadow-[4px_4px_4px_0px_rgba(0,0,0,0.25)] flex items-center justify-center mb-12">
-                <h2 className="font-['Inter'] font-medium text-[30px] text-white">
-                  CONTAINER
-                </h2>
-              </div>
-
-              {/* Input Fields Row 1 */}
-              <div className="grid grid-cols-2 gap-[150px] mb-8">
-                {/* Size */}
+          {selectedCategory === "CONTAINER" && (
+            <div className="space-y-10">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
                 <div>
-                  <label className="block font-['Inter'] font-medium text-[30px] text-black mb-4">
-                    Size
-                  </label>
+                  <label className="block text-[24px] font-bold mb-3">Size</label>
                   <input
                     type="text"
                     value={containerSize}
                     onChange={(e) => setContainerSize(e.target.value)}
-                    className="w-full h-[50px] bg-white border-none rounded-none px-4 font-['Inter'] font-normal text-[20px] text-black focus:outline-none focus:ring-2 focus:ring-[#296341]"
+                    className="w-full h-[54px] bg-white rounded-md border-none px-6 text-[20px] shadow-sm outline-none focus:ring-2 focus:ring-[#296341]"
                   />
                 </div>
-
-                {/* Location */}
                 <div>
-                  <label className="block font-['Inter'] font-medium text-[30px] text-black mb-4">
-                    Location
-                  </label>
+                  <label className="block text-[24px] font-bold mb-3">Location</label>
                   <div className="flex items-center gap-4">
                     <div className="relative flex-1">
                       <select
                         value={containerFrom}
                         onChange={(e) => setContainerFrom(e.target.value)}
-                        className="w-full h-[50px] bg-white border-none rounded-none px-4 font-['Inter'] font-normal text-[20px] text-black appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#296341]"
+                        className="w-full h-[54px] bg-white rounded-md appearance-none px-6 text-[20px] shadow-sm outline-none cursor-pointer focus:ring-2 focus:ring-[#296341]"
                       >
                         <option value="NAS">NAS</option>
                         <option value="GTC">GTC</option>
                         <option value="MH">MH</option>
                       </select>
-                      <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
-                        <svg className="w-[23px] h-[41px] -rotate-90" fill="none" viewBox="0 0 22.5908 40.5312">
-                          <path d={svgPaths.p640e000} fill="#296341" />
-                        </svg>
-                      </div>
+                      <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-[#296341] pointer-events-none" />
                     </div>
-
-                    <span className="font-['Inter'] font-medium text-[30px] text-black">
-                      ---&gt;
-                    </span>
-
+                    <ArrowRight className="w-8 h-8 text-gray-700" />
                     <div className="relative flex-1">
                       <select
                         value={containerTo}
                         onChange={(e) => setContainerTo(e.target.value)}
-                        className="w-full h-[50px] bg-white border-none rounded-none px-4 font-['Inter'] font-normal text-[20px] text-black appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#296341]"
+                        className="w-full h-[54px] bg-white rounded-md appearance-none px-6 text-[20px] shadow-sm outline-none cursor-pointer focus:ring-2 focus:ring-[#296341]"
                       >
                         <option value="NAS">NAS</option>
                         <option value="GTC">GTC</option>
                         <option value="MH">MH</option>
                       </select>
-                      <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
-                        <svg className="w-[23px] h-[41px] -rotate-90" fill="none" viewBox="0 0 22.5908 40.5312">
-                          <path d={svgPaths.p640e000} fill="#296341" />
-                        </svg>
-                      </div>
+                      <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-[#296341] pointer-events-none" />
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* Input Fields Row 2 */}
-              <div className="grid grid-cols-2 gap-[150px] mb-12">
-                {/* Type */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
                 <div>
-                  <label className="block font-['Inter'] font-medium text-[30px] text-black mb-4">
-                    Type
-                  </label>
+                  <label className="block text-[24px] font-bold mb-3">Type</label>
                   <div className="relative">
                     <select
                       value={containerType}
                       onChange={(e) => setContainerType(e.target.value)}
-                      className="w-full h-[50px] bg-white border-none rounded-none px-4 font-['Inter'] font-normal text-[20px] text-black appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#296341]"
+                      className="w-full h-[54px] bg-white rounded-md appearance-none px-6 text-[20px] shadow-sm outline-none cursor-pointer focus:ring-2 focus:ring-[#296341]"
                     >
                       <option value="DRY">DRY</option>
                       <option value="FROZEN">FROZEN</option>
                       <option value="COOLER">COOLER</option>
                     </select>
-                    <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
-                      <svg className="w-[23px] h-[41px] -rotate-90" fill="none" viewBox="0 0 22.5908 40.5312">
-                        <path d={svgPaths.p640e000} fill="#296341" />
-                      </svg>
-                    </div>
+                    <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-[#296341] pointer-events-none" />
                   </div>
                 </div>
-
-                {/* Value and ADD Button */}
-                <div className="flex items-end gap-4">
+                <div className="flex items-end gap-6">
                   <div className="flex-1">
-                    <label className="block font-['Inter'] font-medium text-[30px] text-black mb-4">
-                      Value
-                    </label>
+                    <label className="block text-[24px] font-bold mb-3">Value</label>
                     <input
                       type="text"
                       value={containerValue}
                       onChange={(e) => setContainerValue(e.target.value)}
-                      className="w-full h-[50px] bg-white border-none rounded-none px-4 font-['Inter'] font-normal text-[20px] text-black focus:outline-none focus:ring-2 focus:ring-[#296341]"
+                      className="w-full h-[54px] bg-white rounded-md border-none px-6 text-[20px] shadow-sm outline-none focus:ring-2 focus:ring-[#296341]"
                     />
                   </div>
-
                   <button
                     onClick={handleAddContainer}
-                    className="bg-[#132540] border border-black h-[49px] w-[166px] rounded-full font-['Inter'] font-semibold text-[26px] text-white hover:bg-[#0d1a2d] transition-colors"
+                    className="bg-[#132540] text-white px-12 py-3 rounded-md text-[24px] font-bold hover:bg-[#1a3254] transition-all shadow-md active:scale-95"
                   >
                     ADD
                   </button>
                 </div>
               </div>
 
-              {/* Table */}
+              {/* Data Table */}
               <div className="space-y-4">
-                {containerPrices.slice(0, 5).map((price) => (
-                  <div
-                    key={price.id}
-                    className="bg-white border border-[#296341] h-[50px] shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] flex items-center px-6"
-                  >
-                    <div className="font-['Inter'] font-semibold text-[26px] text-black w-[187px]">
-                      {price.size}
+                {containerPrices.map((price) => (
+                  <div key={price.id} className="bg-white rounded-md border border-[#296341]/30 p-2 flex items-center shadow-sm group">
+                    <div className="w-[120px] font-bold text-[22px] px-4 border-r border-gray-100">{price.size}</div>
+                    <div className="w-[120px] font-bold text-[22px] px-4 border-r border-gray-100">{price.type}</div>
+                    <div className="w-[150px] font-bold text-[22px] px-4 border-r border-gray-100">{price.value}</div>
+                    <div className="flex-1 font-bold text-[22px] px-4 flex items-center gap-4 text-center">
+                      {price.from} <ArrowRight className="w-5 h-5 opacity-40" /> {price.to}
                     </div>
-                    <div className="font-['Inter'] font-semibold text-[26px] text-black w-[187px]">
-                      {price.type}
-                    </div>
-                    <div className="font-['Inter'] font-semibold text-[26px] text-black w-[220px]">
-                      {price.value}
-                    </div>
-                    <div className="font-['Inter'] font-semibold text-[26px] text-black flex-1">
-                      {price.from} ---&gt; {price.to}
-                    </div>
-                    <div className="flex gap-2">
-                      <button className="w-[40px] h-[40px] hover:opacity-70 transition-opacity">
-                        <svg className="w-full h-full" fill="none" viewBox="0 0 40 40">
-                          <path d={svgPaths.p265e7200} fill="black" />
-                          <path d={svgPaths.p2dd0b00} fill="black" />
-                        </svg>
+                    <div className="flex gap-2 px-4">
+                      <button className="p-2 hover:bg-gray-100 rounded-md transition-colors">
+                        <Edit2 className="w-5 h-5 text-gray-600" />
                       </button>
                       <button
                         onClick={() => handleDeleteContainer(price.id)}
-                        className="w-[40px] h-[40px] hover:opacity-70 transition-opacity"
+                        className="p-2 hover:bg-red-50 rounded-md transition-colors"
                       >
-                        <svg className="w-full h-full" fill="none" viewBox="0 0 40 40">
-                          <path d={svgPaths.p3925c600} fill="black" />
-                        </svg>
+                        <Trash2 className="w-5 h-5 text-[#296341] group-hover:text-red-500" />
                       </button>
                     </div>
                   </div>
                 ))}
               </div>
-
-              {/* Pagination */}
-              <div className="flex gap-4 mt-6">
-                <span className="font-['Inter'] font-normal text-[20px] text-[#2450e0]">
-                  5 of 20
-                </span>
-                <button className="font-['Inter'] font-normal text-[20px] text-[#2450e0] hover:underline">
-                  Load more...
-                </button>
+              <div className="pt-4 flex items-center gap-4">
+                <span className="text-blue-600 text-[18px]">5 of 20</span>
+                <button className="text-blue-600 text-[18px] hover:underline font-medium">Load more...</button>
               </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Placeholder for other categories */}
-        {selectedCategory !== "DRY_BOX" && selectedCategory !== "CONTAINER" && (
-          <div className="bg-[#c2d9d1] shadow-[0px_4px_4px_0px_#296341] px-[119px] py-12 mb-12 -mx-[120px]">
-            <div className="max-w-[1205px]">
-              <div className="bg-[#296341] h-[57px] rounded-[10px] shadow-[4px_4px_4px_0px_rgba(0,0,0,0.25)] flex items-center justify-center mb-12">
-                <h2 className="font-['Inter'] font-medium text-[30px] text-white">
-                  {categories.find((c) => c.id === selectedCategory)?.label}
-                </h2>
+          {/* Placeholder for others */}
+          {selectedCategory !== "DRY_BOX" && selectedCategory !== "CONTAINER" && (
+            <div className="py-20 flex flex-col items-center justify-center text-gray-500">
+              <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center mb-4 shadow-sm">
+                <Plus className="w-10 h-10 text-gray-300" />
               </div>
-              <p className="font-['Inter'] font-normal text-[24px] text-black text-center py-12">
-                Price management for this category coming soon...
-              </p>
+              <p className="text-[24px] font-medium tracking-wide">Category Management Coming Soon</p>
             </div>
-          </div>
-        )}
-      </div>
-
-      {/* Footer */}
-      <footer className="bg-[#296341] h-[174px] flex items-center justify-center gap-8 px-8">
-        <div className="w-[397px] h-[94px]">
-          <img
-            src={imgLogo}
-            alt="Dean's Shipping Ltd."
-            className="w-full h-full object-cover"
-          />
+          )}
         </div>
-        <div className="font-['Inter'] text-[40px] text-white">
-          <span className="font-semibold">Administration  |  </span>
-          <span className="font-normal">Cicily Dean</span>
+      </main>
+
+      {/* Brand Footer */}
+      <footer className="bg-[#296341] py-8 mt-auto">
+        <div className="max-w-[1400px] mx-auto px-8 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <img src={imgLogo.src} alt="Dean's Shipping Ltd" className="h-[70px]" />
+          </div>
+          <div className="text-white text-[28px] font-semibold">
+            Administration | <span className="font-normal">Cicily Dean</span>
+          </div>
         </div>
       </footer>
     </div>
+  );
+}
+
+export default function PriceManagement() {
+  return (
+    <SidebarProvider>
+      <PriceManagementContent />
+    </SidebarProvider>
   );
 }
