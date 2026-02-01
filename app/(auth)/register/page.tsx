@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import { Link } from "lucide-react";
-import { Header } from "../../components/Header";
-import Footer from "../../components/Footer";
-import svgPaths from "../imports/svg-vsq6m84fvq";
+import { Header } from "../../../components/Header";
+import Footer from "../../../components/Footer";
+import svgPaths from "@/app/imports/svg-vsq6m84fvq";
 
 export default function Signup() {
   const [firstName, setFirstName] = useState("");

@@ -3,9 +3,9 @@
 import { useState } from "react";
 // import { Link } from "react-router";
 import { Link } from "lucide-react";
-import { Header } from "../../components/Header";
-import Footer from "../../components/Footer";
-import svgPaths from "../imports/svg-qkcs8auxd4";
+import { Header } from "../../../components/Header";
+import Footer from "../../../components/Footer";
+import svgPaths from "../../imports/svg-qkcs8auxd4";
 
 export default function Login() {
   const [loginType, setLoginType] = useState<"user" | "agent" | "admin">("user");

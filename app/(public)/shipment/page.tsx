@@ -1,5 +1,5 @@
-import image1 from "../assets/5116e4be081f83018c8edb2f7af47539cf88e4f0.png";
-import image2 from "../assets/9f13ecadcbced4d19bc15f999dd464355f2ad1a6.png";
+import image1 from "@/app/assets/5116e4be081f83018c8edb2f7af47539cf88e4f0.png";
+import image2 from "@/app/assets/9f13ecadcbced4d19bc15f999dd464355f2ad1a6.png";
 
 export default function Home() {
   return (
