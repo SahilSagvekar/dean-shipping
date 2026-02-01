@@ -1,406 +1,281 @@
-import svgPaths from "../../../imports/svg-hb4ckbkvzi";
-import imgImages73 from "@/app/assets/c84df36e65722170900b0920e2cc3eb7cf14fbd0.png";
-import imgRectangle228 from "@/app/assets/0630bc807bbd9122cb449e66c33d18d13536d121.png";
+"use client"
 
-function WeuiArrowOutlined() {
-  return (
-    <div className="h-[57px] relative w-[28px]" data-name="weui:arrow-outlined">
-      <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 28 57">
-        <g id="weui:arrow-outlined">
-          <path d={svgPaths.p215e0c00} fill="var(--fill-0, #296341)" id="Vector" />
-        </g>
-      </svg>
-    </div>
-  );
-}
+import { useState } from 'react';
+import { Plus, Grid3x3, RefreshCw, Trash2, Eye, EyeOff, Search, ChevronDown } from 'lucide-react';
+import imgLogo from "@/app/assets/0630bc807bbd9122cb449e66c33d18d13536d121.png";
+import imgHero from "@/app/assets/c84df36e65722170900b0920e2cc3eb7cf14fbd0.png";
 
-function GridiconsAdd() {
-  return (
-    <div className="absolute left-[118px] size-[40px] top-[742px]" data-name="gridicons:add">
-      <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 40 40">
-        <g id="gridicons:add">
-          <path d={svgPaths.p37fc6d00} fill="var(--fill-0, #296341)" id="Vector" />
-        </g>
-      </svg>
-    </div>
-  );
-}
+// Import the pieces from sidebar
+import { SidebarProvider, Sidebar, HamburgerButton } from '@/components/sidebar';
 
-function MaterialSymbolsChangeCircle() {
-  return (
-    <div className="absolute left-[116px] size-[40px] top-[1630px]" data-name="material-symbols:change-circle">
-      <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 40 40">
-        <g id="material-symbols:change-circle">
-          <path d={svgPaths.p3b24b880} fill="var(--fill-0, #296341)" id="Vector" />
-        </g>
-      </svg>
-    </div>
-  );
-}
+const agents = [
+  { id: 1, name: 'Henry Rogers', email: 'hendryrogers@demo.com', role: 'Freight Supervisor' },
+  { id: 2, name: 'Joseph Fernandes', email: 'jfernandes01@demo.com', role: 'Freight Agent' },
+  { id: 3, name: 'Bruno White', email: 'brunowhite@demo.com', role: 'Freight Supervisor' },
+];
 
-function MaterialSymbolsViewCozy() {
-  return (
-    <div className="absolute left-[116px] size-[40px] top-[1191px]" data-name="material-symbols:view-cozy">
-      <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 40 40">
-        <g id="material-symbols:view-cozy">
-          <path d={svgPaths.pa8d4c00} fill="var(--fill-0, #296341)" id="Vector" />
-        </g>
-      </svg>
-    </div>
-  );
-}
+function AgentManagementContent() {
+  const [activeTab, setActiveTab] = useState<'add' | 'view' | 'change'>('add');
+  const [showOldPassword, setShowOldPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
-function MaterialSymbolsDeleteRounded() {
-  return (
-    <div className="absolute left-[1269px] size-[40px] top-[1286px]" data-name="material-symbols:delete-rounded">
-      <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 40 40">
-        <g id="material-symbols:delete-rounded">
-          <path d={svgPaths.pb06f280} fill="var(--fill-0, #296341)" id="Vector" />
-        </g>
-      </svg>
-    </div>
-  );
-}
+  const [formData, setFormData] = useState({
+    name: 'Henry Rogers',
+    email: 'hendry123@demo.com',
+    password: 'HenryR@011',
+    role: 'Freight Supervisor',
+  });
 
-function MaterialSymbolsDeleteRounded1() {
-  return (
-    <div className="absolute left-[1270px] size-[40px] top-[1363px]" data-name="material-symbols:delete-rounded">
-      <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 40 40">
-        <g id="material-symbols:delete-rounded">
-          <path d={svgPaths.pb06f280} fill="var(--fill-0, #296341)" id="Vector" />
-        </g>
-      </svg>
-    </div>
-  );
-}
+  const [passwordData, setPasswordData] = useState({
+    oldPassword: 'HenryR@011',
+    newPassword: 'HenryR@000',
+  });
 
-function MaterialSymbolsDeleteRounded2() {
   return (
-    <div className="absolute aspect-[40/40] left-[88.19%] overflow-clip right-[9.03%] top-[1440px]" data-name="material-symbols:delete-rounded">
-      <div className="absolute inset-[12.5%_16.67%]" data-name="Vector">
-        <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 26.6667 30">
-          <path d={svgPaths.p3ff54780} fill="var(--fill-0, #296341)" id="Vector" />
-        </svg>
+    <div className="min-h-screen bg-white flex flex-col pt-[80px]">
+      {/* Sidebar Component */}
+      <Sidebar logoSrc={imgLogo.src} />
+
+      {/* Header with Hamburger */}
+      <div className="px-8 py-4">
+        <HamburgerButton iconSize={48} />
       </div>
-    </div>
-  );
-}
 
-function WeuiArrowOutlined1() {
-  return (
-    <div className="h-[57px] relative w-[28px]" data-name="weui:arrow-outlined">
-      <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 28 57">
-        <g id="weui:arrow-outlined">
-          <path d={svgPaths.p215e0c00} fill="var(--fill-0, #296341)" id="Vector" />
-        </g>
-      </svg>
-    </div>
-  );
-}
-
-function WeuiArrowOutlined2() {
-  return (
-    <div className="h-[57px] relative w-[28px]" data-name="weui:arrow-outlined">
-      <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 28 57">
-        <g id="weui:arrow-outlined">
-          <path d={svgPaths.p215e0c00} fill="var(--fill-0, #296341)" id="Vector" />
-        </g>
-      </svg>
-    </div>
-  );
-}
-
-function WeuiArrowOutlined3() {
-  return (
-    <div className="h-[57px] relative w-[28px]" data-name="weui:arrow-outlined">
-      <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 28 57">
-        <g id="weui:arrow-outlined">
-          <path d={svgPaths.p215e0c00} fill="var(--fill-0, #296341)" id="Vector" />
-        </g>
-      </svg>
-    </div>
-  );
-}
-
-function MaterialSymbolsSearch() {
-  return (
-    <div className="absolute left-[133.39px] size-[22.085px] top-[1711.09px]" data-name="material-symbols:search">
-      <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 22.0846 22.0846">
-        <g id="material-symbols:search">
-          <path d={svgPaths.pfce3000} fill="var(--fill-0, black)" id="Vector" />
-        </g>
-      </svg>
-    </div>
-  );
-}
-
-function Group() {
-  return (
-    <div className="absolute bottom-1/4 left-[13.46%] right-[13.46%] top-1/4" data-name="Group">
-      <div className="absolute inset-[-5.56%_-3.8%]">
-        <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 23.5917 16.6667">
-          <g id="Group">
-            <path d={svgPaths.p2ac55780} id="Vector" stroke="var(--stroke-0, black)" strokeWidth="1.66667" />
-            <path d={svgPaths.p3bcce600} id="Vector_2" stroke="var(--stroke-0, black)" strokeWidth="1.66667" />
-          </g>
-        </svg>
+      {/* Hero Illustration */}
+      <div className="flex justify-center mb-12 px-8">
+        <div className="relative w-full max-w-[1000px] aspect-[1000/400] overflow-hidden rounded-xl shadow-lg">
+          <img
+            src={imgHero.src}
+            alt="Agent Management"
+            className="w-full h-full object-cover"
+          />
+          {/* Blurred background effect similar to design */}
+          <div className="absolute inset-0 -z-10 blur-2xl opacity-50 scale-110">
+            <img src={imgHero.src} alt="" className="w-full h-full object-cover" />
+          </div>
+        </div>
       </div>
+
+      <main className="max-w-[1400px] mx-auto px-8 pb-12 flex-1 w-full">
+        {/* Title Section */}
+        <div className="mb-12">
+          <h1 className="text-[36px] font-bold text-black mb-1">AGENT MANAGEMENT</h1>
+          <div className="h-[4px] bg-black w-[180px]" />
+        </div>
+
+        {/* Tab Navigation */}
+        <div className="flex gap-12 mb-12">
+          <button
+            onClick={() => setActiveTab('add')}
+            className={`px-10 py-2 rounded-[8px] text-[24px] font-medium transition-all ${activeTab === 'add' ? 'bg-[#296341] text-white' : 'bg-[#296341] text-white opacity-90'
+              }`}
+          >
+            Add Agent
+          </button>
+          <button
+            onClick={() => setActiveTab('view')}
+            className={`px-10 py-2 rounded-[8px] text-[24px] font-medium transition-all ${activeTab === 'view' ? 'bg-[#296341] text-white' : 'bg-[#296341] text-white opacity-90'
+              }`}
+          >
+            View Agents
+          </button>
+          <button
+            onClick={() => setActiveTab('change')}
+            className={`px-10 py-2 rounded-[8px] text-[24px] font-medium transition-all ${activeTab === 'change' ? 'bg-[#296341] text-white' : 'bg-[#296341] text-white opacity-90'
+              }`}
+          >
+            Change Password
+          </button>
+        </div>
+
+        {/* Add New Agent Section */}
+        {activeTab === 'add' && (
+          <div className="bg-[#e5f7f1] p-10 rounded-lg mb-8">
+            <div className="flex items-center gap-3 mb-8">
+              <Plus className="w-8 h-8 text-[#296341] border-2 border-[#296341] rounded-full" />
+              <h2 className="text-[24px] font-medium text-[#296341]">Add New Agent</h2>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-x-12 gap-y-8 mb-10">
+              <div>
+                <label className="block text-[22px] font-medium mb-2">Name</label>
+                <input
+                  type="text"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  className="w-full border border-[#296341] rounded-[4px] px-4 py-2 text-[18px] bg-white shadow-sm outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-[22px] font-medium mb-2">Email</label>
+                <input
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  className="w-full border border-[#296341] rounded-[4px] px-4 py-2 text-[18px] bg-white shadow-sm outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-[22px] font-medium mb-2">Password</label>
+                <input
+                  type="text"
+                  value={formData.password}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  className="w-full border border-[#296341] rounded-[4px] px-4 py-2 text-[18px] bg-white shadow-sm outline-none"
+                />
+              </div>
+              <div className="md:col-span-1">
+                <label className="block text-[22px] font-medium mb-2">Role</label>
+                <div className="relative">
+                  <select
+                    value={formData.role}
+                    onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                    className="w-full border border-[#296341] rounded-[4px] px-4 py-2 text-[18px] bg-white shadow-sm appearance-none outline-none"
+                  >
+                    <option>Freight Supervisor</option>
+                    <option>Freight Agent</option>
+                  </select>
+                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-[#296341] w-6 h-6 pointer-events-none" />
+                </div>
+              </div>
+              <div className="md:col-span-1 flex items-end">
+                <button className="bg-[#132540] text-white px-16 py-2 rounded-[8px] text-[24px] font-medium hover:bg-[#1a3254] transition-colors w-full md:w-auto">
+                  Save
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* View Agents Section */}
+        {activeTab === 'view' && (
+          <div className="bg-[#e8eff6] p-10 rounded-lg mb-8">
+            <div className="flex items-center gap-3 mb-8">
+              <Grid3x3 className="w-8 h-8 text-[#296341]" />
+              <h2 className="text-[24px] font-medium text-[#296341]">View Agents</h2>
+            </div>
+
+            <div className="space-y-4">
+              {agents.map((agent, index) => (
+                <div
+                  key={agent.id}
+                  className="border border-[#296341] bg-white flex items-center px-6 py-2 rounded-sm shadow-sm"
+                >
+                  <div className="w-[60px] text-[20px] font-bold">{index + 1}.</div>
+                  <div className="w-[300px] text-[18px]">{agent.name}</div>
+                  <div className="flex-1 text-[18px] text-center">{agent.email}</div>
+                  <div className="w-[300px] text-[18px] flex items-center justify-between px-4">
+                    <span>{agent.role}</span>
+                    <ChevronDown className="w-6 h-6 text-[#296341]" />
+                  </div>
+                  <button className="p-2 ml-4 hover:bg-red-50 rounded transition-colors group">
+                    <Trash2 className="w-6 h-6 text-[#296341] group-hover:text-red-500" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Change Password Section */}
+        {activeTab === 'change' && (
+          <div className="bg-[#dcf5f6] p-10 rounded-lg mb-8">
+            <div className="flex items-center gap-3 mb-8">
+              <RefreshCw className="w-8 h-8 text-[#296341]" />
+              <h2 className="text-[24px] font-medium text-[#296341]">Change Password</h2>
+            </div>
+
+            {/* Search Bar */}
+            <div className="relative mb-8 max-w-[500px]">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <input
+                type="text"
+                placeholder="Search Agent Name"
+                className="w-full border border-[#296341] rounded-[4px] pl-12 pr-4 py-2 text-[18px] outline-none"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+
+            <div className="bg-white rounded-lg p-10 shadow-lg border border-gray-100">
+              {/* User Info Header */}
+              <div className="flex items-center justify-between mb-10 border-b border-gray-100 pb-6">
+                <div className="flex items-center gap-16">
+                  <div className="text-[22px] font-medium text-[#296341]">Henry Rogers</div>
+                  <div className="text-[22px] font-medium text-[#296341]">hendryrogers@demo.com</div>
+                </div>
+                <div className="text-[22px] font-medium text-[#296341]">Freight Supervisor</div>
+              </div>
+
+              {/* Password Fields */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 mb-10">
+                <div className="flex items-center gap-4">
+                  <label className="text-[20px] font-medium whitespace-nowrap min-w-[140px]">Old password:</label>
+                  <div className="relative flex-1">
+                    <input
+                      type={showOldPassword ? 'text' : 'password'}
+                      value={passwordData.oldPassword}
+                      onChange={(e) => setPasswordData({ ...passwordData, oldPassword: e.target.value })}
+                      className="w-full bg-[#e5f7f1] border border-gray-400 rounded-[4px] px-4 py-2 text-[18px] pr-12 outline-none"
+                    />
+                    <button
+                      onClick={() => setShowOldPassword(!showOldPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"
+                    >
+                      {showOldPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    </button>
+                  </div>
+                </div>
+                <div className="flex items-center gap-4">
+                  <label className="text-[20px] font-medium whitespace-nowrap min-w-[150px]">New password:</label>
+                  <div className="relative flex-1">
+                    <input
+                      type={showNewPassword ? 'text' : 'password'}
+                      value={passwordData.newPassword}
+                      onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
+                      className="w-full bg-[#e5f7f1] border border-gray-400 rounded-[4px] px-4 py-2 text-[18px] pr-12 outline-none"
+                    />
+                    <button
+                      onClick={() => setShowNewPassword(!showNewPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"
+                    >
+                      {showNewPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-center">
+                <button className="bg-[#132540] text-white px-16 py-2 rounded-[8px] text-[24px] font-medium hover:bg-[#1a3254] transition-colors">
+                  Save
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </main>
+
+      {/* Footer */}
+      <footer className="bg-[#296341] py-8 mt-auto">
+        <div className="max-w-[1400px] mx-auto px-8 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <img src={imgLogo.src} alt="Dean's Shipping Ltd" className="h-[70px]" />
+          </div>
+          <div className="text-white text-[28px] font-semibold">
+            Administration | <span className="font-normal">Cicily Dean</span>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
 
-function LetsIconsViewLight() {
-  return (
-    <div className="absolute left-[605px] overflow-clip size-[30px] top-[1843px]" data-name="lets-icons:view-light">
-      <Group />
-    </div>
-  );
-}
-
-function Group1() {
-  return (
-    <div className="absolute bottom-1/4 left-[13.46%] right-[13.46%] top-1/4" data-name="Group">
-      <div className="absolute inset-[-5.56%_-3.8%]">
-        <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 23.5917 16.6667">
-          <g id="Group">
-            <path d={svgPaths.p2ac55780} id="Vector" stroke="var(--stroke-0, black)" strokeWidth="1.66667" />
-            <path d={svgPaths.p3bcce600} id="Vector_2" stroke="var(--stroke-0, black)" strokeWidth="1.66667" />
-          </g>
-        </svg>
-      </div>
-    </div>
-  );
-}
-
-function LetsIconsViewLight1() {
-  return (
-    <div className="absolute left-[1256px] overflow-clip size-[30px] top-[1843px]" data-name="lets-icons:view-light">
-      <Group1 />
-    </div>
-  );
-}
-
-function StashBurgerClassicDuotone() {
-  return (
-    <div className="absolute left-[70px] size-[95px] top-[24px]" data-name="stash:burger-classic-duotone">
-      <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 95 95">
-        <g id="stash:burger-classic-duotone">
-          <path d={svgPaths.pdb84a00} fill="var(--fill-0, #296341)" id="Vector" />
-        </g>
-      </svg>
-    </div>
-  );
-}
-
+// Wrap with SidebarProvider
 export default function AdminAgentManagement() {
   return (
-    <div className="bg-white relative size-full" data-name="Admin, Agent Management">
-      <div className="absolute blur-[10px] h-[488px] left-[329px] top-0 w-[869px]" data-name="images (7) 3">
-        <img alt="" className="absolute inset-0 max-w-none object-cover pointer-events-none size-full" src={imgImages73} />
-      </div>
-      <div className="absolute blur-[10px] h-[488px] left-[220px] top-0 w-[869px]" data-name="images (7) 2">
-        <img alt="" className="absolute inset-0 max-w-none object-cover pointer-events-none size-full" src={imgImages73} />
-      </div>
-      <div className="absolute bg-[#ddf6f8] h-[416px] left-0 top-[1610px] w-[1440px]" />
-      <div className="absolute bg-[#e5f7f1] h-[363px] left-[-1px] top-[711px] w-[1440px]" />
-      <div className="absolute bg-[#296341] h-[50px] left-[137px] rounded-[20px] top-[612px] w-[300px]" />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[120px] not-italic text-[40px] text-black top-[535px] whitespace-nowrap">
-        <p className="leading-[normal]">AGENT MANAGEMENT</p>
-      </div>
-      <div className="absolute h-0 left-[119px] top-[572px] w-[202px]">
-        <div className="absolute inset-[-5px_0_0_0]">
-          <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 202 5">
-            <line id="Line 29" stroke="var(--stroke-0, black)" strokeLinecap="round" strokeWidth="5" x1="2.5" x2="199.5" y1="2.5" y2="2.5" />
-          </svg>
-        </div>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[119px] not-italic text-[30px] text-black top-[840px] w-[142px]">
-        <p className="leading-[normal] whitespace-pre-wrap">Name</p>
-      </div>
-      <div className="absolute h-[49px] left-[119px] top-[863.5px] w-[340px]">
-        <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 340 49">
-          <path d={svgPaths.p19225580} fill="var(--fill-0, white)" id="Rectangle 173" stroke="var(--stroke-0, #296341)" />
-        </svg>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[119px] not-italic text-[30px] text-black top-[949px] w-[142px]">
-        <p className="leading-[normal] whitespace-pre-wrap">Role</p>
-      </div>
-      <div className="absolute bg-white border border-[#296341] border-solid h-[49px] left-[119px] rounded-[5px] top-[974px] w-[340px]" />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[984px] not-italic text-[30px] text-black top-[840px] w-[218px]">
-        <p className="leading-[normal] whitespace-pre-wrap">Password</p>
-      </div>
-      <div className="absolute bg-white border border-[#296341] border-solid h-[49px] left-[979px] rounded-[5px] top-[864px] w-[340px]" />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[561px] not-italic text-[30px] text-black top-[840px] w-[142px]">
-        <p className="leading-[normal] whitespace-pre-wrap">Email</p>
-      </div>
-      <div className="absolute bg-white border border-[#296341] border-solid h-[49px] left-[549px] rounded-[5px] top-[864px] w-[340px]" />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[199px] not-italic text-[30px] text-white top-[637px] whitespace-nowrap">
-        <p className="leading-[normal]">{`Add Agent `}</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[992px] not-italic text-[30px] text-black top-[887px] w-[230px]">
-        <p className="leading-[normal] whitespace-pre-wrap">HenryR@011</p>
-      </div>
-      <div className="absolute flex h-[28px] items-center justify-center left-[396px] top-[984px] w-[57px]" style={{ "--transform-inner-width": "1177.1875", "--transform-inner-height": "20.390625" } as React.CSSProperties}>
-        <div className="flex-none rotate-90">
-          <WeuiArrowOutlined />
-        </div>
-      </div>
-      <div className="absolute bg-[#296341] h-[50px] left-[570px] rounded-[20px] top-[612px] w-[300px]" />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[626px] not-italic text-[30px] text-white top-[637px] whitespace-nowrap">
-        <p className="leading-[normal]">View Agents</p>
-      </div>
-      <div className="absolute bg-[#296341] h-[50px] left-[1019px] rounded-[20px] top-[613px] w-[300px]" />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[1038px] not-italic text-[30px] text-white top-[638px] w-[279px]">
-        <p className="leading-[normal] whitespace-pre-wrap">Change Password</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[165px] not-italic text-[#296341] text-[30px] top-[760px] whitespace-nowrap">
-        <p className="leading-[normal]">Add New Agent</p>
-      </div>
-      <GridiconsAdd />
-      <div className="absolute bg-[#132540] h-[51px] left-[549px] rounded-[10px] top-[973px] w-[220px]" />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[624px] not-italic text-[30px] text-white top-[998px] whitespace-nowrap">
-        <p className="leading-[normal]">Save</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[139px] not-italic text-[26px] text-black top-[887.5px] w-[270px]">
-        <p className="leading-[normal] whitespace-pre-wrap">Henry Rogers</p>
-      </div>
-      <a className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[560px] not-italic text-[26px] text-black top-[887.5px] w-[356px]" href="mailto:hendry123@demo.com">
-        <p className="cursor-pointer decoration-solid leading-[normal] underline whitespace-pre-wrap">hendry123@demo.com</p>
-      </a>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[139px] not-italic text-[26px] text-black top-[997.5px] w-[270px]">
-        <p className="leading-[normal] whitespace-pre-wrap">Freight Supervisor</p>
-      </div>
-      <div className="absolute bg-[#e4ebf4] h-[363px] left-0 top-[1161px] w-[1440px]" />
-      <div className="absolute h-[49px] left-[120px] top-[1281px] w-[1199px]" data-name="Vector">
-        <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 1199 49">
-          <path d={svgPaths.p1dbaf880} fill="var(--fill-0, white)" id="Vector" stroke="var(--stroke-0, #296341)" />
-        </svg>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[166px] not-italic text-[#296341] text-[30px] top-[1210px] whitespace-nowrap">
-        <p className="leading-[normal]">View Agents</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[187px] not-italic text-[26px] text-black top-[1305.5px] w-[270px]">
-        <p className="leading-[normal] whitespace-pre-wrap">Henry Rogers</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[136px] not-italic text-[26px] text-black top-[1303.5px] whitespace-nowrap">
-        <p className="leading-[normal]">1.</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[879px] not-italic text-[26px] text-black top-[1305.5px] w-[242px]">
-        <p className="leading-[normal] whitespace-pre-wrap">Freight Supervisor</p>
-      </div>
-      <MaterialSymbolsChangeCircle />
-      <MaterialSymbolsViewCozy />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[462px] not-italic text-[26px] text-black top-[1305.5px] w-[356px]">
-        <p className="leading-[normal] whitespace-pre-wrap">hendryrogers@demo.com</p>
-      </div>
-      <MaterialSymbolsDeleteRounded />
-      <div className="absolute h-[49px] left-[121px] top-[1358px] w-[1199px]" data-name="Vector">
-        <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 1199 49">
-          <path d={svgPaths.p1dbaf880} fill="var(--fill-0, white)" id="Vector" stroke="var(--stroke-0, #296341)" />
-        </svg>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[188px] not-italic text-[26px] text-black top-[1382.5px] w-[270px]">
-        <p className="leading-[normal] whitespace-pre-wrap">Joseph Fernandes</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[137px] not-italic text-[26px] text-black top-[1380.5px] whitespace-nowrap">
-        <p className="leading-[normal]">2.</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[880px] not-italic text-[26px] text-black top-[1382.5px] w-[242px]">
-        <p className="leading-[normal] whitespace-pre-wrap">Freight Agent</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[463px] not-italic text-[26px] text-black top-[1382.5px] w-[356px]">
-        <p className="leading-[normal] whitespace-pre-wrap">jfernandes01@demo.com</p>
-      </div>
-      <MaterialSymbolsDeleteRounded1 />
-      <div className="absolute inset-[62.56%_8.33%_34.96%_8.4%]" data-name="Vector">
-        <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 1199 56.7904">
-          <path d={svgPaths.p1a3c4080} fill="var(--fill-0, white)" id="Vector" stroke="var(--stroke-0, #296341)" />
-        </svg>
-      </div>
-      <div className="absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium inset-[62.87%_68.19%_35.56%_13.06%] justify-center leading-[0] not-italic text-[26px] text-black">
-        <p className="leading-[normal] whitespace-pre-wrap">Bruno White</p>
-      </div>
-      <div className="absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium inset-[62.96%_88.82%_35.47%_9.51%] justify-center leading-[0] not-italic text-[26px] text-black">
-        <p className="leading-[normal] whitespace-pre-wrap">3.</p>
-      </div>
-      <div className="absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium inset-[62.87%_22.08%_35.56%_61.11%] justify-center leading-[0] not-italic text-[26px] text-black">
-        <p className="leading-[normal] whitespace-pre-wrap">Freight Supervisor</p>
-      </div>
-      <div className="absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium inset-[62.87%_43.13%_35.56%_32.15%] justify-center leading-[0] not-italic text-[26px] text-black">
-        <p className="leading-[normal] whitespace-pre-wrap">brunowhite@demo.com</p>
-      </div>
-      <MaterialSymbolsDeleteRounded2 />
-      <div className="absolute flex h-[28px] items-center justify-center left-[1194px] top-[1292px] w-[57px]" style={{ "--transform-inner-width": "1177.1875", "--transform-inner-height": "20.390625" } as React.CSSProperties}>
-        <div className="flex-none rotate-90">
-          <WeuiArrowOutlined1 />
-        </div>
-      </div>
-      <div className="absolute flex h-[28px] items-center justify-center left-[1194px] top-[1369px] w-[57px]" style={{ "--transform-inner-width": "1177.1875", "--transform-inner-height": "20.390625" } as React.CSSProperties}>
-        <div className="flex-none rotate-90">
-          <WeuiArrowOutlined2 />
-        </div>
-      </div>
-      <div className="absolute flex h-[28px] items-center justify-center left-[1194px] top-[1447px] w-[57px]" style={{ "--transform-inner-width": "1177.1875", "--transform-inner-height": "20.390625" } as React.CSSProperties}>
-        <div className="flex-none rotate-90">
-          <WeuiArrowOutlined3 />
-        </div>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[181px] not-italic text-[#296341] text-[30px] top-[1648px] whitespace-nowrap">
-        <p className="leading-[normal]">Change Password</p>
-      </div>
-      <div className="absolute h-[222px] left-[121px] top-[1760px] w-[1199px]" data-name="Vector">
-        <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 1199 222">
-          <path d={svgPaths.p2fe980f2} fill="var(--fill-0, white)" id="Vector" />
-        </svg>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[145px] not-italic text-[#296341] text-[26px] top-[1790.5px] w-[270px]">
-        <p className="leading-[normal] whitespace-pre-wrap">Henry Rogers</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[526px] not-italic text-[#296341] text-[26px] top-[1790.5px] w-[362px]">
-        <p className="leading-[normal] whitespace-pre-wrap">hendryrogers@demo.com</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[1063px] not-italic text-[#296341] text-[26px] top-[1791.5px] w-[270px]">
-        <p className="leading-[normal] whitespace-pre-wrap">Freight Supervisor</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[145px] not-italic text-[26px] text-black top-[1855.5px] w-[187px]">
-        <p className="leading-[normal] whitespace-pre-wrap">Old password:</p>
-      </div>
-      <div className="absolute bg-[#e5f7f1] border border-black border-solid h-[45px] left-[347px] rounded-[5px] top-[1834px] w-[300px]" />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[366px] not-italic text-[26px] text-black top-[1856.5px] whitespace-nowrap">
-        <p className="leading-[normal]">HenryR@011</p>
-      </div>
-      <div className="absolute border border-[#296341] border-solid h-[50px] left-[121px] rounded-[5px] top-[1696px] w-[540px]" />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Regular',sans-serif] font-normal justify-center leading-[0] left-[164.85px] not-italic text-[20px] text-black top-[1722px] w-[342.63px]">
-        <p className="leading-[normal] whitespace-pre-wrap">Search Agent Name</p>
-      </div>
-      <MaterialSymbolsSearch />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[784px] not-italic text-[26px] text-black top-[1856.5px] w-[211px]">
-        <p className="leading-[normal] whitespace-pre-wrap">New password:</p>
-      </div>
-      <div className="absolute bg-[#e5f7f1] border border-black border-solid h-[45px] left-[996px] rounded-[5px] top-[1835px] w-[300px]" />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[1012px] not-italic text-[26px] text-black top-[1856.5px] whitespace-nowrap">
-        <p className="leading-[normal]">HenryR@000</p>
-      </div>
-      <LetsIconsViewLight />
-      <LetsIconsViewLight1 />
-      <div className="absolute bg-[#132540] h-[51px] left-[640px] rounded-[10px] top-[1909px] w-[220px]" />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[715px] not-italic text-[30px] text-white top-[1934px] whitespace-nowrap">
-        <p className="leading-[normal]">Save</p>
-      </div>
-      <div className="absolute h-[488px] left-[269px] top-0 w-[869px]" data-name="images (7) 1">
-        <img alt="" className="absolute backdrop-blur-[100px] inset-0 max-w-none object-cover pointer-events-none size-full" src={imgImages73} />
-      </div>
-      <StashBurgerClassicDuotone />
-      <div className="absolute bg-[#296341] h-[174px] left-0 top-[2115px] w-[1440px]" />
-      <div className="-translate-x-1/2 absolute h-[94px] left-[calc(50%-473.5px)] top-[2153px] w-[397px]">
-        <img alt="" className="absolute inset-0 max-w-none object-cover pointer-events-none size-full" src={imgRectangle228} />
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Semi_Bold',sans-serif] font-semibold justify-center leading-[0] left-[805px] not-italic text-[40px] text-white top-[2200px] whitespace-nowrap">
-        <p>
-          <span className="leading-[normal]">{`Administration  |  `}</span>
-          <span className="font-['Inter:Regular',sans-serif] font-normal leading-[normal] not-italic">Cicily Dean</span>
-        </p>
-      </div>
-    </div>
+    <SidebarProvider>
+      <AgentManagementContent />
+    </SidebarProvider>
   );
 }
