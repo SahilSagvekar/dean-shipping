@@ -27,17 +27,8 @@ function Search() {
   );
 }
 
-function StashBurgerClassicDuotone() {
-  return (
-    <div className="absolute left-[86px] size-[95px] top-[43px]" data-name="stash:burger-classic-duotone">
-      <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 95 95">
-        <g id="stash:burger-classic-duotone">
-          <path d={svgPaths.pdb84a00} fill="var(--fill-0, #296341)" id="Vector" />
-        </g>
-      </svg>
-    </div>
-  );
-}
+// Burger menu is now handled by (dashboard)/layout.tsx
+
 
 export default function CashierUnpaid() {
   return (
@@ -586,7 +577,8 @@ export default function CashierUnpaid() {
         <p className="leading-[normal] whitespace-pre-wrap">{`View all pending shipments      -->`}</p>
       </div>
       <div className="absolute border border-[#296341] border-solid h-[39px] left-[930px] rounded-[10px] top-[2303px] w-[352px]" />
-      <StashBurgerClassicDuotone />
+      {/* Burger menu is now handled by (dashboard)/layout.tsx */}
+
     </div>
   );
 }

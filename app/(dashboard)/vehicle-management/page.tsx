@@ -33,18 +33,8 @@ function VehicleIcon({ variant = "default" }: { variant?: "default" | "plus" | "
 }
 
 // Hamburger menu icon
-function HamburgerIcon() {
-  return (
-    <svg width="40" height="40" viewBox="0 0 95 95" fill="none">
-      <path
-        d="M20 30H75M20 47.5H75M20 65H75"
-        stroke="#296341"
-        strokeWidth="6"
-        strokeLinecap="round"
-      />
-    </svg>
-  );
-}
+// HamburgerIcon is now handled by (dashboard)/layout.tsx
+
 
 // Arrow icon for accordion
 function ChevronIcon({ direction = "down" }: { direction?: "up" | "down" }) {
@@ -132,12 +122,9 @@ function WaitlistCard({
 
 export default function AgentVehicleDetails() {
   return (
-    <div className="bg-white min-h-screen">
-      {/* Header */}
+    <div className="bg-white">
+      {/* Header is now handled by (dashboard)/layout.tsx */}
       <header className="flex items-start justify-between p-4">
-        <button className="p-2">
-          <HamburgerIcon />
-        </button>
         <div className="flex-1 flex justify-center">
           <img
             src="/vehicle-header-image.png"
@@ -145,7 +132,6 @@ export default function AgentVehicleDetails() {
             className="h-40 object-contain"
           />
         </div>
-        <div className="w-10" /> {/* Spacer for alignment */}
       </header>
 
       {/* Action Buttons */}

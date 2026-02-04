@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import {
-  Menu,
   Camera,
   Paperclip,
   Plus,
@@ -22,8 +21,7 @@ import imgPassport from "@/app/assets/bbad37ee24906289e97d640c601d7cafe55963b5.p
 import imgIdCard from "@/app/assets/10ad04e365367f2edb1a23ad5021caa2d9bfde6f.png";
 import imgLogo from "@/app/assets/0630bc807bbd9122cb449e66c33d18d13536d121.png";
 
-// Import Sidebar pieces
-import { SidebarProvider, Sidebar, HamburgerButton } from '@/components/sidebar';
+// Sidebar is now handled by (dashboard)/layout.tsx
 
 const cargoItemsList = [
   { id: 1, icon: 'box', type: 'DRY BOX(S) x 3', amount: '$50 (3)', total: '$150', paid: true },
@@ -65,13 +63,10 @@ function CargoBookingContent() {
   const cargoRadioTypes = ['Small', 'Medium', 'Large', 'Fragile', 'Hazardous', 'Live'];
 
   return (
-    <div className="bg-white min-h-screen flex flex-col pt-[80px]">
-      <Sidebar logoSrc={imgLogo.src} />
+    <div>
 
-      {/* Header with Hamburger */}
-      <div className="px-8 py-4">
-        <HamburgerButton iconSize={48} />
-      </div>
+      {/* Sidebar and Hamburger are now handled by the dashboard layout */}
+
 
       {/* Hero Illustration */}
       <div className="flex justify-center mb-6 px-8">
@@ -506,9 +501,5 @@ function CargoBookingContent() {
 }
 
 export default function CargoBooking() {
-  return (
-    <SidebarProvider>
-      <CargoBookingContent />
-    </SidebarProvider>
-  );
+  return <CargoBookingContent />;
 }

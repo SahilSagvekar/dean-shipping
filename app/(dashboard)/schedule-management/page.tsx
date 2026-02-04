@@ -6,8 +6,8 @@ import imgLogo from "@/app/assets/0630bc807bbd9122cb449e66c33d18d13536d121.png";
 import imgHero from "@/app/assets/b493fe526d34a8d0e654480300ff88ab45d2dde1.png";
 import imgShipBg from "@/app/assets/cf53a64ce492864216e5a9b357abee066ed01103.png";
 
-// Import Sidebar components
-import { SidebarProvider, Sidebar, HamburgerButton } from '@/components/sidebar';
+// Sidebar is now handled by (dashboard)/layout.tsx
+
 
 const schedules = [
   {
@@ -153,12 +153,11 @@ function ScheduleItem({ data }: { data: any }) {
 
 function ScheduleManagementContent() {
   return (
-    <div className="min-h-screen bg-white flex flex-col pt-[80px]">
-      <Sidebar logoSrc={imgLogo.src} />
+    <div className="bg-white">
 
-      <div className="px-8 py-4">
-        <HamburgerButton iconSize={48} />
-      </div>
+      {/* Sidebar and Hamburger are now handled by (dashboard)/layout.tsx */}
+
+
 
       {/* Hero Illustration */}
       <div className="flex justify-center mb-12 px-8">
@@ -258,9 +257,5 @@ function ScheduleManagementContent() {
 }
 
 export default function ScheduleManagement() {
-  return (
-    <SidebarProvider>
-      <ScheduleManagementContent />
-    </SidebarProvider>
-  );
+  return <ScheduleManagementContent />;
 }

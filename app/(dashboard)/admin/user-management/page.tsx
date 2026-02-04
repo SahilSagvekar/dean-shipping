@@ -142,12 +142,8 @@ export default function UserManagement() {
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
-      {/* Header - Hamburger Menu */}
-      <div className="px-8 py-6">
-        <button className="p-2">
-          <Menu className="w-[95px] h-[95px] text-[#296341]" />
-        </button>
-      </div>
+      {/* Header handled by (dashboard)/layout.tsx */}
+
 
       {/* User Management Icons */}
       <div className="flex justify-center mb-12">
@@ -184,11 +180,10 @@ export default function UserManagement() {
           {filteredUsers.map((user, index) => (
             <div key={user.id}>
               <div
-                className={`${
-                  expandedUser === user.id
+                className={`${expandedUser === user.id
                     ? "border-[#296341] min-h-[250px]"
                     : "h-[65px]"
-                } border-b border-[#296341] relative`}
+                  } border-b border-[#296341] relative`}
               >
                 {/* User Row */}
                 <div className="flex items-center px-8 py-4 h-[65px]">

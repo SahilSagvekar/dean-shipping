@@ -3,18 +3,8 @@
 import { useState } from "react";
 
 // Icons
-function HamburgerIcon() {
-  return (
-    <svg width="40" height="40" viewBox="0 0 95 95" fill="none">
-      <path
-        d="M20 30H75M20 47.5H75M20 65H75"
-        stroke="#296341"
-        strokeWidth="6"
-        strokeLinecap="round"
-      />
-    </svg>
-  );
-}
+// HamburgerIcon is now handled by (dashboard)/layout.tsx
+
 
 function ChevronIcon({ direction = "down" }: { direction?: "up" | "down" }) {
   return (
@@ -246,14 +236,9 @@ export default function EquipmentManagementList() {
   };
 
   return (
-    <div className="bg-white min-h-screen">
-      {/* Header */}
+    <div className="bg-white">
+      {/* Header is now handled by (dashboard)/layout.tsx */}
       <header className="relative">
-        {/* Hamburger menu */}
-        <button className="absolute left-4 top-4 p-2 z-10">
-          <HamburgerIcon />
-        </button>
-
         {/* Header image */}
         <div className="flex justify-center pt-2 pb-4">
           <img

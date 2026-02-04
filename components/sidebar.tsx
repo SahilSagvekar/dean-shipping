@@ -6,31 +6,18 @@ import { usePathname } from "next/navigation";
 import {
   Menu,
   X,
-  Search,
-  ChevronDown,
-  ChevronRight,
-  Package,
-  DollarSign,
-  Clock,
-  CheckCircle,
-  FileText,
-  Box,
-  Printer,
   LayoutDashboard,
   Users,
   UserCog,
-  UserCheck,
+  ShieldCheck,
   Ship,
-  Calendar,
-  Anchor,
-  CreditCard,
-  Boxes,
-  ClipboardList,
+  Banknote,
+  Package,
+  Ticket,
+  Truck,
+  FileText,
+  Car,
   AlertTriangle,
-  Wallet,
-  Bell,
-  MapPin,
-  BarChart3,
   Settings,
   LogOut,
 } from "lucide-react";
@@ -47,8 +34,8 @@ interface SidebarContextType {
 
 const SidebarContext = createContext<SidebarContextType>({
   isOpen: false,
-  toggle: () => {},
-  close: () => {},
+  toggle: () => { },
+  close: () => { },
 });
 
 export function useSidebar() {
@@ -110,127 +97,72 @@ export interface NavItem {
   title: string;
   href: string;
   icon: any;
-  roles?: string[];
-  children?: { title: string; href: string }[];
 }
 
 export const navigationItems: NavItem[] = [
   {
-    title: "Dashboard",
-    href: "/dashboard",
+    title: "Dashboard Overview",
+    href: "/admin/dashboard",
     icon: LayoutDashboard,
   },
   {
-    title: "Shipments",
-    href: "/shipments",
+    title: "User Management",
+    href: "/admin/user-management",
+    icon: Users,
+  },
+  {
+    title: "Agent Management",
+    href: "/admin/agent-management",
+    icon: UserCog,
+  },
+  {
+    title: "Admin Management",
+    href: "/admin/admin-management",
+    icon: ShieldCheck,
+  },
+  {
+    title: "Schedule Management",
+    href: "/schedule-management",
+    icon: Ship,
+  },
+  {
+    title: "Price Management",
+    href: "/price-management",
+    icon: Banknote,
+  },
+  {
+    title: "Freight Entry",
+    href: "/cargo-booking",
     icon: Package,
-    children: [
-      { title: "All Shipments", href: "/shipments" },
-      { title: "New Booking", href: "/shipments/new" },
-    ],
   },
   {
-    title: "Voyages",
-    href: "/voyages",
-    icon: Anchor,
-    roles: ["ADMIN", "AGENT"],
+    title: "Passenger Ticketing",
+    href: "/passenger-booking",
+    icon: Ticket,
   },
   {
-    title: "Schedules",
-    href: "/schedules",
-    icon: Calendar,
-    roles: ["ADMIN", "AGENT"],
-  },
-  {
-    title: "Invoices",
-    href: "/invoices",
-    icon: FileText,
-    children: [
-      { title: "All Invoices", href: "/invoices" },
-      { title: "Unpaid", href: "/invoices/unpaid" },
-    ],
-  },
-  {
-    title: "Payments",
-    href: "/payments",
-    icon: CreditCard,
-    roles: ["ADMIN", "AGENT"],
-  },
-  {
-    title: "Cashier",
-    href: "/cashier",
-    icon: Wallet,
-    roles: ["ADMIN", "AGENT"],
+    title: "Equipment Management",
+    href: "/equipment-management",
+    icon: Truck,
   },
   {
     title: "Manifest",
-    href: "/manifest",
-    icon: ClipboardList,
-    roles: ["ADMIN", "AGENT"],
+    href: "/warehouse/manifest", // Updated to match manifest concept
+    icon: FileText,
   },
   {
-    title: "Ships",
-    href: "/ships",
-    icon: Ship,
-    roles: ["ADMIN"],
+    title: "Vehicle Wait List",
+    href: "/vehicle-management",
+    icon: Car,
   },
   {
-    title: "Locations",
-    href: "/locations",
-    icon: MapPin,
-    roles: ["ADMIN"],
-  },
-  {
-    title: "Prices",
-    href: "/prices",
-    icon: DollarSign,
-    roles: ["ADMIN"],
-  },
-  {
-    title: "Equipment",
-    href: "/equipment",
-    icon: Boxes,
-    roles: ["ADMIN", "AGENT"],
-  },
-  {
-    title: "Incidents",
-    href: "/incidents",
+    title: "Incident Report",
+    href: "/incident-report",
     icon: AlertTriangle,
-    roles: ["ADMIN", "AGENT"],
   },
   {
-    title: "Users",
-    href: "/users",
-    icon: Users,
-    roles: ["ADMIN", "AGENT"],
-  },
-  {
-    title: "Agents",
-    href: "/agents",
-    icon: UserCheck,
-    roles: ["ADMIN"],
-  },
-  {
-    title: "Admins",
-    href: "/admins",
-    icon: UserCog,
-    roles: ["ADMIN"],
-  },
-  {
-    title: "Notifications",
-    href: "/notifications",
-    icon: Bell,
-    roles: ["ADMIN"],
-  },
-  {
-    title: "Reports",
-    href: "/reports",
-    icon: BarChart3,
-    roles: ["ADMIN"],
-  },
-  {
-    title: "Settings",
-    href: "/settings",
+    title: "Setting",
+    href: "/admin/settings",
     icon: Settings,
   },
 ];
@@ -241,54 +173,19 @@ export const navigationItems: NavItem[] = [
 
 function SidebarNavItem({ item }: { item: NavItem }) {
   const pathname = usePathname();
-  const [expanded, setExpanded] = useState(false);
-  const isActive =
-    pathname === item.href ||
-    (item.children?.some((child) => pathname === child.href) ?? false);
-
+  const isActive = pathname === item.href;
   const Icon = item.icon;
-
-  if (item.children) {
-    return (
-      <div>
-        <button
-          onClick={() => setExpanded(!expanded)}
-          className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-colors
-            ${isActive ? "bg-[#296341] text-white" : "text-[#1a1a1a] hover:bg-[#e8f0eb]"}`}
-        >
-          <Icon className="w-5 h-5 flex-shrink-0" />
-          <span className="flex-1 text-[15px] font-medium">{item.title}</span>
-          <ChevronRight
-            className={`w-4 h-4 transition-transform duration-200 ${expanded ? "rotate-90" : ""}`}
-          />
-        </button>
-
-        <div
-          className={`overflow-hidden transition-all duration-200 ${expanded ? "max-h-40" : "max-h-0"}`}
-        >
-          {item.children.map((child) => (
-            <Link
-              key={child.href}
-              href={child.href}
-              className={`block pl-12 pr-4 py-2.5 text-[14px] rounded-lg transition-colors
-                ${pathname === child.href ? "text-[#296341] font-semibold bg-[#e8f0eb]" : "text-[#555] hover:text-[#296341] hover:bg-[#f0f5f2]"}`}
-            >
-              {child.title}
-            </Link>
-          ))}
-        </div>
-      </div>
-    );
-  }
 
   return (
     <Link
       href={item.href}
-      className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors
-        ${isActive ? "bg-[#296341] text-white" : "text-[#1a1a1a] hover:bg-[#e8f0eb]"}`}
+      className={`flex items-center gap-4 px-6 py-3 transition-colors group
+        ${isActive ? "bg-[#e2f0ea]" : "hover:bg-[#e2f0ea]"}`}
     >
-      <Icon className="w-5 h-5 flex-shrink-0" />
-      <span className="text-[15px] font-medium">{item.title}</span>
+      <Icon className={`w-7 h-7 flex-shrink-0 transition-colors ${isActive ? "text-[#1a365d]" : "text-[#1a365d]/80 group-hover:text-[#1a365d]"}`} />
+      <span className={`text-[17px] font-bold transition-colors ${isActive ? "text-[#1a365d]" : "text-[#1a365d]/80 group-hover:text-[#1a365d]"}`}>
+        {item.title}
+      </span>
     </Link>
   );
 }
@@ -321,61 +218,36 @@ export function Sidebar({
 
       {/* Sidebar Panel */}
       <aside
-        className={`fixed top-0 left-0 h-full w-[280px] bg-white z-50 
+        className={`fixed top-0 left-0 h-full w-[320px] bg-[#f4fbf9] z-50 
           flex flex-col shadow-2xl
           transition-transform duration-300 ease-in-out
           ${isOpen ? "translate-x-0" : "-translate-x-full"}`}
       >
-        {/* Header */}
-        <div className="flex items-center justify-between px-5 py-5 border-b border-[#e0e8e3]">
-          {logoSrc ? (
-            <img src={logoSrc} alt="Logo" className="h-10" />
-          ) : (
-            <span className="text-[18px] font-bold text-[#296341]">
-              Dean&apos;s Shipping
-            </span>
-          )}
+        {/* Header - Hamburger box from image */}
+        <div className="px-6 py-8">
           <button
             onClick={close}
-            className="p-2 rounded-lg hover:bg-[#e8f0eb] transition-colors"
+            className="w-12 h-12 flex items-center justify-center border-2 border-[#1a73e8] rounded-sm bg-white hover:bg-gray-50 transition-colors"
             aria-label="Close menu"
           >
-            <X className="w-5 h-5 text-[#296341]" />
+            <Menu className="w-8 h-8 text-[#1a365d]" />
           </button>
         </div>
 
-        {/* User Info */}
-        <div className="px-5 py-4 border-b border-[#e0e8e3]">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-[#296341] flex items-center justify-center text-white font-bold text-[14px]">
-              {userName
-                .split(" ")
-                .map((n) => n[0])
-                .join("")}
-            </div>
-            <div>
-              <p className="text-[15px] font-semibold text-[#1a1a1a]">
-                {userName}
-              </p>
-              <p className="text-[12px] text-[#666]">{userRole}</p>
-            </div>
-          </div>
-        </div>
-
         {/* Navigation */}
-        <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
+        <nav className="flex-1 overflow-y-auto py-2 space-y-1">
           {navigationItems.map((item) => (
             <SidebarNavItem key={item.href} item={item} />
           ))}
         </nav>
 
-        {/* Footer */}
-        <div className="px-3 py-4 border-t border-[#e0e8e3]">
-          <button className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-[#cf5d5d] hover:bg-red-50 transition-colors">
+        {/* Optional: User/Logout (Hidden to match image strictly, but kept for partial visibility) */}
+        {/* <div className="px-6 py-4 border-t border-[#e0e8e3] opacity-40 hover:opacity-100 transition-opacity">
+          <button className="flex items-center gap-3 text-[#cf5d5d]">
             <LogOut className="w-5 h-5" />
             <span className="text-[15px] font-medium">Logout</span>
           </button>
-        </div>
+        </div> */}
       </aside>
     </>
   );
@@ -399,11 +271,11 @@ export function HamburgerButton({
   return (
     <button
       onClick={toggle}
-      className={`p-2 rounded-lg hover:bg-[#e8f0eb] transition-colors ${className}`}
+      className={`w-12 h-12 flex items-center justify-center border-2 border-[#1a73e8] rounded-sm bg-white hover:bg-gray-50 transition-colors ${className}`}
       aria-label={isOpen ? "Close menu" : "Open menu"}
       aria-expanded={isOpen}
     >
-      <Menu className={`text-[#296341]`} style={{ width: iconSize, height: iconSize }} />
+      <Menu className="text-[#1a365d]" style={{ width: iconSize, height: iconSize }} />
     </button>
   );
 }

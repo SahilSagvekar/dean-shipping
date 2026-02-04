@@ -5,8 +5,8 @@ import { Plus, Grid3x3, RefreshCw, Trash2, Eye, EyeOff } from 'lucide-react';
 import imgLogo from "@/app/assets/0630bc807bbd9122cb449e66c33d18d13536d121.png";
 import imgAdminIcon from "@/app/assets/502abc0f15e7e21e1f5df5c5bb93c870c70bbf38.png";
 
-// 1. Import the 3 pieces
-import { SidebarProvider, Sidebar, HamburgerButton } from '@/components/sidebar';
+// Sidebar is now handled by (dashboard)/layout.tsx
+
 
 const admins = [
   { id: 1, name: 'Cecily Dean', email: 'Cecilydean@demo.com' },
@@ -29,15 +29,11 @@ function AdminManagementContent() {
   });
 
   return (
-    <div className="min-h-screen bg-white flex flex-col pt-[80px]">
-      {/* 2. Drop in Sidebar */}
-      <Sidebar logoSrc={imgLogo.src} />
+    <div className="bg-white">
 
-      {/* Header - Replace old Menu button with HamburgerButton */}
-      <div className="px-8 py-4">
-        {/* 3. Replace the old <Menu> icon with HamburgerButton */}
-        <HamburgerButton iconSize={48} />
-      </div>
+      {/* Sidebar and Hamburger are now handled by (dashboard)/layout.tsx */}
+
+
 
       {/* Admin Management Icon */}
       <div className="flex justify-center mb-8 px-8">
@@ -235,9 +231,5 @@ function AdminManagementContent() {
 
 // Wrap with SidebarProvider
 export default function AdminManagement() {
-  return (
-    <SidebarProvider>
-      <AdminManagementContent />
-    </SidebarProvider>
-  );
+  return <AdminManagementContent />;
 }

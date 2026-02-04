@@ -8,8 +8,7 @@ import imgVehicle2 from "@/app/assets/cf53a64ce492864216e5a9b357abee066ed01103.p
 import imgIDCard from "@/app/assets/10ad04e365367f2edb1a23ad5021caa2d9bfde6f.png";
 import imgLogo from "@/app/assets/0630bc807bbd9122cb449e66c33d18d13536d121.png";
 
-// Import Sidebar components
-import { SidebarProvider, Sidebar, HamburgerButton } from '@/components/sidebar';
+// Sidebar is now handled by (dashboard)/layout.tsx
 
 function VehicleBookingContent() {
   const [make, setMake] = useState("Hundai");
@@ -38,13 +37,10 @@ function VehicleBookingContent() {
   const idImages = [imgIDCard, imgIDCard, imgIDCard, imgIDCard];
 
   return (
-    <div className="bg-white min-h-screen flex flex-col pt-[100px]">
-      <Sidebar logoSrc={imgLogo.src} />
+    <div>
 
-      {/* Header with Hamburger */}
-      <div className="px-8 py-4">
-        <HamburgerButton iconSize={48} />
-      </div>
+      {/* Sidebar and Hamburger are now handled by the dashboard layout */}
+
 
       {/* Illustration */}
       <div className="flex justify-center mb-8 px-8">
@@ -397,9 +393,5 @@ function VehicleBookingContent() {
 }
 
 export default function VehicleBooking() {
-  return (
-    <SidebarProvider>
-      <VehicleBookingContent />
-    </SidebarProvider>
-  );
+  return <VehicleBookingContent />;
 }

@@ -5,8 +5,8 @@ import { Trash2, Edit2, ChevronDown, Plus, Search, ArrowRight } from "lucide-rea
 import imgDesk from "@/app/assets/ab576223d2665babdbfbcf0c2c488ca622b1efd4.png";
 import imgLogo from "@/app/assets/0630bc807bbd9122cb449e66c33d18d13536d121.png";
 
-// Import Sidebar pieces
-import { SidebarProvider, Sidebar, HamburgerButton } from '@/components/sidebar';
+// Sidebar is now handled by (dashboard)/layout.tsx
+
 
 type Category = "DRY_BOX" | "FROZEN_BOX" | "COOLER_BOX" | "ENVELOPE" | "CONTAINER" | "LUGGAGE" | "PALLET" | "VEHICLE" | "BUNDLE" | "PESSENGER";
 
@@ -110,14 +110,11 @@ function PriceManagementContent() {
   ] as const;
 
   return (
-    <div className="bg-white min-h-screen flex flex-col pt-[80px]">
-      {/* Sidebar Drop-in */}
-      <Sidebar logoSrc={imgLogo.src} />
+    <div className="bg-white">
 
-      {/* Header with Hamburger */}
-      <div className="px-8 py-4">
-        <HamburgerButton iconSize={48} />
-      </div>
+      {/* Sidebar and Hamburger are now handled by (dashboard)/layout.tsx */}
+
+
 
       {/* Hero Illustration */}
       <div className="flex justify-center mb-12 px-8">
@@ -144,8 +141,8 @@ function PriceManagementContent() {
               key={cat.id}
               onClick={() => setSelectedCategory(cat.id as Category)}
               className={`py-3 rounded-[8px] text-[22px] font-semibold border-2 transition-all shadow-sm ${selectedCategory === cat.id
-                  ? "bg-[#296341] text-white border-[#296341]"
-                  : "bg-white text-[#296341] border-gray-100 hover:border-[#296341]/30"
+                ? "bg-[#296341] text-white border-[#296341]"
+                : "bg-white text-[#296341] border-gray-100 hover:border-[#296341]/30"
                 }`}
             >
               {cat.label}
@@ -393,9 +390,5 @@ function PriceManagementContent() {
 }
 
 export default function PriceManagement() {
-  return (
-    <SidebarProvider>
-      <PriceManagementContent />
-    </SidebarProvider>
-  );
+  return <PriceManagementContent />;
 }

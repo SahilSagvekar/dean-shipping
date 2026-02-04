@@ -70,11 +70,10 @@ function ShipmentTable({ title, badge, shipments, showCount }: any) {
           <p className="text-[14px] text-[#3b3b3b]">Latest shipment records and status</p>
         </div>
         <div className="flex items-center gap-4">
-          <div className={`px-6 py-2 rounded-[10px] text-white text-[30px] ${
-            badge === 'DRY' ? 'bg-[#296341]' : 
-            badge === 'FROZEN' ? 'bg-[#296341]' : 
-            'bg-[#296341]'
-          }`}>
+          <div className={`px-6 py-2 rounded-[10px] text-white text-[30px] ${badge === 'DRY' ? 'bg-[#296341]' :
+              badge === 'FROZEN' ? 'bg-[#296341]' :
+                'bg-[#296341]'
+            }`}>
             {badge}
           </div>
           <button className="p-2 hover:bg-gray-100 rounded">
@@ -105,9 +104,8 @@ function ShipmentTable({ title, badge, shipments, showCount }: any) {
             <div className="text-[15px]">{shipment.item}</div>
             <div className="text-[15px]">{shipment.payment}</div>
             <div className="text-[15px]">{shipment.amount}</div>
-            <div className={`border border-black px-2 py-1 text-center text-[15px] font-bold ${
-              shipment.status === 'Paid' ? 'text-[#70cf5d]' : 'text-[#cf5d5d]'
-            }`}>
+            <div className={`border border-black px-2 py-1 text-center text-[15px] font-bold ${shipment.status === 'Paid' ? 'text-[#70cf5d]' : 'text-[#cf5d5d]'
+              }`}>
               {shipment.status}
             </div>
             <div className="text-[15px]">{shipment.date}</div>
@@ -128,65 +126,35 @@ function ShipmentTable({ title, badge, shipments, showCount }: any) {
 
 export default function App() {
   return (
-    <div className="min-h-screen bg-white">
-      {/* Header */}
-      <header className="border-b border-[#5F8A71] px-8 py-6">
-        <div className="flex items-center justify-between max-w-[1400px] mx-auto">
-          <div className="flex items-center gap-8">
-            <button className="p-2">
-              <Menu className="w-[70px] h-[70px] text-[#296341]" />
-            </button>
-            <div className="flex items-center gap-3">
-              <img src={imgLogo} alt="Dean's Shipping Ltd" className="h-12" />
-            </div>
-          </div>
-          
-          <div className="flex-1 max-w-[650px] mx-8">
-            <div className="relative">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#767676]" />
-              <input
-                type="text"
-                placeholder="search shipment, user, invoices..."
-                className="w-full border border-[#296341] rounded-[5px] pl-12 pr-4 py-3 text-[18px] text-[#717171]"
-              />
-            </div>
-          </div>
+    <div className="bg-white">
+      {/* Header is now handled by (dashboard)/layout.tsx */}
 
-          <div className="border border-[#296341] rounded-[5px] px-4 py-2 flex items-center gap-2 cursor-pointer hover:bg-gray-50">
-            <div>
-              <p className="text-[20px]">Cecily Dean</p>
-              <p className="text-[18px]">Adminstration</p>
-            </div>
-            <ChevronDown className="w-6 h-6 text-[#296341]" />
-          </div>
-        </div>
-      </header>
 
-      <main className="max-w-[1400px] mx-auto px-8 py-8">
+      <main className="max-w-[1400px] mx-auto px-4 sm:px-8 py-4 sm:py-8">
         {/* Dashboard Overview */}
         <h1 className="text-[32px] font-semibold text-[#296341] mb-8">Dashboard Overview</h1>
 
         {/* Stats Grid */}
         <div className="grid grid-cols-4 gap-6 mb-6">
-          <StatCard 
+          <StatCard
             icon={Package}
             title="Total Shipment Today"
             value="157"
             subtitle="+12% from yesterday"
           />
-          <StatCard 
+          <StatCard
             icon={DollarSign}
             title="Collected Cash Today"
             value="$1570.00"
             subtitle="+22% from yesterday"
           />
-          <StatCard 
+          <StatCard
             icon={DollarSign}
             title="Total Revenue Today"
             value="$5678.00"
             subtitle="+8% from yesterday"
           />
-          <StatCard 
+          <StatCard
             icon={Clock}
             title="Pending Payment"
             value="15"
@@ -196,14 +164,14 @@ export default function App() {
         </div>
 
         <div className="grid grid-cols-2 gap-6 mb-8">
-          <StatCard 
+          <StatCard
             icon={Clock}
             title="Pending Pickup"
             value="27"
             subtitle="20-12-2025"
             positive={false}
           />
-          <StatCard 
+          <StatCard
             icon={CheckCircle}
             title="Completed Pickup"
             value="13"
@@ -219,22 +187,22 @@ export default function App() {
             <ResponsiveContainer width="100%" height={300}>
               <LineChart data={revenueData}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis 
-                  dataKey="name" 
+                <XAxis
+                  dataKey="name"
                   tick={{ fontSize: 12 }}
                   interval={0}
                 />
-                <YAxis 
+                <YAxis
                   tick={{ fontSize: 12 }}
                   domain={[0, 5000]}
                   ticks={[500, 1000, 1500, 2000, 2500, 3000, 3500, 4000]}
                   tickFormatter={(value) => `$${value}`}
                 />
                 <Tooltip />
-                <Line 
-                  type="monotone" 
-                  dataKey="value" 
-                  stroke="#000" 
+                <Line
+                  type="monotone"
+                  dataKey="value"
+                  stroke="#000"
                   strokeWidth={2}
                   dot={{ fill: '#000', r: 4 }}
                 />
@@ -270,21 +238,21 @@ export default function App() {
         </div>
 
         {/* Shipment Tables */}
-        <ShipmentTable 
+        <ShipmentTable
           title="Recent DRY Cargo Shipment"
           badge="DRY"
           shipments={dryShipments}
           showCount="5"
         />
 
-        <ShipmentTable 
+        <ShipmentTable
           title="Recent Frozen Cargo Shipment"
           badge="FROZEN"
           shipments={frozenShipments}
           showCount="5"
         />
 
-        <ShipmentTable 
+        <ShipmentTable
           title="Recent Cooler Cargo Shipment"
           badge="COOLER"
           shipments={coolerShipments}

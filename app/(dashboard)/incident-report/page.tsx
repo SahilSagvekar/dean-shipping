@@ -26,17 +26,8 @@ function CodexFile() {
   );
 }
 
-function StashBurgerClassicDuotone() {
-  return (
-    <div className="absolute left-[107px] size-[95px] top-[47px]" data-name="stash:burger-classic-duotone">
-      <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 95 95">
-        <g id="stash:burger-classic-duotone">
-          <path d={svgPaths.pdb84a00} fill="var(--fill-0, #296341)" id="Vector" />
-        </g>
-      </svg>
-    </div>
-  );
-}
+// Burger menu is now handled by (dashboard)/layout.tsx
+
 
 export default function IncidentReport() {
   return (
@@ -175,7 +166,8 @@ export default function IncidentReport() {
       <div className="absolute h-[459px] left-[361px] top-[31px] w-[544px]" data-name="png-clipart-occupational-safety-removebg-preview 1">
         <img alt="" className="absolute inset-0 max-w-none object-cover pointer-events-none size-full" src={imgPngClipartOccupationalSafetyRemovebgPreview1.src} />
       </div>
-      <StashBurgerClassicDuotone />
+      {/* Burger menu is now handled by (dashboard)/layout.tsx */}
+
     </div>
   );
 }

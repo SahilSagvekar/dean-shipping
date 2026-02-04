@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import {
-  Menu,
   Camera,
   Paperclip,
   Plus,
@@ -18,8 +17,7 @@ import imgBookingIllustration from "@/app/assets/cfa31b3ce2eb14a48a0ef2738b4164b
 import imgDriversLicense from "@/app/assets/10ad04e365367f2edb1a23ad5021caa2d9bfde6f.png";
 import imgLogo from "@/app/assets/0630bc807bbd9122cb449e66c33d18d13536d121.png";
 
-// Import Sidebar pieces
-import { SidebarProvider, Sidebar, HamburgerButton } from '@/components/sidebar';
+// Sidebar is now handled by (dashboard)/layout.tsx
 
 function PassengerBookingContent() {
   const [infantCount, setInfantCount] = useState(0);
@@ -37,13 +35,10 @@ function PassengerBookingContent() {
   const [paymentStatus, setPaymentStatus] = useState("PAID");
 
   return (
-    <div className="bg-white min-h-screen flex flex-col pt-[80px]">
-      <Sidebar logoSrc={imgLogo.src} />
+    <div>
 
-      {/* Header with Hamburger */}
-      <div className="px-8 py-4">
-        <HamburgerButton iconSize={48} />
-      </div>
+      {/* Sidebar and Hamburger are now handled by the dashboard layout */}
+
 
       {/* Hero Illustration */}
       <div className="flex justify-center mb-8 px-8">
@@ -348,9 +343,5 @@ function PassengerBookingContent() {
 }
 
 export default function PassengerBooking() {
-  return (
-    <SidebarProvider>
-      <PassengerBookingContent />
-    </SidebarProvider>
-  );
+  return <PassengerBookingContent />;
 }

@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { Link } from "lucide-react";
-import { Header } from "../../../components/Header";
-import Footer from "../../../components/Footer";
-import svgPaths from "../../imports/svg-vsq6m84fvq";
+import Link from "next/link";
+import { Header } from "@/components/Header";
+import Footer from "@/components/Footer";
+import svgPaths from "../imports/svg-vsq6m84fvq";
 
 export default function Signup() {
   const [firstName, setFirstName] = useState("");
@@ -42,7 +42,8 @@ export default function Signup() {
   };
 
   return (
-    <div className="bg-white min-h-screen pt-[135px]">
+    <div className="bg-white">
+
       {/* <Header /> */}
 
       {/* Signup Form Section */}
@@ -180,7 +181,7 @@ export default function Signup() {
               {/* Log In Link */}
               <p className="font-['Inter'] font-medium text-[20px] text-black text-center">
                 Already Have An Account?{" "}
-                <Link to="/login" className="text-[#4c6aff] hover:underline">
+                <Link href="/login" className="text-[#4c6aff] hover:underline">
                   Log In
                 </Link>
               </p>
@@ -191,7 +192,7 @@ export default function Signup() {
               <form onSubmit={handleCreateAccount} className="mt-12 space-y-8">
                 {/* OTP Input Boxes */}
                 <div className="flex justify-center gap-2">
-                  {otp.map((digit, index) => (
+                  {otp.map((digit: string, index: number) => (
                     <input
                       key={index}
                       id={`otp-${index}`}

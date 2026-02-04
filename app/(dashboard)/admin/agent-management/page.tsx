@@ -5,8 +5,8 @@ import { Plus, Grid3x3, RefreshCw, Trash2, Eye, EyeOff, Search, ChevronDown } fr
 import imgLogo from "@/app/assets/0630bc807bbd9122cb449e66c33d18d13536d121.png";
 import imgHero from "@/app/assets/c84df36e65722170900b0920e2cc3eb7cf14fbd0.png";
 
-// Import the pieces from sidebar
-import { SidebarProvider, Sidebar, HamburgerButton } from '@/components/sidebar';
+// Sidebar is now handled by (dashboard)/layout.tsx
+
 
 const agents = [
   { id: 1, name: 'Henry Rogers', email: 'hendryrogers@demo.com', role: 'Freight Supervisor' },
@@ -33,14 +33,11 @@ function AgentManagementContent() {
   });
 
   return (
-    <div className="min-h-screen bg-white flex flex-col pt-[80px]">
-      {/* Sidebar Component */}
-      <Sidebar logoSrc={imgLogo.src} />
+    <div className="bg-white">
 
-      {/* Header with Hamburger */}
-      <div className="px-8 py-4">
-        <HamburgerButton iconSize={48} />
-      </div>
+      {/* Sidebar and Hamburger are now handled by (dashboard)/layout.tsx */}
+
+
 
       {/* Hero Illustration */}
       <div className="flex justify-center mb-12 px-8">
@@ -273,9 +270,5 @@ function AgentManagementContent() {
 
 // Wrap with SidebarProvider
 export default function AdminAgentManagement() {
-  return (
-    <SidebarProvider>
-      <AgentManagementContent />
-    </SidebarProvider>
-  );
+  return <AgentManagementContent />;
 }
