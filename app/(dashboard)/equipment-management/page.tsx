@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import image from "@/app/assets/e6c79afe715811b9fb95363def64518d57e9451c.png"
 
 // Icons
 // HamburgerIcon is now handled by (dashboard)/layout.tsx
@@ -242,7 +243,7 @@ export default function EquipmentManagementList() {
         {/* Header image */}
         <div className="flex justify-center pt-2 pb-4">
           <img
-            src="/warehouse-logistics.png"
+            src={image.src}
             alt="Warehouse Logistics"
             className="h-48 md:h-56 object-contain"
           />

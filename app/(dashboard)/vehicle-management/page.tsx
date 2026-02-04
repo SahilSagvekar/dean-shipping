@@ -1,4 +1,5 @@
 import Image from "next/image";
+import image2 from "@/app/assets/cc1821c6ea8a81adb203fcf9b1bb2ee371bbcbed.png"
 
 // Vehicle icon component
 function VehicleIcon({ variant = "default" }: { variant?: "default" | "plus" | "list" }) {
@@ -127,7 +128,7 @@ export default function AgentVehicleDetails() {
       <header className="flex items-start justify-between p-4">
         <div className="flex-1 flex justify-center">
           <img
-            src="/vehicle-header-image.png"
+            src={image2.src}
             alt="Vehicle"
             className="h-40 object-contain"
           />
