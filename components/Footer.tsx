@@ -1,11 +1,11 @@
-import svgPaths from '@/app/imports/svg-1kz55w3e74';
+﻿import svgPaths from '@/app/imports/svg-1kz55w3e74';
 import imgRectangle4 from "@/app/assets/3ffc24d8b6b2a7f5ec77f9c65134af63bb12a59d.png";
 import imgEllipse10 from "@/app/assets/bf9cd628ad5f00dd322c5f93f026d17b58691ba9.png";
 import imgEllipse11 from "@/app/assets/346182195ff46a2a07dc2451f19eb7228d7596a1.png";
 import imgRectangle44 from "@/app/assets/0630bc807bbd9122cb449e66c33d18d13536d121.png";
 import imgRectangle56 from "@/app/assets/c65da6ab6f4bda8a2bd7648a2be4287c1ac755df.png";
 import imgRectangle1 from "@/app/assets/ffb62b7af25544291ca34f641dc70191ad198db6.png";
-import SchedulePage from '@/app/components/SchedulePage';
+import SchedulePage from '@/components/SchedulePage';
 
 export default function Footer() {
   return (
@@ -129,7 +129,7 @@ export default function Footer() {
         
         {/* Copyright */}
         <div className="border-t border-white/30 pt-8 text-center">
-          <p className="text-xl font-medium">Dean's Shipping Ltd. © 2025. All rights reserved</p>
+          <p className="text-xl font-medium">Dean's Shipping Ltd. Â© 2025. All rights reserved</p>
         </div>
       </div>
     </footer>

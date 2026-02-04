@@ -1,10 +1,10 @@
-import svgPaths from "../../app/imports/svg-1kz55w3e74";
-import imgRectangle4 from "../assets/3ffc24d8b6b2a7f5ec77f9c65134af63bb12a59d.png";
-import imgEllipse10 from "../assets/bf9cd628ad5f00dd322c5f93f026d17b58691ba9.png";
-import imgEllipse11 from "../assets/346182195ff46a2a07dc2451f19eb7228d7596a1.png";
-import imgRectangle44 from "../assets/0630bc807bbd9122cb449e66c33d18d13536d121.png";
-import imgRectangle56 from "../assets/c65da6ab6f4bda8a2bd7648a2be4287c1ac755df.png";
-import imgRectangle1 from "../assets/ffb62b7af25544291ca34f641dc70191ad198db6.png";
+﻿import svgPaths from "@/app/imports/svg-1kz55w3e74";
+import imgRectangle4 from "@/app/assets/3ffc24d8b6b2a7f5ec77f9c65134af63bb12a59d.png";
+import imgEllipse10 from "@/app/assets/bf9cd628ad5f00dd322c5f93f026d17b58691ba9.png";
+import imgEllipse11 from "@/app/assets/346182195ff46a2a07dc2451f19eb7228d7596a1.png";
+import imgRectangle44 from "@/app/assets/0630bc807bbd9122cb449e66c33d18d13536d121.png";
+import imgRectangle56 from "@/app/assets/c65da6ab6f4bda8a2bd7648a2be4287c1ac755df.png";
+import imgRectangle1 from "@/app/assets/ffb62b7af25544291ca34f641dc70191ad198db6.png";
 
 function MdiAllTerrainVehicle() {
   return <div className="absolute left-[792px] size-[40px] top-[694px]" data-name="mdi:all-terrain-vehicle" />;
@@ -124,7 +124,7 @@ function Group1() {
     <div className="absolute contents left-[-1px] top-[4659px]">
       <div className="absolute bg-[#5f8a71] h-[446px] left-[-1px] top-[4659px] w-[1440px]" />
       <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[calc(50%-232px)] not-italic text-[20px] text-white top-[5068px] whitespace-nowrap">
-        <p className="leading-[normal]">{`Dean’s Shipping Ltd. © 2025. All rights reserved `}</p>
+        <p className="leading-[normal]">{`Deanâ€™s Shipping Ltd.Â Â© 2025. All rights reserved `}</p>
       </div>
       <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Semi_Bold',sans-serif] font-semibold justify-center leading-[0] left-[calc(50%+465px)] not-italic text-[24px] text-white top-[4780.5px] whitespace-nowrap">
         <p className="leading-[normal]">Contact Us</p>
@@ -190,7 +190,7 @@ function Group1() {
         </p>
         <p className="leading-[normal] mb-0 text-[20px]">&nbsp;</p>
         <p className="mb-0">
-          <span className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[normal] not-italic text-[22px]">Potter’s Cay</span>
+          <span className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[normal] not-italic text-[22px]">Potterâ€™s Cay</span>
           <span className="leading-[normal] text-[20px]">
             <br aria-hidden="true" />
           </span>
@@ -648,7 +648,7 @@ export default function AboutUs() {
         <p className="leading-[normal]">About Us</p>
       </div>
       <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Bold',sans-serif] font-bold justify-center leading-[0] left-[calc(50%-397px)] not-italic text-[80px] text-shadow-[4px_4px_4px_rgba(0,0,0,0.5)] text-white top-[304.5px] whitespace-nowrap">
-        <p className="leading-[normal]">Dean’s Shipping Ltd.</p>
+        <p className="leading-[normal]">Deanâ€™s Shipping Ltd.</p>
       </div>
       <MdiAllTerrainVehicle />
       <MdiCarSportsUtilityVehicle />
@@ -663,7 +663,7 @@ export default function AboutUs() {
         <p className="leading-[normal]">{`Ernest Dean Jr.  | Owner`}</p>
       </div>
       <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Regular',sans-serif] font-normal justify-center leading-[0] left-[543px] not-italic text-[28px] text-black top-[2371px] w-[715px]">
-        <p className="leading-[normal] whitespace-pre-wrap">Ernest Dean Jr. was born on February 27, 1962 as the last child to Captain Ernest and Mrs. Eula Dean. Birthed into a family of seafarers, it was only natural that he too would be drawn to the call of the sea. His introduction to life on the boat came at the age of 8…</p>
+        <p className="leading-[normal] whitespace-pre-wrap">Ernest Dean Jr. was born on February 27, 1962 as the last child to Captain Ernest and Mrs. Eula Dean. Birthed into a family of seafarers, it was only natural that he too would be drawn to the call of the sea. His introduction to life on the boat came at the age of 8â€¦</p>
       </div>
       <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[550px] not-italic text-[28px] text-black top-[2504px] whitespace-nowrap">
         <p className="leading-[normal]">Learn More....</p>
@@ -675,7 +675,7 @@ export default function AboutUs() {
         <p className="leading-[normal]">Ernest Dean | Founder</p>
       </div>
       <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Regular',sans-serif] font-normal justify-center leading-[0] left-[543px] not-italic text-[28px] text-black top-[2776px] w-[715px]">
-        <p className="leading-[normal] whitespace-pre-wrap">The late, Captain Ernest Alexander Dean was born on May 23, 1915, in the quaint settlement of Sandy Point, Abaco, Bahamas. As the eldest son of a fishing smack captain, Ernest’s introduction to the sea came very early on in life. At the tender age of 9, he went to liv...</p>
+        <p className="leading-[normal] whitespace-pre-wrap">The late, Captain Ernest Alexander Dean was born on May 23, 1915, in the quaint settlement of Sandy Point, Abaco, Bahamas. As the eldest son of a fishing smack captain, Ernestâ€™s introduction to the sea came very early on in life. At the tender age of 9, he went to liv...</p>
       </div>
       <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[550px] not-italic text-[28px] text-black top-[2909px] whitespace-nowrap">
         <p className="leading-[normal]">Learn More....</p>
@@ -685,7 +685,7 @@ export default function AboutUs() {
         <p className="mb-0 text-[40px]">&nbsp;</p>
         <p className="mb-0 text-[28px]">{`Dean's Shipping Company is owned and operated by Ernest Dean Jr. and their Family. The Dean name is synonymous with shipping throughout The Bahamas, with more than 70 years of experience in freight hauling. The M/V Champion III, is locally owned and operated, and licensed for aggregate services and for inter-island transport within The Bahamas.`}</p>
         <p className="mb-0 text-[28px]">&nbsp;</p>
-        <p className="text-[28px]">Dean’s Shipping Co. Ltd. has been overseeing the mailboat services for Marsh Harbour, North Abaco, and the surrounding keys for the last 18 years using our famous vessel - The Legacy. In addition to aggregate services, we offer affordable charter services to Florida and the Northern Caribbean.</p>
+        <p className="text-[28px]">Deanâ€™s Shipping Co. Ltd. has been overseeing the mailboat services for Marsh Harbour, North Abaco, and the surrounding keys for the last 18 years using our famous vessel - The Legacy. In addition to aggregate services, we offer affordable charter services to Florida and the Northern Caribbean.</p>
       </div>
       <Group1 />
       <div className="absolute h-[86px] left-[33px] top-[4816px] w-[298px]">
@@ -697,7 +697,7 @@ export default function AboutUs() {
         <p className="leading-[normal] whitespace-pre-wrap">{`At Dean's Shipping, we offer reliable boat and barge rental services designed to transport large-scale shipments across the islands and the Caribbean. Whether you're moving private shipments, large aggregates, cargo, or vehicle shipments, our fleet is equipped to handle it all.`}</p>
       </div>
       <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Light',sans-serif] font-light justify-center leading-[0] left-[calc(50%-543px)] not-italic text-[#296341] text-[28px] top-[3329px] w-[1088px]">
-        <p className="leading-[normal] whitespace-pre-wrap">{`We make tracking your parcels effortless. Our advanced real-time tracking system ensures you always know where your shipment is—from pickup to delivery. Whether it's local or global, small or oversized, our secure logistics network guarantees speed, reliability, and transparency. With 24/7 tracking updates, automated alerts, and dedicated customer support, we put you in control. Trust Shipping Cargo for seamless logistics, on-time deliveries, and peace of mind. Your cargo, our commitment—tracked, traced, and delivered.`}</p>
+        <p className="leading-[normal] whitespace-pre-wrap">{`We make tracking your parcels effortless. Our advanced real-time tracking system ensures you always know where your shipment isâ€”from pickup to delivery. Whether it's local or global, small or oversized, our secure logistics network guarantees speed, reliability, and transparency. With 24/7 tracking updates, automated alerts, and dedicated customer support, we put you in control. TrustÂ Shipping CargoÂ for seamless logistics, on-time deliveries, and peace of mind.Â Your cargo, our commitmentâ€”tracked, traced, and delivered.`}</p>
       </div>
       <div className="absolute h-[573px] left-[789px] top-[3655px] w-[443px]">
         <img alt="" className="absolute inset-0 max-w-none object-cover pointer-events-none size-full" src={imgRectangle56.src} />
@@ -753,3 +753,4 @@ export default function AboutUs() {
     </div>
   );
 }
+

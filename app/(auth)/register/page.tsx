@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Link } from "lucide-react";
+import Link from "next/link";
 import { Header } from "../../../components/Header";
 import Footer from "../../../components/Footer";
 import svgPaths from "@/app/imports/svg-vsq6m84fvq";
@@ -180,7 +180,7 @@ export default function Signup() {
               {/* Log In Link */}
               <p className="font-['Inter'] font-medium text-[20px] text-black text-center">
                 Already Have An Account?{" "}
-                <Link to="/login" className="text-[#4c6aff] hover:underline">
+                <Link href="/login" className="text-[#4c6aff] hover:underline">
                   Log In
                 </Link>
               </p>

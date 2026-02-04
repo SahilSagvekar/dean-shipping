@@ -65,17 +65,7 @@ function AkarIconsCircle2() {
   );
 }
 
-function StashBurgerClassicDuotone() {
-  return (
-    <div className="absolute left-[85px] size-[95px] top-[40px]" data-name="stash:burger-classic-duotone">
-      <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 95 95">
-        <g id="stash:burger-classic-duotone">
-          <path d={svgPaths.pdb84a00} fill="var(--fill-0, #296341)" id="Vector" />
-        </g>
-      </svg>
-    </div>
-  );
-}
+
 
 export default function AgentNotificationReminder() {
   return (
@@ -603,7 +593,7 @@ export default function AgentNotificationReminder() {
       <div className="absolute left-[440px] size-[572px] top-[-61px]" data-name="Untitled (7) 1">
         <img alt="" className="absolute inset-0 max-w-none object-cover pointer-events-none size-full" src={imgUntitled71.src} />
       </div>
-      <StashBurgerClassicDuotone />
+
     </div>
   );
 }

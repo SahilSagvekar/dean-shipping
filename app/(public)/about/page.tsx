@@ -9,7 +9,7 @@ import imgRectangle44 from "../../assets/0630bc807bbd9122cb449e66c33d18d13536d12
 import imgRectangle56 from "../../assets/c65da6ab6f4bda8a2bd7648a2be4287c1ac755df.png";
 // import imgRectangle1 from "../assets/ffb62b7af25544291ca34f641dc70191ad198db6.png";
 import imgRectangle1 from "../../assets/ffb62b7af25544291ca34f641dc70191ad198db6.png";
-// import SchedulePage from './components/SchedulePage';
+import SchedulePage from '@/components/SchedulePage';
 
 // Header Component
 function Header({ currentPage, onNavigate }: { currentPage: string; onNavigate: (page: string) => void }) {
@@ -20,7 +20,7 @@ function Header({ currentPage, onNavigate }: { currentPage: string; onNavigate: 
         <div className="w-[339px] h-24 cursor-pointer" onClick={() => onNavigate('home')}>
           <img alt="Dean's Shipping Ltd." className="w-full h-full object-cover" src={imgRectangle1.src} />
         </div>
-        
+
         {/* Navigation */}
         <nav className="flex items-center gap-12">
           <div className="relative">
@@ -63,7 +63,7 @@ function Hero() {
     <section className="relative mt-[135px] h-[842px] overflow-hidden">
       <img alt="" className="absolute inset-0 w-full h-full object-cover" src={imgRectangle4.src} />
       <div className="absolute inset-0 bg-black/20" />
-      
+
       <div className="relative max-w-[1440px] mx-auto px-8 h-full flex flex-col items-center justify-center text-white">
         <h1 className="text-[70px] font-bold mb-4" style={{ textShadow: '4px 4px 4px rgba(0,0,0,0.5)' }}>
           Welcome to
@@ -71,7 +71,7 @@ function Hero() {
         <h2 className="text-[80px] font-bold mb-16" style={{ textShadow: '4px 4px 4px rgba(0,0,0,0.5)' }}>
           Dean's Shipping Ltd.
         </h2>
-        
+
         {/* Service Icons */}
         <div className="flex items-center gap-16">
           {/* Vehicle Deck */}
@@ -87,10 +87,10 @@ function Hero() {
               <div className="h-[2px] w-20 bg-white rounded-full" />
             </div>
           </div>
-          
+
           {/* Divider */}
           <div className="h-[118px] w-[2px] bg-white" />
-          
+
           {/* Cargo Deck */}
           <div className="flex flex-col items-center gap-4">
             <div className="flex items-center gap-6">
@@ -105,10 +105,10 @@ function Hero() {
               <div className="h-[2px] w-[120px] bg-white rounded-full" />
             </div>
           </div>
-          
+
           {/* Divider */}
           <div className="h-[118px] w-[2px] bg-white" />
-          
+
           {/* Passengers */}
           <div className="flex flex-col items-center gap-4">
             <div className="flex items-center gap-2">
@@ -294,11 +294,11 @@ function AboutSection() {
       <div className="max-w-[1440px] mx-auto">
         <div className="max-w-[1077px] mx-auto">
           <h2 className="text-[40px] font-semibold text-[#296341] mb-12">About Us</h2>
-          
+
           <p className="text-[28px] font-light text-black leading-relaxed mb-8">
             We are a Bahamas-based company that specializes in mailboat services to North Abaco Bahamas. We also provide international aggregate charting services across the globe. With our fleet of two large shipping vessels, we are equipped to meet the transportation needs of businesses and individuals across different industries.
           </p>
-          
+
           <p className="text-[28px] font-light text-black leading-relaxed">
             At Dean's Shipping Ltd., we are committed to providing exceptional services that meet the unique needs of our clients. We pride ourselves on our dedication to customer satisfaction, and our experienced team is always available to answer any questions you may have. Whether you need mailboat shipping services or international aggregate charting, Dean's Shipping Ltd. is your go-to partner for reliable and efficient transportation solutions.
           </p>
@@ -315,11 +315,11 @@ function OperationsSection() {
       <div className="max-w-[1440px] mx-auto">
         <div className="max-w-[1103px] mx-auto">
           <h2 className="text-[40px] font-semibold text-[#296341] mb-12">OUR OPERATIONS</h2>
-          
+
           <p className="text-[28px] text-black leading-relaxed mb-8">
             Dean's Shipping Company is owned and operated by Ernest Dean Jr. and their Family. The Dean name is synonymous with shipping throughout The Bahamas, with more than 70 years of experience in freight hauling. The M/V Champion III, is locally owned and operated, and licensed for aggregate services and for inter-island transport within The Bahamas.
           </p>
-          
+
           <p className="text-[28px] text-black leading-relaxed">
             Dean's Shipping Co. Ltd. has been overseeing the mailboat services for Marsh Harbour, North Abaco, and the surrounding keys for the last 18 years using our famous vessel - The Legacy. In addition to aggregate services, we offer affordable charter services to Florida and the Northern Caribbean.
           </p>
@@ -350,7 +350,7 @@ function TeamSection() {
               </button>
             </div>
           </div>
-          
+
           {/* Ernest Dean */}
           <div className="flex gap-16 items-start">
             <div className="flex-shrink-0 w-[300px] h-[300px] rounded-full overflow-hidden">
@@ -381,7 +381,7 @@ function TrackingSection() {
           <p className="text-[28px] font-light text-[#296341] leading-relaxed">
             At Dean's Shipping, we offer reliable boat and barge rental services designed to transport large-scale shipments across the islands and the Caribbean. Whether you're moving private shipments, large aggregates, cargo, or vehicle shipments, our fleet is equipped to handle it all.
           </p>
-          
+
           <p className="text-[28px] font-light text-[#296341] leading-relaxed">
             We make tracking your parcels effortless. Our advanced real-time tracking system ensures you always know where your shipment is—from pickup to delivery. Whether it's local or global, small or oversized, our secure logistics network guarantees speed, reliability, and transparency. With 24/7 tracking updates, automated alerts, and dedicated customer support, we put you in control. Trust Shipping Cargo for seamless logistics, on-time deliveries, and peace of mind. Your cargo, our commitment—tracked, traced, and delivered.
           </p>
@@ -400,21 +400,21 @@ function ServicesSection() {
           {/* Services List */}
           <div className="space-y-8">
             <h2 className="text-[40px] font-semibold text-[#296341] mb-12">Our Services Include</h2>
-            
+
             <div>
               <h3 className="text-[28px] font-semibold text-[#296341] mb-2">Private Shipments:</h3>
               <p className="text-[28px] text-[#296341] leading-relaxed">
                 Safe and secure transportation of your private goods between islands and throughout the Caribbean.
               </p>
             </div>
-            
+
             <div>
               <h3 className="text-[28px] font-semibold text-[#296341] mb-2">Large Aggregate Shipping:</h3>
               <p className="text-[28px] text-[#296341] leading-relaxed">
                 We specialize in handling large cargo like construction materials, machinery, and more, ensuring safe delivery to your destination.
               </p>
             </div>
-            
+
             <div>
               <h3 className="text-[28px] font-semibold text-[#296341] mb-2">Vehicle Shipments:</h3>
               <p className="text-[28px] text-[#296341] leading-relaxed">
@@ -422,7 +422,7 @@ function ServicesSection() {
               </p>
             </div>
           </div>
-          
+
           {/* Image */}
           <div className="relative">
             <div className="bg-[#5f8a71] absolute inset-[-24px] rounded-lg" />
@@ -443,12 +443,12 @@ function Footer() {
         <div className="mb-12">
           <img alt="Dean's Shipping Ltd." className="h-[86px] w-[298px] object-cover" src={imgRectangle44.src} />
         </div>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-12 mb-12">
           {/* Head Office */}
           <div>
             <h3 className="text-2xl font-semibold mb-6">Head office</h3>
-            
+
             <div className="space-y-6 text-xl">
               <div>
                 <p className="text-[22px] font-semibold mb-2">Nassau, The Bahamas</p>
@@ -456,12 +456,12 @@ function Footer() {
                 <p className="font-normal">P.O. Box EE-17318</p>
                 <p className="font-normal mt-2">CALL: 1.242.394.0245/6</p>
               </div>
-              
+
               <div>
                 <p className="text-[22px] font-semibold mb-2">Potter's Cay</p>
                 <p className="font-normal">CALL: 1.242.601.5121</p>
               </div>
-              
+
               <div>
                 <p className="text-[22px] font-semibold mb-2">Abaco, The Bahamas</p>
                 <p className="font-normal">Queen's Highway (at Port)</p>
@@ -469,7 +469,7 @@ function Footer() {
               </div>
             </div>
           </div>
-          
+
           {/* Quick Links */}
           <div>
             <h3 className="text-2xl font-semibold mb-6">Quick Links</h3>
@@ -481,11 +481,11 @@ function Footer() {
               <li><a href="#privacy" className="hover:underline">Privacy Policy</a></li>
             </ul>
           </div>
-          
+
           {/* Contact Us */}
           <div>
             <h3 className="text-2xl font-semibold mb-6">Contact Us</h3>
-            
+
             <div className="space-y-4">
               <div className="flex items-center gap-3">
                 <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24">
@@ -495,7 +495,7 @@ function Footer() {
                   contact@contact.com
                 </a>
               </div>
-              
+
               <div className="flex items-center gap-3">
                 <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24">
                   <path d={svgPaths.pe263670} fill="white" />
@@ -504,7 +504,7 @@ function Footer() {
                 <span className="text-xl font-light">+1 98765 43210</span>
               </div>
             </div>
-            
+
             <div className="mt-8">
               <p className="text-2xl font-medium mb-4">Follow us on</p>
               <div className="flex items-center gap-4">
@@ -528,14 +528,14 @@ function Footer() {
                     </defs>
                   </svg>
                 </a>
-                
+
                 <a href="#facebook" className="hover:opacity-80 transition-opacity" aria-label="Facebook">
                   <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24">
                     <path d={svgPaths.p1fdd2200} fill="#1877F2" />
                     <path d={svgPaths.p23faaa00} fill="white" />
                   </svg>
                 </a>
-                
+
                 <a href="#linkedin" className="hover:opacity-80 transition-opacity" aria-label="LinkedIn">
                   <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24">
                     <path d={svgPaths.p24edac00} fill="white" />
@@ -543,7 +543,7 @@ function Footer() {
                     <path d={svgPaths.pf9a8e00} fill="white" />
                   </svg>
                 </a>
-                
+
                 <a href="#twitter" className="hover:opacity-80 transition-opacity" aria-label="Twitter">
                   <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24">
                     <rect fill="white" height="16" width="18" x="3" y="4" />
@@ -554,7 +554,7 @@ function Footer() {
             </div>
           </div>
         </div>
-        
+
         {/* Copyright */}
         <div className="border-t border-white/30 pt-8 text-center">
           <p className="text-xl font-medium">Dean's Shipping Ltd. © 2025. All rights reserved</p>
