@@ -1,418 +1,308 @@
-import svgPaths from "../../imports/svg-n2i4kfzai6";
-import imgUntitled51 from "@/app/assets/cc1821c6ea8a81adb203fcf9b1bb2ee371bbcbed.png";
-import imgRectangle228 from "@/app/assets/0630bc807bbd9122cb449e66c33d18d13536d121.png";
+import Image from "next/image";
 
-function StreamlineAiVehicleSpark() {
+// Vehicle icon component
+function VehicleIcon({ variant = "default" }: { variant?: "default" | "plus" | "list" }) {
   return (
-    <div className="absolute left-[115px] size-[60px] top-[1643px]" data-name="streamline:ai-vehicle-spark-1">
-      <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 60 60">
-        <g id="streamline:ai-vehicle-spark-1">
-          <g id="Group">
-            <path d={svgPaths.p24b025c0} id="Vector" stroke="var(--stroke-0, black)" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.85714" />
-            <path d={svgPaths.p2faa7900} id="Vector_2" stroke="var(--stroke-0, black)" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.85714" />
-          </g>
-          <path d={svgPaths.p11a09d00} id="Rectangle 283" stroke="var(--stroke-0, black)" strokeWidth="2" />
-          <path d={svgPaths.pfe48300} id="Vector_3" stroke="var(--stroke-0, black)" strokeWidth="1.6" />
-        </g>
-      </svg>
-    </div>
+    <svg width="24" height="24" viewBox="0 0 60 60" fill="none" className="w-6 h-6">
+      <path
+        d="M5 45V25C5 23 6 21 8 20L15 15H45L52 20C54 21 55 23 55 25V45"
+        stroke="currentColor"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M10 45V50H20V45M40 45V50H50V45"
+        stroke="currentColor"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <rect x="8" y="30" width="12" height="8" rx="2" stroke="currentColor" strokeWidth="2" />
+      {variant === "plus" && (
+        <>
+          <line x1="46" y1="8" x2="46" y2="24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+          <line x1="38" y1="16" x2="54" y2="16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+        </>
+      )}
+      {variant === "list" && (
+        <path d="M38 12L50 12M38 18L50 18M38 24L46 24" stroke="currentColor" strokeWidth="1.6" />
+      )}
+    </svg>
   );
 }
 
-function Group() {
+// Hamburger menu icon
+function HamburgerIcon() {
   return (
-    <div className="-translate-x-1/2 absolute contents left-[calc(50%-8px)] top-[2409px]">
-      <div className="-translate-x-1/2 absolute bg-[#e4ebf4] border border-[#132540] border-solid h-[57px] left-[calc(50%-163px)] rounded-[10px] top-[2409px] w-[238px]" />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[calc(50%-221px)] not-italic text-[30px] text-black top-[2438px] w-[179px]">
-        <p className="leading-[normal] whitespace-pre-wrap">Cancel</p>
+    <svg width="40" height="40" viewBox="0 0 95 95" fill="none">
+      <path
+        d="M20 30H75M20 47.5H75M20 65H75"
+        stroke="#296341"
+        strokeWidth="6"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+// Arrow icon for accordion
+function ChevronIcon({ direction = "down" }: { direction?: "up" | "down" }) {
+  return (
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      className={`w-6 h-6 transition-transform ${direction === "up" ? "rotate-180" : ""}`}
+    >
+      <path
+        d="M6 9L12 15L18 9"
+        stroke="#296341"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+// Delete icon
+function DeleteIcon() {
+  return (
+    <svg width="28" height="28" viewBox="0 0 66 66" fill="none">
+      <path
+        d="M16.5 55C16.5 57.75 18.7 60 21.5 60H44.5C47.3 60 49.5 57.75 49.5 55V20H16.5V55ZM52 12.5H43.25L40.75 10H25.25L22.75 12.5H14V17.5H52V12.5Z"
+        fill="#132540"
+      />
+    </svg>
+  );
+}
+
+// Input field component
+function InputField({
+  label,
+  value,
+  readonly = true,
+}: {
+  label: string;
+  value: string;
+  readonly?: boolean;
+}) {
+  return (
+    <div className="flex flex-col gap-1">
+      <label className="text-sm font-medium text-black">{label}</label>
+      <div className="bg-white border border-[#296341] rounded-[5px] px-3 py-2.5 text-sm text-black">
+        {value}
       </div>
-      <div className="-translate-x-1/2 absolute bg-[#132540] border border-[#296341] border-solid h-[57px] left-[calc(50%+147px)] rounded-[10px] top-[2409px] w-[238px]" />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[calc(50%+102px)] not-italic text-[30px] text-white top-[2438px] w-[103px]">
-        <p className="leading-[normal] whitespace-pre-wrap">Save</p>
+    </div>
+  );
+}
+
+// Waitlist card (collapsed view)
+function WaitlistCard({
+  name,
+  invoiceNo,
+  vehicleCount,
+  expanded = false,
+}: {
+  name: string;
+  invoiceNo: string;
+  vehicleCount: number;
+  expanded?: boolean;
+}) {
+  return (
+    <div className="bg-[#e5f7f1] rounded-[10px] p-4">
+      <div className="flex items-center justify-between">
+        <div className="grid grid-cols-3 gap-4 flex-1">
+          <InputField label="Name" value={name} />
+          <InputField label="Invoice No." value={invoiceNo} />
+          <div className="flex flex-col gap-1">
+            <label className="text-sm font-medium text-black">#Vehicle</label>
+            <div className="text-xl font-medium text-black pt-2">{vehicleCount}</div>
+          </div>
+        </div>
+        <button className="ml-4 p-2">
+          <ChevronIcon direction={expanded ? "up" : "down"} />
+        </button>
       </div>
-    </div>
-  );
-}
-
-function MaterialSymbolsDeleteOutlineRounded() {
-  return (
-    <div className="absolute left-[157px] size-[66px] top-[2405px]" data-name="material-symbols:delete-outline-rounded">
-      <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 66 66">
-        <g id="material-symbols:delete-outline-rounded">
-          <path d={svgPaths.p1de35480} fill="var(--fill-0, #132540)" id="Vector" />
-        </g>
-      </svg>
-    </div>
-  );
-}
-
-function WeuiArrowOutlined() {
-  return (
-    <div className="h-[125px] relative w-[63px]" data-name="weui:arrow-outlined">
-      <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 63 125">
-        <g id="weui:arrow-outlined">
-          <path d={svgPaths.p3cfe2700} fill="var(--fill-0, #296341)" id="Vector" />
-        </g>
-      </svg>
-    </div>
-  );
-}
-
-function WeuiArrowOutlined1() {
-  return (
-    <div className="h-[125px] relative w-[63px]" data-name="weui:arrow-outlined">
-      <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 63 125">
-        <g id="weui:arrow-outlined">
-          <path d={svgPaths.p3cfe2700} fill="var(--fill-0, #296341)" id="Vector" />
-        </g>
-      </svg>
-    </div>
-  );
-}
-
-function WeuiArrowOutlined2() {
-  return (
-    <div className="h-[125px] relative w-[63px]" data-name="weui:arrow-outlined">
-      <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 63 125">
-        <g id="weui:arrow-outlined">
-          <path d={svgPaths.p3cfe2700} fill="var(--fill-0, #296341)" id="Vector" />
-        </g>
-      </svg>
-    </div>
-  );
-}
-
-function StreamlineAiVehicleSpark1() {
-  return (
-    <div className="absolute left-[158px] size-[60px] top-[505px]" data-name="streamline:ai-vehicle-spark-1">
-      <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 60 60">
-        <g id="streamline:ai-vehicle-spark-1">
-          <g id="Group">
-            <path d={svgPaths.p24b025c0} id="Vector" stroke="var(--stroke-0, white)" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.85714" />
-            <path d={svgPaths.p2faa7900} id="Vector_2" stroke="var(--stroke-0, white)" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.85714" />
-          </g>
-          <path d={svgPaths.p11a09d00} id="Rectangle 283" stroke="var(--stroke-0, white)" strokeWidth="2" />
-          <line id="Line 53" stroke="var(--stroke-0, white)" strokeLinecap="round" strokeWidth="2" x1="46" x2="46" y1="8" y2="24" />
-          <line id="Line 54" stroke="var(--stroke-0, white)" strokeLinecap="round" strokeWidth="2" x1="38" x2="54" y1="16" y2="16" />
-        </g>
-      </svg>
-    </div>
-  );
-}
-
-function StreamlineAiVehicleSpark2() {
-  return (
-    <div className="absolute left-[140px] size-[60px] top-[675px]" data-name="streamline:ai-vehicle-spark-1">
-      <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 60 60">
-        <g id="streamline:ai-vehicle-spark-1">
-          <g id="Group">
-            <path d={svgPaths.p24b025c0} id="Vector" stroke="var(--stroke-0, #132540)" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.85714" />
-            <path d={svgPaths.p2faa7900} id="Vector_2" stroke="var(--stroke-0, #132540)" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.85714" />
-          </g>
-          <path d={svgPaths.p11a09d00} id="Rectangle 283" stroke="var(--stroke-0, #132540)" strokeWidth="2" />
-          <line id="Line 53" stroke="var(--stroke-0, #132540)" strokeWidth="2" x1="46" x2="46" y1="9" y2="27" />
-          <line id="Line 54" stroke="var(--stroke-0, #132540)" strokeWidth="2" x1="37" x2="55" y1="18" y2="18" />
-        </g>
-      </svg>
-    </div>
-  );
-}
-
-function StreamlineAiVehicleSpark3() {
-  return (
-    <div className="absolute left-[789px] size-[60px] top-[506px]" data-name="streamline:ai-vehicle-spark-1">
-      <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 60 60">
-        <g id="streamline:ai-vehicle-spark-1">
-          <g id="Group">
-            <path d={svgPaths.p24b025c0} id="Vector" stroke="var(--stroke-0, white)" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.85714" />
-            <path d={svgPaths.p2faa7900} id="Vector_2" stroke="var(--stroke-0, white)" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.85714" />
-          </g>
-          <path d={svgPaths.p11a09d00} id="Rectangle 283" stroke="var(--stroke-0, white)" strokeWidth="2" />
-          <path d={svgPaths.pfe48300} id="Vector_3" stroke="var(--stroke-0, white)" strokeWidth="1.6" />
-        </g>
-      </svg>
-    </div>
-  );
-}
-
-function StashBurgerClassicDuotone() {
-  return (
-    <div className="absolute left-[97px] size-[95px] top-[77px]" data-name="stash:burger-classic-duotone">
-      <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 95 95">
-        <g id="stash:burger-classic-duotone">
-          <path d={svgPaths.pdb84a00} fill="var(--fill-0, #296341)" id="Vector" />
-        </g>
-      </svg>
     </div>
   );
 }
 
 export default function AgentVehicleDetails() {
   return (
-    <div className="bg-white relative size-full" data-name="Agent - vehicle details">
-      <div className="absolute h-[526px] left-[406px] top-[-16px] w-[666px]" data-name="Untitled (5) 1">
-        <img alt="" className="absolute inset-0 max-w-none object-cover pointer-events-none size-full" src={imgUntitled51} />
-      </div>
-      <div className="absolute bg-[#e5f7f1] h-[141px] left-[117px] rounded-[10px] top-[2750px] w-[1201px]" />
-      <div className="absolute bg-[#e5f7f1] h-[736px] left-[112px] rounded-[10px] top-[1777px] w-[1200px]" />
-      <div className="absolute bg-white h-[81px] left-[135px] rounded-[5px] top-[2274px] w-[479px]" />
-      <div className="absolute bg-[#e5f7f1] h-[664px] left-[120px] rounded-[10px] top-[798px] w-[1200px]" />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[215px] not-italic text-[40px] text-black top-[714px] whitespace-nowrap">
-        <p className="leading-[normal]">ADD VEHICLE WAITLIST</p>
-      </div>
-      <div className="absolute h-0 left-[125px] top-[754px] w-[460px]">
-        <div className="absolute inset-[-5px_0_0_0]">
-          <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 460 5">
-            <line id="Line 29" stroke="var(--stroke-0, #132540)" strokeLinecap="round" strokeWidth="5" x1="2.5" x2="457.5" y1="2.5" y2="2.5" />
-          </svg>
+    <div className="bg-white min-h-screen">
+      {/* Header */}
+      <header className="flex items-start justify-between p-4">
+        <button className="p-2">
+          <HamburgerIcon />
+        </button>
+        <div className="flex-1 flex justify-center">
+          <img
+            src="/vehicle-header-image.png"
+            alt="Vehicle"
+            className="h-40 object-contain"
+          />
         </div>
+        <div className="w-10" /> {/* Spacer for alignment */}
+      </header>
+
+      {/* Action Buttons */}
+      <div className="px-6 flex gap-4 mb-8">
+        <button className="flex-1 bg-[#296341] text-white rounded-[10px] py-4 flex items-center justify-center gap-2 text-lg font-medium">
+          <VehicleIcon variant="plus" />
+          ADD VEHICLE
+        </button>
+        <button className="flex-1 bg-[#296341] text-white rounded-[10px] py-4 flex items-center justify-center gap-2 text-lg font-medium">
+          <VehicleIcon variant="list" />
+          VEHICLE WAITLIST
+        </button>
       </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[140px] not-italic text-[28px] text-black top-[835px] w-[142px]">
-        <p className="leading-[normal] whitespace-pre-wrap">Name</p>
-      </div>
-      <div className="absolute bg-white border border-[#296341] border-solid h-[50px] left-[140px] rounded-[5px] top-[859px] w-[330px]" />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[140px] not-italic text-[28px] text-black top-[956px] w-[170px]">
-        <p className="leading-[normal] whitespace-pre-wrap">Invoice no.</p>
-      </div>
-      <div className="absolute bg-white border border-[#296341] border-solid h-[50px] left-[140px] rounded-[5px] top-[980px] w-[330px]" />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[980px] not-italic text-[28px] text-black top-[835px] w-[214px]">
-        <p className="leading-[normal] whitespace-pre-wrap">Contact</p>
-      </div>
-      <div className="absolute bg-white border border-[#296341] border-solid h-[50px] left-[970px] rounded-[5px] top-[859px] w-[330px]" />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[986px] not-italic text-[30px] text-black top-[884px] w-[204px]">
-        <p className="leading-[normal] whitespace-pre-wrap">{`+1  1234 5678`}</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[550px] not-italic text-[28px] text-black top-[835px] w-[142px]">
-        <p className="leading-[normal] whitespace-pre-wrap">Email</p>
-      </div>
-      <div className="absolute bg-white border border-[#296341] border-solid h-[50px] left-[550px] rounded-[5px] top-[859px] w-[330px]" />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[202px] not-italic text-[40px] text-black top-[1679px] whitespace-nowrap">
-        <p className="leading-[normal]">VIEW VEHICLE WAITLIST</p>
-      </div>
-      <div className="absolute h-0 left-[112px] top-[1719px] w-[460px]">
-        <div className="absolute inset-[-5px_0_0_0]">
-          <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 460 5">
-            <line id="Line 29" stroke="var(--stroke-0, #132540)" strokeLinecap="round" strokeWidth="5" x1="2.5" x2="457.5" y1="2.5" y2="2.5" />
-          </svg>
+
+      {/* Add Vehicle Waitlist Section */}
+      <section className="px-6 mb-8">
+        <div className="flex items-center gap-2 mb-2">
+          <VehicleIcon variant="plus" />
+          <h2 className="text-xl font-medium text-black">ADD VEHICLE WAITLIST</h2>
         </div>
-      </div>
-      <StreamlineAiVehicleSpark />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[571px] not-italic text-[26px] text-black top-[883.5px] w-[274px]">
-        <p className="leading-[normal] whitespace-pre-wrap">jhondoe@demo.com</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[550px] not-italic text-[28px] text-black top-[956px] w-[142px]">
-        <p className="leading-[normal] whitespace-pre-wrap">Date</p>
-      </div>
-      <div className="absolute bg-white border border-[#296341] border-solid h-[50px] left-[550px] rounded-[5px] top-[980px] w-[330px]" />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[968px] not-italic text-[28px] text-black top-[956px] w-[208px]">
-        <p className="leading-[normal] whitespace-pre-wrap">License plate</p>
-      </div>
-      <div className="absolute bg-white border border-[#296341] border-solid h-[50px] left-[970px] rounded-[5px] top-[980px] w-[330px]" />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[158px] not-italic text-[26px] text-black top-[1004.5px] w-[142px]">
-        <p className="leading-[normal] whitespace-pre-wrap">#56724</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[140px] not-italic text-[28px] text-black top-[1077px] w-[170px]">
-        <p className="leading-[normal] whitespace-pre-wrap">Vehicle</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[142px] not-italic text-[28px] text-black top-[1209px] w-[170px]">
-        <p className="leading-[normal] whitespace-pre-wrap">Details</p>
-      </div>
-      <div className="absolute bg-white border border-[#296341] border-solid h-[50px] left-[140px] rounded-[5px] top-[1101px] w-[330px]" />
-      <div className="absolute bg-white border border-[#296341] border-solid h-[95px] left-[142px] rounded-[5px] top-[1231px] w-[738px]" />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[161px] not-italic text-[26px] text-black top-[1125.5px] w-[248px]">
-        <p className="leading-[normal] whitespace-pre-wrap">Honda Creta</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[972px] not-italic text-[28px] text-black top-[1076px] w-[170px]">
-        <p className="leading-[normal] whitespace-pre-wrap">To</p>
-      </div>
-      <div className="absolute bg-white border border-[#296341] border-solid h-[50px] left-[967px] rounded-[5px] top-[1100px] w-[330px]" />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[988px] not-italic text-[26px] text-black top-[1124.5px] w-[248px]">
-        <p className="leading-[normal] whitespace-pre-wrap">MAH</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[550px] not-italic text-[28px] text-black top-[1076px] w-[170px]">
-        <p className="leading-[normal] whitespace-pre-wrap">From</p>
-      </div>
-      <div className="absolute bg-white border border-[#296341] border-solid h-[50px] left-[550px] rounded-[5px] top-[1100px] w-[330px]" />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[571px] not-italic text-[26px] text-black top-[1124.5px] w-[248px]">
-        <p className="leading-[normal] whitespace-pre-wrap">{`NAS   `}</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[572px] not-italic text-[26px] text-black top-[1004.5px] w-[196px]">
-        <p className="leading-[normal] whitespace-pre-wrap">12 / 12 / 2025</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[158px] not-italic text-[26px] text-black top-[883.5px] w-[142px]">
-        <p className="leading-[normal] whitespace-pre-wrap">Jhon Doe</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[990px] not-italic text-[26px] text-black top-[1004.5px] w-[142px]">
-        <p className="leading-[normal] whitespace-pre-wrap">BD 1234</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[132px] not-italic text-[28px] text-black top-[1819px] w-[142px]">
-        <p className="leading-[normal] whitespace-pre-wrap">Name</p>
-      </div>
-      <div className="absolute bg-white border border-[#296341] border-solid h-[50px] left-[132px] rounded-[5px] top-[1843px] w-[330px]" />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[132px] not-italic text-[28px] text-black top-[1940px] w-[170px]">
-        <p className="leading-[normal] whitespace-pre-wrap">Invoice no.</p>
-      </div>
-      <div className="absolute bg-white border border-[#296341] border-solid h-[50px] left-[132px] rounded-[5px] top-[1964px] w-[330px]" />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[972px] not-italic text-[28px] text-black top-[1819px] w-[214px]">
-        <p className="leading-[normal] whitespace-pre-wrap">Contact</p>
-      </div>
-      <div className="absolute bg-white border border-[#296341] border-solid h-[50px] left-[962px] rounded-[5px] top-[1843px] w-[330px]" />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[978px] not-italic text-[30px] text-black top-[1868px] w-[204px]">
-        <p className="leading-[normal] whitespace-pre-wrap">{`+1  1234 5678`}</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[542px] not-italic text-[28px] text-black top-[1819px] w-[142px]">
-        <p className="leading-[normal] whitespace-pre-wrap">Email</p>
-      </div>
-      <div className="absolute bg-white border border-[#296341] border-solid h-[50px] left-[542px] rounded-[5px] top-[1843px] w-[330px]" />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[563px] not-italic text-[26px] text-black top-[1867.5px] w-[274px]">
-        <p className="leading-[normal] whitespace-pre-wrap">jhondoe@demo.com</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[542px] not-italic text-[28px] text-black top-[1940px] w-[200px]">
-        <p className="leading-[normal] whitespace-pre-wrap">Date Added</p>
-      </div>
-      <div className="absolute bg-white border border-[#296341] border-solid h-[50px] left-[542px] rounded-[5px] top-[1964px] w-[330px]" />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[960px] not-italic text-[28px] text-black top-[1940px] w-[208px]">
-        <p className="leading-[normal] whitespace-pre-wrap">License plate</p>
-      </div>
-      <div className="absolute bg-white border border-[#296341] border-solid h-[50px] left-[962px] rounded-[5px] top-[1964px] w-[330px]" />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[154px] not-italic text-[26px] text-black top-[1988.5px] w-[142px]">
-        <p className="leading-[normal] whitespace-pre-wrap">#56724</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[564px] not-italic text-[26px] text-black top-[1988.5px] w-[196px]">
-        <p className="leading-[normal] whitespace-pre-wrap">12 / 12 / 2025</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[154px] not-italic text-[26px] text-black top-[1867.5px] w-[142px]">
-        <p className="leading-[normal] whitespace-pre-wrap">Jhon Doe</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[982px] not-italic text-[26px] text-black top-[1988.5px] w-[142px]">
-        <p className="leading-[normal] whitespace-pre-wrap">BD 1234</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Semi_Bold',sans-serif] font-semibold justify-center leading-[0] left-[132px] not-italic text-[#296341] text-[30px] top-[2074px] whitespace-nowrap">
-        <p className="leading-[normal]">{`VEHICLE  DETAILS`}</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Semi_Bold',sans-serif] font-semibold justify-center leading-[0] left-[132px] not-italic text-[#296341] text-[26px] top-[2153.5px] whitespace-nowrap">
-        <p className="leading-[normal]">DETAILS</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Regular',sans-serif] font-normal justify-center leading-[0] left-[132px] not-italic text-[26px] text-black top-[2191.5px] whitespace-nowrap">
-        <p className="leading-[normal]">TO BE SHIP NEXT WEEK</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Semi_Bold',sans-serif] font-semibold justify-center leading-[0] left-[135px] not-italic text-[#296341] text-[26px] top-[2252.5px] whitespace-nowrap">
-        <p className="leading-[normal]">STATUS</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Semi_Bold',sans-serif] font-semibold justify-center leading-[0] left-[542px] not-italic text-[#296341] text-[26px] top-[2153.5px] whitespace-nowrap">
-        <p className="leading-[normal]">VEHICLE</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Regular',sans-serif] font-normal justify-center leading-[0] left-[545px] not-italic text-[26px] text-black top-[2191.5px] whitespace-nowrap">
-        <p className="leading-[normal]">HUNDAI CRETA</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Semi_Bold',sans-serif] font-semibold justify-center leading-[0] left-[962px] not-italic text-[#296341] text-[26px] top-[2147.5px] whitespace-nowrap">
-        <p className="leading-[normal]">DESTINATION</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Regular',sans-serif] font-normal justify-center leading-[0] left-[965px] not-italic text-[26px] text-black top-[2185.5px] whitespace-nowrap">
-        <p className="leading-[normal]">MARSH HARBOUR</p>
-      </div>
-      <div className="absolute h-0 left-[135px] top-[2095px] w-[160px]">
-        <div className="absolute inset-[-3px_0_0_0]">
-          <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 160 3">
-            <line id="Line 36" stroke="var(--stroke-0, black)" strokeLinecap="round" strokeWidth="3" x1="1.5" x2="158.5" y1="1.5" y2="1.5" />
-          </svg>
+        <div className="w-48 h-1 bg-[#132540] rounded-full mb-4" />
+
+        <div className="bg-[#e5f7f1] rounded-[10px] p-4 space-y-4">
+          {/* Row 1: Name, Email, Contact */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <InputField label="Name" value="Jhon Doe" />
+            <InputField label="Email" value="jhondoe@demo.com" />
+            <InputField label="Contact" value="+1 1234 5678" />
+          </div>
+
+          {/* Row 2: Invoice no, Date, License plate */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <InputField label="Invoice no." value="#56724" />
+            <InputField label="Date" value="12 / 12 / 2025" />
+            <InputField label="License plate" value="BD 1234" />
+          </div>
+
+          {/* Row 3: Vehicle, From, To */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <InputField label="Vehicle" value="Honda Creta" />
+            <InputField label="From" value="NAS" />
+            <InputField label="To" value="MAH" />
+          </div>
+
+          {/* Details */}
+          <div className="flex flex-col gap-1">
+            <label className="text-sm font-medium text-black">Details</label>
+            <div className="bg-white border border-[#296341] rounded-[5px] px-3 py-2.5 min-h-[80px] text-sm text-black" />
+          </div>
+
+          {/* Save Button */}
+          <div className="flex justify-center pt-2">
+            <button className="bg-[#132540] text-white rounded-[10px] px-12 py-3 text-lg font-medium">
+              Save
+            </button>
+          </div>
         </div>
-      </div>
-      <Group />
-      <MaterialSymbolsDeleteOutlineRounded />
-      <div className="absolute left-[707px] size-[60px] top-[1649px]">
-        <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 60 60">
-          <circle cx="30" cy="30" fill="var(--fill-0, #E4EBF4)" id="Ellipse 15" r="29" stroke="var(--stroke-0, #132540)" strokeWidth="2" />
-        </svg>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Bold',sans-serif] font-bold justify-center leading-[0] left-[726px] not-italic text-[#132540] text-[36px] top-[1677px] whitespace-nowrap">
-        <p className="leading-[normal]">3</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[137px] not-italic text-[28px] text-black top-[2786px] w-[142px]">
-        <p className="leading-[normal] whitespace-pre-wrap">Name</p>
-      </div>
-      <div className="absolute bg-white border border-[#296341] border-solid h-[50px] left-[137px] rounded-[5px] top-[2810px] w-[330px]" />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[905px] not-italic text-[28px] text-black top-[2790px] w-[214px]">
-        <p className="leading-[normal] whitespace-pre-wrap">#Vehicle</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[952px] not-italic text-[34px] text-black top-[2834.5px] w-[204px]">
-        <p className="leading-[normal] whitespace-pre-wrap">1</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[516px] not-italic text-[28px] text-black top-[2786px] whitespace-nowrap">
-        <p className="leading-[normal]">Invoice No.</p>
-      </div>
-      <div className="absolute bg-white border border-[#296341] border-solid h-[50px] left-[516px] rounded-[5px] top-[2810px] w-[330px]" />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[537px] not-italic text-[26px] text-black top-[2834.5px] w-[302px]">
-        <p className="leading-[normal] whitespace-pre-wrap">#23456</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[159px] not-italic text-[26px] text-black top-[2834.5px] w-[244px]">
-        <p className="leading-[normal] whitespace-pre-wrap">Jason Frank</p>
-      </div>
-      <div className="absolute flex h-[63px] items-center justify-center left-[1156px] top-[2787px] w-[125px]" style={{ "--transform-inner-width": "1185", "--transform-inner-height": "22" } as React.CSSProperties}>
-        <div className="flex-none rotate-90">
-          <WeuiArrowOutlined />
+      </section>
+
+      {/* View Vehicle Waitlist Section */}
+      <section className="px-6 mb-8">
+        <div className="flex items-center gap-2 mb-2">
+          <VehicleIcon variant="list" />
+          <h2 className="text-xl font-medium text-black">VIEW VEHICLE WAITLIST</h2>
+          <div className="ml-2 w-10 h-10 rounded-full bg-[#e4ebf4] border-2 border-[#132540] flex items-center justify-center">
+            <span className="text-lg font-bold text-[#132540]">3</span>
+          </div>
         </div>
-      </div>
-      <div className="absolute bg-[#e5f7f1] h-[141px] left-[112px] rounded-[10px] top-[2559px] w-[1201px]" />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[132px] not-italic text-[28px] text-black top-[2595px] w-[142px]">
-        <p className="leading-[normal] whitespace-pre-wrap">Name</p>
-      </div>
-      <div className="absolute bg-white border border-[#296341] border-solid h-[50px] left-[132px] rounded-[5px] top-[2619px] w-[330px]" />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[900px] not-italic text-[28px] text-black top-[2599px] w-[214px]">
-        <p className="leading-[normal] whitespace-pre-wrap">#Vehicle</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[947px] not-italic text-[34px] text-black top-[2643.5px] w-[204px]">
-        <p className="leading-[normal] whitespace-pre-wrap">1</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[511px] not-italic text-[28px] text-black top-[2595px] whitespace-nowrap">
-        <p className="leading-[normal]">Invoice No.</p>
-      </div>
-      <div className="absolute bg-white border border-[#296341] border-solid h-[50px] left-[511px] rounded-[5px] top-[2619px] w-[330px]" />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[532px] not-italic text-[26px] text-black top-[2643.5px] w-[302px]">
-        <p className="leading-[normal] whitespace-pre-wrap">#27891</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[154px] not-italic text-[26px] text-black top-[2643.5px] w-[244px]">
-        <p className="leading-[normal] whitespace-pre-wrap">Jane Forbes</p>
-      </div>
-      <div className="absolute flex h-[63px] items-center justify-center left-[1151px] top-[2596px] w-[125px]" style={{ "--transform-inner-width": "1185", "--transform-inner-height": "22" } as React.CSSProperties}>
-        <div className="flex-none rotate-90">
-          <WeuiArrowOutlined1 />
+        <div className="w-48 h-1 bg-[#132540] rounded-full mb-4" />
+
+        {/* Expanded Waitlist Item */}
+        <div className="bg-[#e5f7f1] rounded-[10px] p-4 mb-4 space-y-4">
+          {/* Row 1: Name, Email, Contact */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <InputField label="Name" value="Jhon Doe" />
+            <InputField label="Email" value="jhondoe@demo.com" />
+            <InputField label="Contact" value="+1 1234 5678" />
+          </div>
+
+          {/* Row 2: Invoice no, Date Added, License plate */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <InputField label="Invoice no." value="#56724" />
+            <InputField label="Date Added" value="12 / 12 / 2025" />
+            <InputField label="License plate" value="BD 1234" />
+          </div>
+
+          {/* Vehicle Details Header */}
+          <div>
+            <h3 className="text-lg font-semibold text-[#296341]">VEHICLE DETAILS</h3>
+            <div className="w-32 h-0.5 bg-black mt-1" />
+          </div>
+
+          {/* Vehicle Details Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <p className="text-sm font-semibold text-[#296341]">DETAILS</p>
+              <p className="text-sm text-black">TO BE SHIP NEXT WEEK</p>
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-[#296341]">VEHICLE</p>
+              <p className="text-sm text-black">HUNDAI CRETA</p>
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-[#296341]">DESTINATION</p>
+              <p className="text-sm text-black">MARSH HARBOUR</p>
+            </div>
+          </div>
+
+          {/* Status */}
+          <div>
+            <p className="text-sm font-semibold text-[#296341] mb-1">STATUS</p>
+            <div className="bg-white rounded-[5px] px-3 py-2.5 w-fit min-w-[200px] text-sm text-black">
+              In a Dock - ABACO
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex items-center justify-between pt-2">
+            <button className="p-2">
+              <DeleteIcon />
+            </button>
+            <div className="flex gap-4">
+              <button className="bg-[#e4ebf4] border border-[#132540] text-black rounded-[10px] px-8 py-3 text-lg font-medium">
+                Cancel
+              </button>
+              <button className="bg-[#132540] border border-[#296341] text-white rounded-[10px] px-8 py-3 text-lg font-medium">
+                Save
+              </button>
+            </div>
+            <button className="p-2">
+              <ChevronIcon direction="up" />
+            </button>
+          </div>
         </div>
-      </div>
-      <div className="absolute flex h-[63px] items-center justify-center left-[1151px] top-[2401px] w-[125px]" style={{ "--transform-inner-width": "1185", "--transform-inner-height": "22" } as React.CSSProperties}>
-        <div className="-rotate-90 flex-none">
-          <WeuiArrowOutlined2 />
+
+        {/* Collapsed Waitlist Items */}
+        <div className="space-y-4">
+          <WaitlistCard name="Jane Forbes" invoiceNo="#27891" vehicleCount={1} />
+          <WaitlistCard name="Jason Frank" invoiceNo="#23456" vehicleCount={1} />
         </div>
-      </div>
-      <div className="-translate-x-1/2 absolute bg-[#132540] border border-[#296341] border-solid h-[57px] left-[calc(50%-31px)] rounded-[10px] top-[1368px] w-[238px]" />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[calc(50%-76px)] not-italic text-[30px] text-white top-[1396px] w-[103px]">
-        <p className="leading-[normal] whitespace-pre-wrap">Save</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Regular',sans-serif] font-normal justify-center leading-[0] left-[146px] not-italic text-[26px] text-black top-[2299.5px] whitespace-nowrap">
-        <p className="leading-[normal]">In a Dock - ABACO</p>
-      </div>
-      <div className="absolute bg-[#296341] h-[100px] left-[125px] rounded-[10px] top-[491px] w-[563px]" />
-      <div className="absolute bg-[#296341] h-[100px] left-[756px] rounded-[10px] top-[491px] w-[563px]" />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[256px] not-italic text-[38px] text-white top-[542px] whitespace-nowrap">
-        <p className="leading-[normal]">{`ADD  VEHICLE `}</p>
-      </div>
-      <StreamlineAiVehicleSpark1 />
-      <StreamlineAiVehicleSpark2 />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[876px] not-italic text-[40px] text-white top-[542px] whitespace-nowrap">
-        <p className="leading-[normal]">VEHICLE WAITLIST</p>
-      </div>
-      <StreamlineAiVehicleSpark3 />
-      <StashBurgerClassicDuotone />
-      <div className="absolute bg-[#296341] h-[174px] left-0 top-[3079px] w-[1440px]" />
-      <div className="-translate-x-1/2 absolute h-[94px] left-[calc(50%-473.5px)] top-[3117px] w-[397px]">
-        <img alt="" className="absolute inset-0 max-w-none object-cover pointer-events-none size-full" src={imgRectangle228} />
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Semi_Bold',sans-serif] font-semibold justify-center leading-[0] left-[797px] not-italic text-[40px] text-white top-[3166px] whitespace-nowrap">
-        <p>
-          <span className="leading-[normal]">{`Freight Agent  |  `}</span>
-          <span className="font-['Inter:Regular',sans-serif] font-normal leading-[normal] not-italic">Smith Frank</span>
-        </p>
-      </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="bg-[#296341] py-6 px-6 flex items-center justify-between mt-8">
+        <div className="flex items-center gap-2">
+          <img
+            src="/deans-shipping-logo.png"
+            alt="Dean's Shipping Ltd."
+            className="h-12 object-contain"
+          />
+        </div>
+        <div className="text-white text-lg">
+          <span className="font-semibold">Freight Agent</span>
+          <span className="mx-2">|</span>
+          <span>Smith Frank</span>
+        </div>
+      </footer>
     </div>
   );
 }
