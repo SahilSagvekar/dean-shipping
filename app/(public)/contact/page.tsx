@@ -1,9 +1,6 @@
 "use client";
 
 import { useState } from "react";
-// import { Header } from "../../components/Header";
-import { Header } from "../../../components/Header";
-import Footer from "../../../components/Footer";
 import svgPaths from "@/app/imports/svg-pjl233zy3t";
 
 export default function Contact() {

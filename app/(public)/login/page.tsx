@@ -1,10 +1,6 @@
 "use client";
 
 import { useState } from "react";
-// import { Link } from "react-router";
-import { Link } from "lucide-react";
-import { Header } from "../../../components/Header";
-import Footer from "../../../components/Footer";
 import svgPaths from "../../imports/svg-qkcs8auxd4";
 
 export default function Login() {
@@ -20,8 +16,6 @@ export default function Login() {
 
   return (
     <div className="bg-white min-h-screen pt-[135px]">
-      {/* <Header /> */}
-
       {/* Login Form Section */}
       <section className="relative py-24 min-h-[calc(100vh-147px-446px)]">
         <div className="max-w-[1440px] mx-auto px-8">
@@ -271,8 +265,6 @@ export default function Login() {
           </div>
         </div>
       </section>
-
-      {/* <Footer /> */}
     </div>
   );
 }

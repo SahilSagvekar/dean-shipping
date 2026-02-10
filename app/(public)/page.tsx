@@ -1,8 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Header } from '@/components/Header';
-import Footer from '@/components/Footer';
 import {
   HeroSection,
   IntroSection,
@@ -21,9 +19,6 @@ export default function HomePage() {
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#fff' }}>
-      {/* Header / Navigation */}
-      {/* <Header isLoaded={isLoaded} /> */}
-
       {/* Main Content Sections */}
       <main>
         <HeroSection isLoaded={isLoaded} />
@@ -33,9 +28,6 @@ export default function HomePage() {
         <AboutSection />
         <TrackingBanner />
       </main>
-
-      {/* Footer */}
-      {/* <Footer /> */}
     </div>
   );
 }

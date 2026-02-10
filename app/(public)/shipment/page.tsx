@@ -1,18 +1,15 @@
 import image1 from "@/app/assets/5116e4be081f83018c8edb2f7af47539cf88e4f0.png";
 import image2 from "@/app/assets/9f13ecadcbced4d19bc15f999dd464355f2ad1a6.png";
 
-export default function Home() {
+export default function ShipmentPage() {
   return (
     <div className="bg-white min-h-screen">
-      {/* <Header /> */}
-
       {/* Hero Section with Background Image */}
-      <section className="relative h-[570px] overflow-hidden">
-        <img 
-          alt="Cargo ship aerial view" 
-          className="w-full h-full object-cover" 
+      <section className="relative mt-[135px] h-[570px] overflow-hidden">
+        <img
+          alt="Cargo ship aerial view"
+          className="w-full h-full object-cover"
           src={image1.src}
-        //   src="../assets/5116e4be081f83018c8edb2f7af47539cf88e4f0.png"
         />
       </section>
 
@@ -41,16 +38,14 @@ export default function Home() {
       <section className="relative py-16">
         <div className="max-w-[1440px] mx-auto px-8">
           <div className="w-full max-w-[1360px] mx-auto">
-            <img 
-              alt="Shipment tracking map" 
-              className="w-full h-[668px] object-cover rounded-lg" 
+            <img
+              alt="Shipment tracking map"
+              className="w-full h-[668px] object-cover rounded-lg"
               src={image2.src}
             />
           </div>
         </div>
       </section>
-
-      {/* <Footer /> */}
     </div>
   );
 }

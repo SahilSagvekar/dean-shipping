@@ -2,8 +2,6 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Header } from "../../../components/Header";
-import Footer from "../../../components/Footer";
 import svgPaths from "@/app/imports/svg-vsq6m84fvq";
 
 export default function Signup() {
@@ -43,8 +41,6 @@ export default function Signup() {
 
   return (
     <div className="bg-white min-h-screen pt-[135px]">
-      {/* <Header /> */}
-
       {/* Signup Form Section */}
       <section className="relative py-24 min-h-[calc(100vh-147px-446px)]">
         <div className="max-w-[1440px] mx-auto px-8">
@@ -218,8 +214,6 @@ export default function Signup() {
           </div>
         </div>
       </section>
-
-      {/* <Footer /> */}
     </div>
   );
 }
