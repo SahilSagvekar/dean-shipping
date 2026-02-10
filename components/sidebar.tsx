@@ -165,6 +165,16 @@ export const navigationItems: NavItem[] = [
     href: "/admin/settings",
     icon: Settings,
   },
+  {
+    title: "Cashier",
+    href: "/cashier",
+    icon: Settings,
+  },
+  {
+    title: "Notifications",
+    href: "/notification",
+    icon: Settings,
+  },
 ];
 
 // ============================================
