@@ -2,6 +2,9 @@
 
 import React from 'react';
 import { ServiceItem, PrimaryButton } from '../ui';
+import Image1 from '../../app/assets/william-william-NndKt2kF1L4-unsplash.jpg';
+import Image2 from '../../app/assets/aron-yigin-lNpAmLA_bvQ-unsplash.jpg';
+import Image3 from '../../app/assets/aron-yigin-lNpAmLA_bvQ-unsplash.jpg';
 
 export default function ServicesSection() {
   return (
@@ -67,7 +70,7 @@ export default function ServicesSection() {
               boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)',
             }}>
               <img 
-                src="https://images.unsplash.com/photo-1494412651409-8963ce7935a7?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
+                src={Image1.src}
                 alt="Lighthouse and cargo ship"
                 style={{ width: '100%', height: '400px', objectFit: 'cover' }}
               />
@@ -80,7 +83,8 @@ export default function ServicesSection() {
                 background: 'linear-gradient(transparent, rgba(27, 77, 62, 0.9))',
               }}>
                 <p style={{
-                  color: 'var(--accent-gold)',
+                  // color: 'var(--accent-gold)',
+                  color: '#ffffff',
                   fontFamily: "'Playfair Display', serif",
                   fontSize: '1.2rem',
                 }}>Weekly Schedule to North Abaco</p>
@@ -115,7 +119,7 @@ export default function ServicesSection() {
                 background: 'linear-gradient(transparent, rgba(27, 77, 62, 0.9))',
               }}>
                 <p style={{
-                  color: 'var(--accent-gold)',
+                  color: '#ffffff',
                   fontFamily: "'Playfair Display', serif",
                   fontSize: '1.2rem',
                 }}>M/V Champion III</p>
@@ -192,7 +196,7 @@ export default function ServicesSection() {
               boxShadow: '0 25px 50px -12px rgba(0,0,0,0.4)',
             }}>
               <img 
-                src="https://images.unsplash.com/photo-1520334363269-c1fd85a51764?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
+                src={Image3.src}
                 alt="Captain at work"
                 style={{ width: '100%', height: '500px', objectFit: 'cover' }}
               />

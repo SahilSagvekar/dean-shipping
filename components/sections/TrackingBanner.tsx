@@ -2,13 +2,14 @@
 
 import React from 'react';
 import { PrimaryButton } from '../ui';
+import Image1 from '../../app/assets/ammiel-j-wan-qX2ENCIxquA-unsplash.jpg';
 
 export default function TrackingBanner() {
   return (
     <section style={{
       position: 'relative',
       padding: '5rem 2rem',
-      backgroundImage: 'url("https://images.unsplash.com/photo-1494412685616-a5d310fbb07d?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80")',
+      backgroundImage: `url("${Image1.src}")`,
       backgroundSize: 'cover',
       backgroundPosition: 'center',
       backgroundAttachment: 'fixed',
@@ -32,7 +33,7 @@ export default function TrackingBanner() {
           fontFamily: "'Playfair Display', serif",
           fontSize: '2.5rem',
           color: 'var(--text-light)',
-          marginBottom: '1.5rem',
+          marginBottom: '1.5rem', 
         }}>Real-Time Tracking System</h2>
         
         <p style={{
