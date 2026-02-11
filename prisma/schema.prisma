@@ -1,0 +1,500 @@
+// ============================================
+// DEAN'S SHIPPING LTD - DATABASE SCHEMA
+// ============================================
+// PostgreSQL via Supabase + Prisma ORM
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ============================================
+// ENUMS
+// ============================================
+
+enum Role {
+  USER
+  AGENT
+  ADMIN
+}
+
+enum PriceCategory {
+  DRY_BOX
+  FROZEN_BOX
+  COOLER_BOX
+  ENVELOPE
+  CONTAINER
+  LUGGAGE
+  PALLET
+  VEHICLE
+  BUNDLE
+  PASSENGER
+}
+
+enum ContainerType {
+  DRY
+  FROZEN
+  COOLER
+}
+
+enum CargoServiceType {
+  CONTAINER
+  PALLET
+  BOX
+}
+
+enum CargoSizeCategory {
+  SMALL
+  MEDIUM
+  LARGE
+  FRAGILE
+  HAZARDOUS
+  LIVE
+}
+
+enum PaymentStatus {
+  PAID
+  UNPAID
+}
+
+enum EquipmentType {
+  FORKLIFT
+  MULE_TRACTOR
+  CHASSIS
+  CONTAINER_EQ
+  FLAT_RACK
+}
+
+enum IncidentSeverity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum IncidentStatus {
+  OPEN
+  INVESTIGATING
+  RESOLVED
+  CLOSED
+}
+
+enum VehicleStatus {
+  WAITING
+  LOADED
+  DEPARTED
+  COMPLETED
+}
+
+// ============================================
+// USER & AUTH MODELS
+// ============================================
+
+model User {
+  id           String   @id @default(cuid())
+  firebaseUid  String?  @unique // Firebase Auth UID
+  firstName    String
+  lastName     String
+  email        String   @unique
+  countryCode  String   @default("+1")
+  mobileNumber String   @unique
+  role         Role     @default(USER)
+  isActive     Boolean  @default(true)
+  avatarUrl    String?
+
+  // Agent-specific fields
+  agentCode String? @unique
+
+  // Relations
+  cargoBookings     CargoBooking[]
+  passengerBookings PassengerBooking[]
+  invoices          Invoice[]
+  notifications     Notification[]
+  incidentReports   IncidentReport[]
+  auditLogs         AuditLog[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([role])
+  @@index([mobileNumber])
+  @@index([email])
+}
+
+// ============================================
+// LOCATIONS
+// ============================================
+
+model Location {
+  id   String @id @default(cuid())
+  code String @unique // NAS, GTC, MH, MAH
+  name String // Nassau, Green Turtle Cay, Marsh Harbour
+
+  // Relations
+  pricesFrom  Price[]     @relation("PriceFrom")
+  pricesTo    Price[]     @relation("PriceTo")
+  equipmentAt Equipment[]
+
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ============================================
+// PRICING
+// ============================================
+
+model Price {
+  id       String        @id @default(cuid())
+  category PriceCategory
+  size     String // "05 ft", "20 ft", etc.
+  type     ContainerType? // Only for containers
+  value    Float
+
+  fromId String
+  from   Location @relation("PriceFrom", fields: [fromId], references: [id])
+  toId   String
+  to     Location @relation("PriceTo", fields: [toId], references: [id])
+
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([category])
+  @@index([fromId, toId])
+}
+
+// ============================================
+// SCHEDULES
+// ============================================
+
+model Schedule {
+  id        String   @id @default(cuid())
+  date      DateTime
+  weekday   String // MON, TUE, etc.
+  month     String // January, February, etc.
+  shipName  String // "SHIP_A" or "SHIP_B"
+  isHoliday Boolean  @default(false)
+
+  // Schedule events
+  events ScheduleEvent[]
+
+  // Launch controls
+  launchAt   DateTime?
+  isLaunched Boolean   @default(false)
+  isPublished Boolean  @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([date])
+  @@index([shipName])
+  @@unique([date, shipName])
+}
+
+model ScheduleEvent {
+  id         String   @id @default(cuid())
+  scheduleId String
+  schedule   Schedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+
+  location String // Nassau, Marsh Harbour, Green Turtle Cay
+  time     String? // "8am - 3pm"
+  type     String // "Freight Drop Off", "Freight Pick Up", "Freight Pick-up"
+  notes    String? // "(Dry Freight Only)", "(Include Freezer & Cooler items)"
+
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+}
+
+// ============================================
+// CARGO BOOKING
+// ============================================
+
+model CargoBooking {
+  id        String @id @default(cuid())
+  invoiceNo String @unique @default(cuid())
+  userId    String
+  user      User   @relation(fields: [userId], references: [id])
+
+  // Service details
+  service   CargoServiceType
+  cargoSize CargoSizeCategory @default(MEDIUM)
+
+  // Container details
+  quantity    Int?
+  pallets     Int?
+  type        ContainerType @default(DRY)
+  containerNo String?
+  size        String?
+  height      String?
+  reeferNo    String?
+  material    String?
+  color       String?
+  chassisNo   String?
+  temperature String?
+  decksNo     String?
+  boxContains String?
+
+  // Dates & Locations
+  bookingDate  DateTime
+  fromLocation String
+  toLocation   String
+  voyageNo     String?
+
+  // Contact details (snapshot at booking time)
+  contactName  String
+  contactEmail String
+  contactPhone String
+  address      String
+  idType       String
+
+  // Deficiency
+  damageFound       String?
+  damageLocation    String?
+  deficiencyComment String?
+
+  // Payment
+  paymentStatus PaymentStatus @default(UNPAID)
+  totalAmount   Float         @default(0)
+  vatPercent    Float         @default(12)
+  remark        String?
+
+  // Relations
+  items   CargoItem[]
+  images  BookingImage[]
+  invoice Invoice?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([paymentStatus])
+  @@index([bookingDate])
+  @@index([userId])
+}
+
+model CargoItem {
+  id        String       @id @default(cuid())
+  bookingId String
+  booking   CargoBooking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  itemType  String // "DRY BOX(S)", "Container (40ft)", etc.
+  unitPrice Float
+  quantity  Int
+  total     Float
+  isPaid    Boolean @default(false)
+
+  createdAt DateTime @default(now())
+}
+
+// ============================================
+// PASSENGER BOOKING
+// ============================================
+
+model PassengerBooking {
+  id        String @id @default(cuid())
+  invoiceNo String @unique @default(cuid())
+  userId    String
+  user      User   @relation(fields: [userId], references: [id])
+
+  // Passenger counts
+  infantCount Int @default(0)
+  childCount  Int @default(0)
+  adultCount  Int @default(0)
+
+  // Contact details
+  name    String
+  email   String
+  contact String
+
+  // Booking details
+  bookingDate  DateTime
+  fromLocation String
+  toLocation   String
+  idType       String
+
+  // Payment
+  paymentStatus PaymentStatus @default(UNPAID)
+  totalAmount   Float         @default(0)
+  vatPercent    Float         @default(12)
+  remark        String?
+
+  // Relations
+  images  BookingImage[]
+  invoice Invoice?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([paymentStatus])
+  @@index([bookingDate])
+  @@index([userId])
+}
+
+// ============================================
+// SHARED: BOOKING IMAGES (Supabase Storage)
+// ============================================
+
+model BookingImage {
+  id  String @id @default(cuid())
+
+  cargoBookingId     String?
+  cargoBooking       CargoBooking?     @relation(fields: [cargoBookingId], references: [id], onDelete: Cascade)
+  passengerBookingId String?
+  passengerBooking   PassengerBooking? @relation(fields: [passengerBookingId], references: [id], onDelete: Cascade)
+
+  imageUrl  String // Supabase Storage URL
+  imageType String // "cargo", "id_document", "deficiency"
+
+  createdAt DateTime @default(now())
+
+  @@index([cargoBookingId])
+  @@index([passengerBookingId])
+}
+
+// ============================================
+// EQUIPMENT MANAGEMENT
+// ============================================
+
+model Equipment {
+  id         String        @id @default(cuid())
+  type       EquipmentType
+  name       String // "CHASSIS #01", "FORKLIFT #03"
+  identifier String? // Serial or tracking number
+
+  locationId String
+  location   Location @relation(fields: [locationId], references: [id])
+
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([type])
+  @@index([locationId])
+}
+
+// ============================================
+// VEHICLE WAIT LIST
+// ============================================
+
+model Vehicle {
+  id             String        @id @default(cuid())
+  registrationNo String
+  ownerName      String
+  contactNo      String
+  vehicleType    String
+  fromLocation   String
+  toLocation     String
+  status         VehicleStatus @default(WAITING)
+  bookingDate    DateTime
+
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([bookingDate])
+}
+
+// ============================================
+// INVOICES & PAYMENTS
+// ============================================
+
+model Invoice {
+  id        String @id @default(cuid())
+  invoiceNo String @unique
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  // Linked booking (one or the other)
+  cargoBookingId     String?           @unique
+  cargoBooking       CargoBooking?     @relation(fields: [cargoBookingId], references: [id])
+  passengerBookingId String?           @unique
+  passengerBooking   PassengerBooking? @relation(fields: [passengerBookingId], references: [id])
+
+  amount        Float
+  vatAmount     Float
+  totalAmount   Float
+  paymentStatus PaymentStatus @default(UNPAID)
+  paymentMode   String? // Cash, Online, Credit Card, Debit Card
+  paidAt        DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([paymentStatus])
+  @@index([userId])
+}
+
+// ============================================
+// INCIDENT REPORTS
+// ============================================
+
+model IncidentReport {
+  id String @id @default(cuid())
+
+  reportedById String
+  reportedBy   User   @relation(fields: [reportedById], references: [id])
+
+  title       String
+  description String
+  location    String
+  severity    IncidentSeverity @default(MEDIUM)
+  status      IncidentStatus   @default(OPEN)
+  images      String[] // Supabase Storage URLs
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([severity])
+}
+
+// ============================================
+// NOTIFICATIONS
+// ============================================
+
+model Notification {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  title   String
+  message String
+  type    String // "booking", "payment", "system", "schedule"
+  isRead  Boolean @default(false)
+
+  createdAt DateTime @default(now())
+
+  @@index([userId, isRead])
+}
+
+// ============================================
+// AUDIT LOG
+// ============================================
+
+model AuditLog {
+  id String @id @default(cuid())
+
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id])
+
+  action   String // "LOGIN", "LOGOUT", "CREATE_BOOKING", "UPDATE_PRICE", etc.
+  entity   String // "user", "cargo_booking", "price", etc.
+  entityId String?
+  metadata Json? // Additional context
+
+  ipAddress String?
+
+  createdAt DateTime @default(now())
+
+  @@index([action])
+  @@index([entity, entityId])
+  @@index([userId])
+  @@index([createdAt])
+}
