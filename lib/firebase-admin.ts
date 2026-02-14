@@ -1,50 +1,27 @@
-// ============================================
-// FIREBASE ADMIN SDK
-// ============================================
-// Used for: Phone OTP verification
-// Firebase Auth handles phone number verification on the client,
-// then we verify the Firebase ID token on the server.
+import admin from "firebase-admin";
 
-import * as admin from "firebase-admin";
-
-// Prevent re-initialization in development (hot reload)
 if (!admin.apps.length) {
-    admin.initializeApp({
-        credential: admin.credential.cert({
-            projectId: process.env.FIREBASE_PROJECT_ID,
-            clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-            // The private key comes with escaped newlines from env
-            privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
-        }),
-    });
+  admin.initializeApp({
+    credential: admin.credential.cert({
+      projectId: process.env.FIREBASE_PROJECT_ID,
+      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+      privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
+    }),
+  });
 }
 
-export const firebaseAuth = admin.auth();
+// export async function verifyFirebaseToken(idToken: string) {
+//   return admin.auth().verifyIdToken(idToken);
+// }
 
-/**
- * Verify a Firebase ID token (from client-side phone auth)
- * @param idToken - The Firebase ID token from the client
- * @returns The decoded token with user info
- */
-export async function verifyFirebaseToken(idToken: string) {
-    try {
-        const decodedToken = await firebaseAuth.verifyIdToken(idToken);
-        return decodedToken;
-    } catch (error) {
-        throw new Error("Invalid or expired Firebase token");
-    }
-}
+export async function verifyFirebaseToken(token: string) {
+  // DEV BYPASS - remove in production
+  if (process.env.NODE_ENV === "development" && token.startsWith("dev-mock-token-")) {
+    return {
+      uid: "dev-uid-" + token.split("-").pop(),
+      phone_number: null,
+    };
+  }
 
-/**
- * Get phone number from Firebase UID
- */
-export async function getPhoneFromFirebaseUid(
-    uid: string
-): Promise<string | undefined> {
-    try {
-        const userRecord = await firebaseAuth.getUser(uid);
-        return userRecord.phoneNumber ?? undefined;
-    } catch {
-        return undefined;
-    }
+  return await  admin.auth().verifyIdToken(token);
 }

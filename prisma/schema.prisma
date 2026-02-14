@@ -5,10 +5,12 @@
 
 generator client {
   provider = "prisma-client-js"
+  // engineType = "binary"
 }
 
 datasource db {
-  provider = "postgresql"
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
 }
 
 // ============================================
@@ -95,7 +97,7 @@ enum VehicleStatus {
 
 model User {
   id           String   @id @default(cuid())
-  supabaseUid  String?  @unique // Supabase Auth UID
+  firebaseUid  String?  @unique // Supabase Auth UID
   firstName    String
   lastName     String
   email        String   @unique

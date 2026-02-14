@@ -13,7 +13,7 @@ import { Role } from "@prisma/client";
 export async function POST(request: NextRequest) {
     try {
         const body = await request.json();
-        const { firebaseIdToken, loginType } = body;
+        const { firebaseIdToken, loginType, mobileNumber } = body;
 
         if (!firebaseIdToken) {
             return NextResponse.json(
@@ -32,11 +32,14 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // Verify the Firebase ID token
+        // Verify the Firebase ID token (handles dev bypass automatically)
         const decodedToken = await verifyFirebaseToken(firebaseIdToken);
-        const phoneNumber = decodedToken.phone_number;
+        
+        // In dev mode, phone_number will be null, so use the mobileNumber from request
+        const phoneNumber = decodedToken.phone_number || mobileNumber;
+        const isDevMode = process.env.NODE_ENV === "development" && firebaseIdToken.startsWith("dev-mock-token-");
 
-        if (!phoneNumber) {
+        if (!phoneNumber && !isDevMode) {
             return NextResponse.json(
                 { error: "Phone number not found in Firebase token" },
                 { status: 400 }
@@ -45,11 +48,15 @@ export async function POST(request: NextRequest) {
 
         // Find the user by Firebase UID or phone number
         // Strip the country code to match stored mobileNumber
+        const strippedPhone = phoneNumber?.replace(/^\+\d{1,3}/, "") || "";
+        
         const user = await prisma.user.findFirst({
             where: {
                 OR: [
                     { firebaseUid: decodedToken.uid },
-                    { mobileNumber: phoneNumber.replace(/^\+\d{1,3}/, "") },
+                    { mobileNumber: strippedPhone },
+                    // In dev mode, also try exact match
+                    ...(isDevMode && mobileNumber ? [{ mobileNumber }] : []),
                 ],
             },
         });
@@ -77,8 +84,8 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // Update Firebase UID if not set (migration scenario)
-        if (!user.firebaseUid) {
+        // Update Firebase UID if not set (migration scenario) - skip in dev mode
+        if (!user.firebaseUid && !isDevMode) {
             await prisma.user.update({
                 where: { id: user.id },
                 data: { firebaseUid: decodedToken.uid },
@@ -98,7 +105,7 @@ export async function POST(request: NextRequest) {
             action: "LOGIN",
             entity: "user",
             entityId: user.id,
-            metadata: { loginType: role },
+            metadata: { loginType: role, devMode: isDevMode },
             ipAddress: getClientIp(request),
         });
 
