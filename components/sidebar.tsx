@@ -147,7 +147,7 @@ export const navigationItems: NavItem[] = [
   },
   {
     title: "Manifest",
-    href: "/warehouse/manifest", // Updated to match manifest concept
+    href: "/manifest", // Updated to match manifest concept
     icon: FileText,
   },
   {

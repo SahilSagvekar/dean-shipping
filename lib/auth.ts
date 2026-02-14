@@ -6,7 +6,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
 import prisma from "./prisma";
-import { Role } from "@prisma/client";
+import { Role, Prisma } from "@prisma/client";
 
 const JWT_SECRET = process.env.JWT_SECRET!;
 const JWT_EXPIRES_IN = "7d";
@@ -153,7 +153,7 @@ export async function createAuditLog(params: {
     action: string;
     entity: string;
     entityId?: string;
-    metadata?: Record<string, unknown>;
+    metadata?: Prisma.InputJsonValue;
     ipAddress?: string;
 }) {
     try {
@@ -163,7 +163,7 @@ export async function createAuditLog(params: {
                 action: params.action,
                 entity: params.entity,
                 entityId: params.entityId,
-                metadata: params.metadata ?? undefined,
+                metadata: params.metadata,
                 ipAddress: params.ipAddress,
             },
         });
