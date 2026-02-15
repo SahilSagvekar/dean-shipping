@@ -1,10 +1,32 @@
 'use client';
 
+import { useState, useEffect } from 'react';
+import { MapPin, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
 import svgPaths from "@/app/imports/svg-1kz55w3e74";
 import imgRectangle4 from "@/app/assets/3ffc24d8b6b2a7f5ec77f9c65134af63bb12a59d.png";
 import imgRectangle490 from "@/app/assets/cf53a64ce492864216e5a9b357abee066ed01103.png";
 
 import { Truck, Package, Users, Car, Bike, Bus, Boxes, Container, Layers, Wheat, Anchor } from 'lucide-react';
+
+// Types
+interface ScheduleEvent {
+  id: string;
+  location: string;
+  time: string;
+  type: string;
+  notes: string;
+}
+
+interface Schedule {
+  id: string;
+  date: string;
+  weekday: string;
+  month: string;
+  shipName: string;
+  isHoliday: boolean;
+  isPublished: boolean;
+  events: ScheduleEvent[];
+}
 
 // Hero Section
 function Hero() {
@@ -89,29 +111,19 @@ function LocationIcon({ className = "w-6 h-6" }: { className?: string }) {
 }
 
 // Schedule Card Component
-interface ScheduleEvent {
-  location: string;
-  eventType: string;
-  time: string;
-  note?: string;
-}
-
 function ScheduleCard({
   date,
   day,
   month,
-  event,
+  isHoliday,
   events
 }: {
   date: string;
   day: string;
   month: string;
-  event?: ScheduleEvent | 'holiday';
+  isHoliday?: boolean;
   events?: ScheduleEvent[];
 }) {
-  const allEvents = events ? events : (event && event !== 'holiday' ? [event] : []);
-  const isHoliday = event === 'holiday';
-
   return (
     <div className="flex items-center gap-8 min-h-[140px]">
       {/* Date Card */}
@@ -127,21 +139,25 @@ function ScheduleCard({
           <div className="text-[28px] font-bold text-white text-center w-full">
             Holiday
           </div>
+        ) : !events || events.length === 0 ? (
+          <div className="text-[20px] text-white/60 text-center w-full">
+            No scheduled events
+          </div>
         ) : (
           <div className="space-y-3">
-            {allEvents.map((e, idx) => (
+            {events.map((e, idx) => (
               <div key={idx} className="flex items-start gap-2">
                 {e.location && <LocationIcon className="w-5 h-5 mt-1 flex-shrink-0" />}
                 <div>
                   <div className="text-[20px] font-bold text-white leading-tight">
-                    {e.location} <span className="ml-2 font-semibold"> {e.time}</span>
+                    {e.location} {e.time && <span className="ml-2 font-semibold">({e.time})</span>}
                   </div>
                   <div className="text-[22px] font-extrabold text-white uppercase leading-tight">
-                    {e.eventType}
+                    {e.type}
                   </div>
-                  {e.note && (
+                  {e.notes && (
                     <div className="text-[17px] font-medium text-white opacity-90 leading-tight">
-                      {e.note}
+                      ({e.notes})
                     </div>
                   )}
                 </div>
@@ -156,191 +172,160 @@ function ScheduleCard({
 
 // Schedule Section
 function ScheduleSection() {
-  const shipASchedule = [
-    {
-      date: "05",
-      day: "MON",
-      month: "January",
-      event: {
-        location: "Nassau",
-        time: "(8am - 3pm)",
-        eventType: "Freight Drop Off",
-        note: "(Dry Freight Only)"
-      }
-    },
-    {
-      date: "06",
-      day: "TUE",
-      month: "January",
-      event: {
-        location: "Nassau",
-        time: "(8am - 3pm)",
-        eventType: "Freight Drop Off",
-        note: "(Include Freezer & Cooler items)"
-      }
-    },
-    {
-      date: "07",
-      day: "WED",
-      month: "January",
-      event: 'holiday' as const
-    },
-    {
-      date: "08",
-      day: "THU",
-      month: "January",
-      event: {
-        location: "Marsh Harbour",
-        time: "(10am - 4pm)",
-        eventType: "Freight Drop Off",
-        note: ""
-      }
-    },
-    {
-      date: "09",
-      day: "FRI",
-      month: "January",
-      events: [
-        {
-          location: "Marsh Harbour",
-          time: "(10am - 4pm)",
-          eventType: "Freight Drop Off",
-          note: ""
-        },
-        {
-          location: "Green Turtle Cay",
-          time: "(9am - 2pm)",
-          eventType: "Freight Drop Off",
-          note: ""
-        },
-        {
-          location: "",
-          time: "(9am - 2pm)",
-          eventType: "Freight Drop Off",
-          note: ""
-        }
-      ]
-    },
-    {
-      date: "10",
-      day: "SAT",
-      month: "January",
-      event: {
-        location: "Nassau",
-        time: "(8am - 3pm)",
-        eventType: "Freight Drop Off",
-        note: "(Dry Freight Only)"
-      }
-    }
-  ];
+  const [schedules, setSchedules] = useState<Schedule[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [currentWeekStart, setCurrentWeekStart] = useState(() => {
+    const now = new Date();
+    const dayOfWeek = now.getDay();
+    const diff = now.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
+    return new Date(now.setDate(diff));
+  });
 
-  const shipBSchedule = [
-    {
-      date: "05",
-      day: "MON",
-      month: "January",
-      event: {
-        location: "Nassau",
-        time: "(8am - 3pm)",
-        eventType: "Freight Drop Off",
-        note: "(Dry Freight Only)"
-      }
-    },
-    {
-      date: "06",
-      day: "TUE",
-      month: "January",
-      event: {
-        location: "Nassau",
-        time: "(8am - 3pm)",
-        eventType: "Freight Drop Off",
-        note: "(Dry Freight Only)"
-      }
-    },
-    {
-      date: "07",
-      day: "WED",
-      month: "January",
-      event: {
-        location: "Nassau",
-        time: "(8am - 3pm)",
-        eventType: "Freight Pick Up",
-        note: "(Dry Freight Only)"
-      }
-    },
-    {
-      date: "08",
-      day: "THU",
-      month: "January",
-      events: [
-        {
-          location: "Marsh Harbour",
-          time: "(10am - 4pm)",
-          eventType: "Freight Drop Off",
-          note: ""
-        },
-        {
-          location: "Green Turtle Cay",
-          time: "",
-          eventType: "Freight Drop Off",
-          note: "Freight Drop Off"
+  // Get week dates
+  const getWeekDates = () => {
+    const dates = [];
+    for (let i = 0; i < 6; i++) {
+      const date = new Date(currentWeekStart);
+      date.setDate(date.getDate() + i);
+      dates.push(date);
+    }
+    return dates;
+  };
+
+  const weekDates = getWeekDates();
+  const weekdays = ["MON", "TUE", "WED", "THU", "FRI", "SAT"];
+  const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+  // Fetch published schedules
+  useEffect(() => {
+    async function fetchSchedules() {
+      setIsLoading(true);
+      setError("");
+      try {
+        const res = await fetch(`/api/schedules?published=true&limit=100`);
+        const data = await res.json();
+        
+        if (res.ok) {
+          setSchedules(data.schedules || []);
+        } else {
+          setError(data.error || "Failed to load schedules");
         }
-      ]
-    },
-    {
-      date: "09",
-      day: "FRI",
-      month: "January",
-      event: {
-        location: "Nassau",
-        time: "(8am - 3pm)",
-        eventType: "Freight Drop Off",
-        note: "(Dry Freight Only)"
-      }
-    },
-    {
-      date: "10",
-      day: "SAT",
-      month: "January",
-      event: {
-        location: "Nassau",
-        time: "(8am - 3pm)",
-        eventType: "Freight Pick-up",
-        note: "The Berry Island"
+      } catch (err: any) {
+        setError(err.message);
+      } finally {
+        setIsLoading(false);
       }
     }
-  ];
+    fetchSchedules();
+  }, [currentWeekStart]);
+
+  // Get schedule for specific date and ship
+  const getScheduleForDate = (date: Date, shipName: string): Schedule | null => {
+    const dateStr = date.toISOString().split('T')[0];
+    return schedules.find(s => 
+      s.date.split('T')[0] === dateStr && s.shipName === shipName && s.isPublished
+    ) || null;
+  };
+
+  // Navigate weeks
+  const prevWeek = () => {
+    const newStart = new Date(currentWeekStart);
+    newStart.setDate(newStart.getDate() - 7);
+    setCurrentWeekStart(newStart);
+  };
+
+  const nextWeek = () => {
+    const newStart = new Date(currentWeekStart);
+    newStart.setDate(newStart.getDate() + 7);
+    setCurrentWeekStart(newStart);
+  };
+
+  // Build schedule arrays for Ship A and Ship B
+  const shipASchedule = weekDates.map((date, index) => {
+    const schedule = getScheduleForDate(date, "SHIP_A");
+    return {
+      date: String(date.getDate()).padStart(2, '0'),
+      day: weekdays[index],
+      month: months[date.getMonth()],
+      isHoliday: schedule?.isHoliday || false,
+      events: schedule?.events || []
+    };
+  });
+
+  const shipBSchedule = weekDates.map((date, index) => {
+    const schedule = getScheduleForDate(date, "SHIP_B");
+    return {
+      date: String(date.getDate()).padStart(2, '0'),
+      day: weekdays[index],
+      month: months[date.getMonth()],
+      isHoliday: schedule?.isHoliday || false,
+      events: schedule?.events || []
+    };
+  });
 
   return (
     <section className="relative py-24 overflow-hidden">
       <img alt="" className="absolute inset-0 w-full h-full object-cover filter brightness-50" src={imgRectangle490.src} />
 
       <div className="relative max-w-[1200px] mx-auto px-8">
-        <div className="grid grid-cols-2 gap-x-20">
-          {/* Ship A */}
-          <div className="relative">
-            <h2 className="text-[50px] font-bold text-white text-center mb-16 tracking-wider">SHIP A</h2>
-            <div className="divide-y divide-white/60">
-              {shipASchedule.map((schedule, index) => (
-                <div key={index} className="py-6 first:pt-0 last:pb-0">
-                  <ScheduleCard {...schedule} />
-                </div>
-              ))}
-            </div>
+        {/* Week Navigation */}
+        <div className="flex items-center justify-center gap-8 mb-12">
+          <button
+            onClick={prevWeek}
+            className="bg-white/20 hover:bg-white/30 text-white p-3 rounded-full transition-colors"
+          >
+            <ChevronLeft className="w-8 h-8" />
+          </button>
+          <div className="text-center">
+            <h2 className="text-3xl font-bold text-white">
+              {weekDates[0].toLocaleDateString('en-US', { month: 'long', day: 'numeric' })} - {weekDates[5].toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+            </h2>
           </div>
-
-          {/* Ship B */}
-          <div className="relative">
-            <h2 className="text-[50px] font-bold text-white text-center mb-16 tracking-wider">SHIP B</h2>
-            <div className="divide-y divide-white/60">
-              {shipBSchedule.map((schedule, index) => (
-                <div key={index} className="py-6 first:pt-0 last:pb-0">
-                  <ScheduleCard {...schedule} />
-                </div>
-              ))}
-            </div>
-          </div>
+          <button
+            onClick={nextWeek}
+            className="bg-white/20 hover:bg-white/30 text-white p-3 rounded-full transition-colors"
+          >
+            <ChevronRight className="w-8 h-8" />
+          </button>
         </div>
+
+        {/* Loading */}
+        {isLoading ? (
+          <div className="flex justify-center py-20">
+            <Loader2 className="w-12 h-12 animate-spin text-white" />
+          </div>
+        ) : error ? (
+          <div className="text-center py-20 text-white">
+            <p className="text-xl">{error}</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 gap-x-20">
+            {/* Ship A */}
+            <div className="relative">
+              <h2 className="text-[50px] font-bold text-white text-center mb-16 tracking-wider">SHIP A</h2>
+              <div className="divide-y divide-white/60">
+                {shipASchedule.map((schedule, index) => (
+                  <div key={index} className="py-6 first:pt-0 last:pb-0">
+                    <ScheduleCard {...schedule} />
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Ship B */}
+            <div className="relative">
+              <h2 className="text-[50px] font-bold text-white text-center mb-16 tracking-wider">SHIP B</h2>
+              <div className="divide-y divide-white/60">
+                {shipBSchedule.map((schedule, index) => (
+                  <div key={index} className="py-6 first:pt-0 last:pb-0">
+                    <ScheduleCard {...schedule} />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Vertical Divider */}
         <div className="absolute left-1/2 top-48 bottom-0 w-[2px] bg-white/60 -translate-x-1/2" />

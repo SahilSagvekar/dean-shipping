@@ -15,13 +15,40 @@ export async function GET(request: NextRequest) {
     const shipName = searchParams.get("ship") || undefined;
     const month = searchParams.get("month") || undefined;
     const published = searchParams.get("published");
+    const startDate = searchParams.get("startDate");
+    const endDate = searchParams.get("endDate");
     const skip = (page - 1) * limit;
 
     const where: any = {};
     if (shipName) where.shipName = shipName;
     if (month) where.month = month;
-    // Only show published schedules for non-staff
-    if (published === "true") where.isPublished = true;
+    
+    // Date range filter
+    if (startDate || endDate) {
+        where.date = {};
+        if (startDate) where.date.gte = new Date(startDate);
+        if (endDate) where.date.lte = new Date(endDate + "T23:59:59.999Z");
+    }
+    
+    // Only show published schedules for public access
+    if (published === "true") {
+        where.isPublished = true;
+        
+        // Also check for scheduled launches that should now be published
+        // This is a simple check - in production you'd use a cron job
+        const now = new Date();
+        await prisma.schedule.updateMany({
+            where: {
+                isPublished: false,
+                isLaunched: false,
+                launchAt: { lte: now }
+            },
+            data: {
+                isPublished: true,
+                isLaunched: true
+            }
+        });
+    }
 
     const [schedules, total] = await Promise.all([
         prisma.schedule.findMany({
@@ -59,6 +86,21 @@ export async function POST(request: NextRequest) {
             );
         }
 
+        // Check for existing schedule on same date and ship
+        const existing = await prisma.schedule.findFirst({
+            where: {
+                date: new Date(date),
+                shipName
+            }
+        });
+
+        if (existing) {
+            return NextResponse.json(
+                { error: "Schedule already exists for this date and ship" },
+                { status: 409 }
+            );
+        }
+
         const schedule = await prisma.schedule.create({
             data: {
                 date: new Date(date),
@@ -67,6 +109,8 @@ export async function POST(request: NextRequest) {
                 shipName,
                 isHoliday: isHoliday || false,
                 launchAt: launchAt ? new Date(launchAt) : undefined,
+                isPublished: false,
+                isLaunched: false,
                 events: {
                     create: (events || []).map((event: any, index: number) => ({
                         location: event.location,
