@@ -1,4 +1,5 @@
 // ============================================
+// GET /api/incidents/[id] - Get incident details
 // PATCH /api/incidents/[id] - Update incident status
 // DELETE /api/incidents/[id] - Close/delete incident
 // ============================================
@@ -44,9 +45,26 @@ export async function PATCH(
 
     try {
         const updateData: any = {};
-        const fields = ["title", "description", "location", "severity", "status", "images"];
+        const fields = [
+            "incidentType", "title", "description", "location", "invoiceNo",
+            "date", "time", "insuranceTaken", "shipmentDetails",
+            "severity", "status", "images", "resolution"
+        ];
+        
         for (const field of fields) {
-            if (body[field] !== undefined) updateData[field] = body[field];
+            if (body[field] !== undefined) {
+                if (field === "date") {
+                    updateData[field] = new Date(body[field]);
+                } else {
+                    updateData[field] = body[field];
+                }
+            }
+        }
+
+        // If status is being set to RESOLVED, set resolvedAt and resolvedBy
+        if (body.status === "RESOLVED" || body.status === "CLOSED") {
+            updateData.resolvedAt = new Date();
+            updateData.resolvedBy = result.user.id;
         }
 
         const incident = await prisma.incidentReport.update({

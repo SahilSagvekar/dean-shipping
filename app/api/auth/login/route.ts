@@ -8,7 +8,9 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { generateToken, createAuditLog, getClientIp } from "@/lib/auth";
 import { verifyFirebaseToken } from "@/lib/firebase-admin";
-import { Role } from "@prisma/client";
+
+// Define Role type locally to avoid build issues
+type Role = "USER" | "AGENT" | "ADMIN";
 
 export async function POST(request: NextRequest) {
     try {

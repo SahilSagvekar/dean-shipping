@@ -1,91 +1,99 @@
 // ============================================
-// SUPABASE CLIENT
+// SUPABASE STORAGE UTILITY
 // ============================================
-// Admin client for server-side operations (Storage, etc.)
-// Supabase is used for: PostgreSQL (via Prisma), Storage (images/docs)
+// Handles file uploads to Supabase Storage
 
 import { createClient } from "@supabase/supabase-js";
 
-// Server-side admin client (uses service_role key)
-// Use this for: file uploads, storage operations, admin tasks
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
-// Admin client - full access, use only server-side
-export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
-    auth: {
-        autoRefreshToken: false,
-        persistSession: false,
-    },
-});
+// Use service role key for server-side operations
+const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-// Public client - limited access, can be used client-side
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
-
-// ============================================
-// STORAGE HELPERS
-// ============================================
-
-const BUCKET_NAME = "dean-shipping";
+const BUCKET_NAME = "uploads";
 
 /**
  * Upload a file to Supabase Storage
- * @param file - The file buffer to upload
- * @param path - The storage path (e.g., "cargo-images/booking-id/photo.jpg")
- * @param contentType - MIME type of the file
- * @returns The public URL of the uploaded file
+ * @param buffer - File buffer
+ * @param path - Storage path (e.g., "cargo/booking123/image.jpg")
+ * @param contentType - MIME type
+ * @returns Public URL of the uploaded file
  */
 export async function uploadFile(
-    file: Buffer,
+    buffer: Buffer,
     path: string,
     contentType: string
 ): Promise<string> {
-    const { data, error } = await supabaseAdmin.storage
+    const { data, error } = await supabase.storage
         .from(BUCKET_NAME)
-        .upload(path, file, {
+        .upload(path, buffer, {
             contentType,
             upsert: true,
         });
 
     if (error) {
+        console.error("Supabase upload error:", error);
         throw new Error(`Upload failed: ${error.message}`);
     }
 
-    const {
-        data: { publicUrl },
-    } = supabaseAdmin.storage.from(BUCKET_NAME).getPublicUrl(data.path);
+    // Get public URL
+    const { data: urlData } = supabase.storage
+        .from(BUCKET_NAME)
+        .getPublicUrl(data.path);
 
-    return publicUrl;
+    return urlData.publicUrl;
 }
 
 /**
  * Delete a file from Supabase Storage
+ * @param path - Storage path
  */
 export async function deleteFile(path: string): Promise<void> {
-    const { error } = await supabaseAdmin.storage
+    const { error } = await supabase.storage
         .from(BUCKET_NAME)
         .remove([path]);
 
     if (error) {
+        console.error("Supabase delete error:", error);
         throw new Error(`Delete failed: ${error.message}`);
     }
 }
 
 /**
  * Get a signed URL for temporary access
+ * @param path - Storage path
+ * @param expiresIn - Seconds until expiry (default 1 hour)
  */
 export async function getSignedUrl(
     path: string,
     expiresIn: number = 3600
 ): Promise<string> {
-    const { data, error } = await supabaseAdmin.storage
+    const { data, error } = await supabase.storage
         .from(BUCKET_NAME)
         .createSignedUrl(path, expiresIn);
 
     if (error) {
-        throw new Error(`Signed URL failed: ${error.message}`);
+        throw new Error(`Failed to create signed URL: ${error.message}`);
     }
 
     return data.signedUrl;
 }
+
+/**
+ * List files in a directory
+ * @param prefix - Directory path
+ */
+export async function listFiles(prefix: string) {
+    const { data, error } = await supabase.storage
+        .from(BUCKET_NAME)
+        .list(prefix);
+
+    if (error) {
+        throw new Error(`Failed to list files: ${error.message}`);
+    }
+
+    return data;
+}
+
+export { supabase };

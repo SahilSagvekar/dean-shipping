@@ -101,7 +101,7 @@ export async function POST(request: NextRequest) {
                 invoiceNo,
                 userId: result.user.id,
                 passengerBookingId: booking.id,
-                amount,
+                subtotal: amount,
                 vatAmount,
                 totalAmount: grandTotal,
                 paymentStatus: paymentStatus || "UNPAID",

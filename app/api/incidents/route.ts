@@ -14,6 +14,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const status = searchParams.get("status") || undefined;
     const severity = searchParams.get("severity") || undefined;
+    const incidentType = searchParams.get("type") || undefined;
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "20");
     const skip = (page - 1) * limit;
@@ -21,6 +22,7 @@ export async function GET(request: NextRequest) {
     const where: any = {};
     if (status) where.status = status;
     if (severity) where.severity = severity;
+    if (incidentType) where.incidentType = incidentType;
 
     const [incidents, total] = await Promise.all([
         prisma.incidentReport.findMany({
@@ -49,11 +51,23 @@ export async function POST(request: NextRequest) {
 
     try {
         const body = await request.json();
-        const { title, description, location, severity, images } = body;
+        const {
+            incidentType,
+            title,
+            description,
+            location,
+            invoiceNo,
+            date,
+            time,
+            insuranceTaken,
+            shipmentDetails,
+            severity,
+            images,
+        } = body;
 
-        if (!title || !description || !location) {
+        if (!incidentType || !title || !description || !location) {
             return NextResponse.json(
-                { error: "Missing required fields: title, description, location" },
+                { error: "Missing required fields: incidentType, title, description, location" },
                 { status: 400 }
             );
         }
@@ -61,9 +75,15 @@ export async function POST(request: NextRequest) {
         const incident = await prisma.incidentReport.create({
             data: {
                 reportedById: result.user.id,
+                incidentType,
                 title,
                 description,
                 location,
+                invoiceNo,
+                date: date ? new Date(date) : new Date(),
+                time,
+                insuranceTaken: insuranceTaken || false,
+                shipmentDetails,
                 severity: severity || "MEDIUM",
                 images: images || [],
             },
@@ -79,7 +99,7 @@ export async function POST(request: NextRequest) {
             action: "CREATE_INCIDENT",
             entity: "incident_report",
             entityId: incident.id,
-            metadata: { title, severity: severity || "MEDIUM" },
+            metadata: { incidentType, title, severity: severity || "MEDIUM" },
             ipAddress: getClientIp(request),
         });
 

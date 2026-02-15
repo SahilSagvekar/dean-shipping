@@ -5,7 +5,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { requireAuth, requireStaff, createAuditLog, getClientIp } from "@/lib/auth";
+import { requireAuth, createAuditLog, getClientIp } from "@/lib/auth";
 
 // Helper to generate invoice number
 function generateInvoiceNo(): string {
@@ -146,7 +146,7 @@ export async function POST(request: NextRequest) {
                 invoiceNo,
                 userId: result.user.id,
                 cargoBookingId: booking.id,
-                amount: totalAmount,
+                subtotal: totalAmount,
                 vatAmount,
                 totalAmount: grandTotal,
                 paymentStatus: paymentStatus || "UNPAID",

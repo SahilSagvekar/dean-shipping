@@ -5,12 +5,11 @@
 
 generator client {
   provider = "prisma-client-js"
-  // engineType = "binary"
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 // ============================================
@@ -60,6 +59,7 @@ enum CargoSizeCategory {
 enum PaymentStatus {
   PAID
   UNPAID
+  PARTIAL
 }
 
 enum EquipmentType {
@@ -68,6 +68,12 @@ enum EquipmentType {
   CHASSIS
   CONTAINER_EQ
   FLAT_RACK
+}
+
+enum EquipmentStatus {
+  AVAILABLE
+  OCCUPIED
+  MAINTENANCE
 }
 
 enum IncidentSeverity {
@@ -91,13 +97,36 @@ enum VehicleStatus {
   COMPLETED
 }
 
+enum VoyageStatus {
+  SCHEDULED
+  BOARDING
+  DEPARTED
+  ARRIVED
+  COMPLETED
+  CANCELLED
+}
+
+enum ManifestItemStatus {
+  PENDING
+  LOADED
+  UNLOADED
+  DELIVERED
+}
+
+enum ReminderFrequency {
+  DAILY
+  EVERY_2_DAYS
+  EVERY_5_DAYS
+  EVERY_7_DAYS
+}
+
 // ============================================
 // USER & AUTH MODELS
 // ============================================
 
 model User {
   id           String   @id @default(cuid())
-  firebaseUid  String?  @unique // Supabase Auth UID
+  firebaseUid  String?  @unique
   firstName    String
   lastName     String
   email        String   @unique
@@ -108,15 +137,18 @@ model User {
   avatarUrl    String?
 
   // Agent-specific fields
-  agentCode String? @unique
+  agentCode    String?   @unique
+  agentLocation String?  // Primary location for agent
 
   // Relations
-  cargoBookings     CargoBooking[]
-  passengerBookings PassengerBooking[]
-  invoices          Invoice[]
-  notifications     Notification[]
-  incidentReports   IncidentReport[]
-  auditLogs         AuditLog[]
+  cargoBookings       CargoBooking[]
+  passengerBookings   PassengerBooking[]
+  invoices            Invoice[]
+  notifications       Notification[]
+  incidentReports     IncidentReport[]
+  auditLogs           AuditLog[]
+  equipmentAssigned   EquipmentAssignment[] @relation("AssignedTo")
+  equipmentAssignedBy EquipmentAssignment[] @relation("AssignedBy")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -132,13 +164,17 @@ model User {
 
 model Location {
   id   String @id @default(cuid())
-  code String @unique // NAS, GTC, MH, MAH
+  code String @unique // NAS, GTC, MHA, GGC_BB, MOW_HPT, NA
   name String // Nassau, Green Turtle Cay, Marsh Harbour
 
   // Relations
   pricesFrom  Price[]     @relation("PriceFrom")
   pricesTo    Price[]     @relation("PriceTo")
   equipmentAt Equipment[]
+  
+  // Voyage relations
+  voyagesFrom Voyage[] @relation("VoyageFrom")
+  voyagesTo   Voyage[] @relation("VoyageTo")
 
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
@@ -152,7 +188,7 @@ model Location {
 model Price {
   id       String        @id @default(cuid())
   category PriceCategory
-  size     String // "05 ft", "20 ft", etc.
+  size     String // "Small", "Medium", "Large", "05 ft", "20 ft", "40 ft", etc.
   type     ContainerType? // Only for containers
   value    Float
 
@@ -167,6 +203,83 @@ model Price {
 
   @@index([category])
   @@index([fromId, toId])
+  @@unique([category, size, type, fromId, toId])
+}
+
+// ============================================
+// VOYAGES
+// ============================================
+
+model Voyage {
+  id          String       @id @default(cuid())
+  voyageNo    Int          @unique // 208, 207, etc.
+  shipName    String       // "SHIP_A" or "SHIP_B"
+  date        DateTime
+  status      VoyageStatus @default(SCHEDULED)
+
+  // Route
+  fromId String
+  from   Location @relation("VoyageFrom", fields: [fromId], references: [id])
+  toId   String
+  to     Location @relation("VoyageTo", fields: [toId], references: [id])
+
+  // Capacity tracking
+  maxCargoCapacity   Int?    // Maximum cargo units
+  maxPassengers      Int?    // Maximum passengers
+  currentCargoCount  Int     @default(0)
+  currentPassengers  Int     @default(0)
+
+  // Linked schedule (optional)
+  scheduleId String?
+  schedule   Schedule? @relation(fields: [scheduleId], references: [id])
+
+  // Relations
+  manifestItems ManifestItem[]
+  cargoBookings CargoBooking[]
+  passengerBookings PassengerBooking[]
+
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([date])
+  @@index([shipName])
+  @@index([status])
+}
+
+// ============================================
+// MANIFEST
+// ============================================
+
+model ManifestItem {
+  id       String @id @default(cuid())
+  voyageId String
+  voyage   Voyage @relation(fields: [voyageId], references: [id], onDelete: Cascade)
+
+  // Can be linked to cargo or passenger booking
+  cargoBookingId     String?
+  cargoBooking       CargoBooking?     @relation(fields: [cargoBookingId], references: [id])
+  passengerBookingId String?
+  passengerBooking   PassengerBooking? @relation(fields: [passengerBookingId], references: [id])
+
+  // Item details (denormalized for manifest view)
+  invoiceNo    String
+  senderName   String
+  receiverName String?
+  itemDetails  String
+  quantity     Int       @default(1)
+  amount       Float
+  
+  status       ManifestItemStatus @default(PENDING)
+  loadedAt     DateTime?
+  unloadedAt   DateTime?
+  
+  notes        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([voyageId])
+  @@index([status])
 }
 
 // ============================================
@@ -184,10 +297,13 @@ model Schedule {
   // Schedule events
   events ScheduleEvent[]
 
+  // Voyages generated from this schedule
+  voyages Voyage[]
+
   // Launch controls
-  launchAt   DateTime?
-  isLaunched Boolean   @default(false)
-  isPublished Boolean  @default(false)
+  launchAt    DateTime?
+  isLaunched  Boolean   @default(false)
+  isPublished Boolean   @default(false)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -220,6 +336,10 @@ model CargoBooking {
   invoiceNo String @unique @default(cuid())
   userId    String
   user      User   @relation(fields: [userId], references: [id])
+
+  // Voyage assignment
+  voyageId String?
+  voyage   Voyage? @relation(fields: [voyageId], references: [id])
 
   // Service details
   service   CargoServiceType
@@ -262,12 +382,15 @@ model CargoBooking {
   paymentStatus PaymentStatus @default(UNPAID)
   totalAmount   Float         @default(0)
   vatPercent    Float         @default(12)
+  vatAmount     Float         @default(0)
+  subtotal      Float         @default(0)
   remark        String?
 
   // Relations
-  items   CargoItem[]
-  images  BookingImage[]
-  invoice Invoice?
+  items         CargoItem[]
+  images        BookingImage[]
+  invoice       Invoice?
+  manifestItems ManifestItem[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -275,6 +398,7 @@ model CargoBooking {
   @@index([paymentStatus])
   @@index([bookingDate])
   @@index([userId])
+  @@index([voyageId])
 }
 
 model CargoItem {
@@ -283,6 +407,8 @@ model CargoItem {
   booking   CargoBooking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
 
   itemType  String // "DRY BOX(S)", "Container (40ft)", etc.
+  category  PriceCategory?
+  size      String?
   unitPrice Float
   quantity  Int
   total     Float
@@ -300,6 +426,10 @@ model PassengerBooking {
   invoiceNo String @unique @default(cuid())
   userId    String
   user      User   @relation(fields: [userId], references: [id])
+
+  // Voyage assignment
+  voyageId String?
+  voyage   Voyage? @relation(fields: [voyageId], references: [id])
 
   // Passenger counts
   infantCount Int @default(0)
@@ -321,11 +451,14 @@ model PassengerBooking {
   paymentStatus PaymentStatus @default(UNPAID)
   totalAmount   Float         @default(0)
   vatPercent    Float         @default(12)
+  vatAmount     Float         @default(0)
+  subtotal      Float         @default(0)
   remark        String?
 
   // Relations
-  images  BookingImage[]
-  invoice Invoice?
+  images        BookingImage[]
+  invoice       Invoice?
+  manifestItems ManifestItem[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -333,6 +466,7 @@ model PassengerBooking {
   @@index([paymentStatus])
   @@index([bookingDate])
   @@index([userId])
+  @@index([voyageId])
 }
 
 // ============================================
@@ -340,7 +474,7 @@ model PassengerBooking {
 // ============================================
 
 model BookingImage {
-  id  String @id @default(cuid())
+  id String @id @default(cuid())
 
   cargoBookingId     String?
   cargoBooking       CargoBooking?     @relation(fields: [cargoBookingId], references: [id], onDelete: Cascade)
@@ -361,7 +495,7 @@ model BookingImage {
 // ============================================
 
 model Equipment {
-  id         String        @id @default(cuid())
+  id         String          @id @default(cuid())
   type       EquipmentType
   name       String // "CHASSIS #01", "FORKLIFT #03"
   identifier String? // Serial or tracking number
@@ -369,12 +503,47 @@ model Equipment {
   locationId String
   location   Location @relation(fields: [locationId], references: [id])
 
+  status     EquipmentStatus @default(AVAILABLE)
+
+  // Relations
+  assignments EquipmentAssignment[]
+
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([type])
   @@index([locationId])
+  @@index([status])
+}
+
+model EquipmentAssignment {
+  id          String    @id @default(cuid())
+  equipmentId String
+  equipment   Equipment @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
+
+  // Who is using it
+  assignedToId String
+  assignedTo   User   @relation("AssignedTo", fields: [assignedToId], references: [id])
+
+  // Who assigned it
+  assignedById String
+  assignedBy   User   @relation("AssignedBy", fields: [assignedById], references: [id])
+
+  // Optional voyage/booking reference
+  voyageId       String?
+  cargoBookingId String?
+
+  // Assignment period
+  assignedAt   DateTime  @default(now())
+  releasedAt   DateTime?
+  expectedReturn DateTime?
+
+  notes String?
+
+  @@index([equipmentId])
+  @@index([assignedToId])
+  @@index([assignedAt])
 }
 
 // ============================================
@@ -391,6 +560,9 @@ model Vehicle {
   toLocation     String
   status         VehicleStatus @default(WAITING)
   bookingDate    DateTime
+
+  // Optional voyage assignment
+  voyageId String?
 
   notes     String?
   createdAt DateTime @default(now())
@@ -417,18 +589,27 @@ model Invoice {
   passengerBookingId String?           @unique
   passengerBooking   PassengerBooking? @relation(fields: [passengerBookingId], references: [id])
 
-  amount        Float
+  subtotal      Float
+  vatPercent    Float         @default(12)
   vatAmount     Float
   totalAmount   Float
+  paidAmount    Float         @default(0)
   paymentStatus PaymentStatus @default(UNPAID)
   paymentMode   String? // Cash, Online, Credit Card, Debit Card
   paidAt        DateTime?
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  // Reminder tracking
+  reminderFrequency ReminderFrequency?
+  lastReminderSent  DateTime?
+  reminderCount     Int @default(0)
+
+  dueDate   DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 
   @@index([paymentStatus])
   @@index([userId])
+  @@index([dueDate])
 }
 
 // ============================================
@@ -441,18 +622,39 @@ model IncidentReport {
   reportedById String
   reportedBy   User   @relation(fields: [reportedById], references: [id])
 
-  title       String
-  description String
-  location    String
-  severity    IncidentSeverity @default(MEDIUM)
-  status      IncidentStatus   @default(OPEN)
-  images      String[] // Supabase Storage URLs
+  // Incident type
+  incidentType String // "Container Damaged", "Cargo Damaged", "Other"
+  title        String
+  description  String
+  
+  // Location and reference
+  location     String
+  invoiceNo    String?
+  
+  // Details
+  date         DateTime @default(now())
+  time         String?
+  
+  // Insurance
+  insuranceTaken Boolean @default(false)
+  
+  // Shipment details
+  shipmentDetails String?
+  
+  severity     IncidentSeverity @default(MEDIUM)
+  status       IncidentStatus   @default(OPEN)
+  images       String[] // Supabase Storage URLs
+
+  resolvedAt   DateTime?
+  resolvedBy   String?
+  resolution   String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([status])
   @@index([severity])
+  @@index([incidentType])
 }
 
 // ============================================
@@ -466,12 +668,33 @@ model Notification {
 
   title   String
   message String
-  type    String // "booking", "payment", "system", "schedule"
+  type    String // "booking", "payment", "system", "schedule", "reminder"
   isRead  Boolean @default(false)
+
+  // Optional reference
+  referenceType String? // "invoice", "booking", "voyage"
+  referenceId   String?
 
   createdAt DateTime @default(now())
 
   @@index([userId, isRead])
+  @@index([type])
+}
+
+// ============================================
+// PAYMENT REMINDERS (Automated)
+// ============================================
+
+model PaymentReminder {
+  id        String @id @default(cuid())
+  invoiceId String
+  
+  sentAt    DateTime @default(now())
+  channel   String // "sms", "email", "in_app"
+  status    String // "sent", "failed", "delivered"
+  
+  @@index([invoiceId])
+  @@index([sentAt])
 }
 
 // ============================================
@@ -484,10 +707,12 @@ model AuditLog {
   userId String?
   user   User?   @relation(fields: [userId], references: [id])
 
-  action   String // "LOGIN", "LOGOUT", "CREATE_BOOKING", "UPDATE_PRICE", etc.
-  entity   String // "user", "cargo_booking", "price", etc.
-  entityId String?
-  metadata Json? // Additional context
+  action    String // "LOGIN", "LOGOUT", "CREATE_BOOKING", "UPDATE_PRICE", etc.
+  entity    String // "user", "cargo_booking", "price", etc.
+  entityId  String?
+  metadata  Json? // Additional context
+  oldValue  Json? // Previous state for updates
+  newValue  Json? // New state for updates
 
   ipAddress String?
 
@@ -497,4 +722,19 @@ model AuditLog {
   @@index([entity, entityId])
   @@index([userId])
   @@index([createdAt])
+}
+
+// ============================================
+// SYSTEM SETTINGS
+// ============================================
+
+model SystemSetting {
+  id    String @id @default(cuid())
+  key   String @unique
+  value String
+  type  String @default("string") // "string", "number", "boolean", "json"
+  
+  description String?
+  
+  updatedAt DateTime @updatedAt
 }

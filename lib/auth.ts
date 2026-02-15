@@ -6,10 +6,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
 import prisma from "./prisma";
-import { Role, Prisma } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 
 const JWT_SECRET = process.env.JWT_SECRET!;
 const JWT_EXPIRES_IN = "7d";
+
+// Define Role type locally to avoid Prisma client generation issues on build
+type Role = "USER" | "AGENT" | "ADMIN";
 
 // ============================================
 // JWT TOKEN HELPERS
@@ -121,7 +124,7 @@ export async function requireRole(
     const result = await requireAuth(request);
     if (result instanceof NextResponse) return result;
 
-    if (!allowedRoles.includes(result.user.role)) {
+    if (!allowedRoles.includes(result.user.role as Role)) {
         return NextResponse.json(
             { error: "Insufficient permissions" },
             { status: 403 }
@@ -154,6 +157,8 @@ export async function createAuditLog(params: {
     entity: string;
     entityId?: string;
     metadata?: Prisma.InputJsonValue;
+    oldValue?: Prisma.InputJsonValue;
+    newValue?: Prisma.InputJsonValue;
     ipAddress?: string;
 }) {
     try {
@@ -164,6 +169,8 @@ export async function createAuditLog(params: {
                 entity: params.entity,
                 entityId: params.entityId,
                 metadata: params.metadata,
+                oldValue: params.oldValue,
+                newValue: params.newValue,
                 ipAddress: params.ipAddress,
             },
         });
