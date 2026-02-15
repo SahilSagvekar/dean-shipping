@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Camera,
   Paperclip,
@@ -13,52 +13,115 @@ import {
   Package,
   Box,
   Container,
-  ArrowRight
+  ArrowRight,
+  Loader2
 } from 'lucide-react';
+import { useAuth } from '@/lib/auth-context';
+import { toast } from 'sonner';
 import imgCargoShip from "@/app/assets/3f7d36fbe26222b564747f69753922efbd74194d.png";
 import imgContainer from "@/app/assets/5edceaf79f7be705450710aa82c190c67fbcaf62.png";
 import imgPassport from "@/app/assets/bbad37ee24906289e97d640c601d7cafe55963b5.png";
 import imgIdCard from "@/app/assets/10ad04e365367f2edb1a23ad5021caa2d9bfde6f.png";
 import imgLogo from "@/app/assets/0630bc807bbd9122cb449e66c33d18d13536d121.png";
 
-// Sidebar is now handled by (dashboard)/layout.tsx
+export default function CargoBooking() {
+  const { apiFetch, user } = useAuth();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [locations, setLocations] = useState<any[]>([]);
 
-const cargoItemsList = [
-  { id: 1, icon: 'box', type: 'DRY BOX(S) x 3', amount: '$50 (3)', total: '$150', paid: true },
-  { id: 2, icon: 'container', type: 'Container (40ft) x 1', amount: '$500 (1)', total: '$500', paid: false },
-];
-
-function CargoBookingContent() {
+  // Form State
   const [service, setService] = useState('CONTAINER');
-  const [cargoType, setCargoType] = useState('Medium');
+  const [cargoSize, setCargoSize] = useState('Medium');
   const [quantity, setQuantity] = useState("");
   const [pallets, setPallets] = useState("");
   const [type, setType] = useState("DRY");
-  const [containerNo, setContainerNo] = useState("134");
+  const [containerNo, setContainerNo] = useState("");
   const [size, setSize] = useState("");
   const [height, setHeight] = useState("");
   const [reefer, setReefer] = useState("");
   const [material, setMaterial] = useState("");
   const [color, setColor] = useState("");
-  const [chassisNo, setChassisNo] = useState("2");
-  const [temperature, setTemperature] = useState("50°C");
+  const [chassisNo, setChassisNo] = useState("");
+  const [temperature, setTemperature] = useState("");
   const [decksNo, setDecksNo] = useState("");
+  const [boxContains, setBoxContains] = useState("clothing, shoes, non-perishables");
 
-  const [bookingDate, setBookingDate] = useState("20 / 12 / 2025");
-  const [fromLocation, setFromLocation] = useState("NAS");
-  const [toLocation, setToLocation] = useState("MAH");
+  const [bookingDate, setBookingDate] = useState(new Date().toISOString().split('T')[0]);
+  const [fromLocation, setFromLocation] = useState("");
+  const [toLocation, setToLocation] = useState("");
 
-  const [contactName, setContactName] = useState("Jane Robin Forbes");
-  const [contactEmail, setContactEmail] = useState("janeforbes101@sample.com");
-  const [contactPhone, setContactPhone] = useState("+1 1234 1234");
-  const [address, setAddress] = useState("ABC-12, ABC DEF, BD-12");
+  const [contactName, setContactName] = useState(user ? `${user.firstName} ${user.lastName}` : "");
+  const [contactEmail, setContactEmail] = useState(user?.email || "");
+  const [contactPhone, setContactPhone] = useState(user?.mobileNumber || "");
+  const [address, setAddress] = useState("");
   const [idType, setIdType] = useState("Passport");
 
-  const [deficiency, setDeficiency] = useState("Broken");
-  const [damageLocation, setDamageLocation] = useState("Left Center");
+  const [damageFound, setDamageFound] = useState("");
+  const [damageLocation, setDamageLocation] = useState("");
   const [comment, setComment] = useState("");
-  const [paymentStatus, setPaymentStatus] = useState("PAID");
+  const [paymentStatus, setPaymentStatus] = useState("UNPAID");
   const [remark, setRemark] = useState("");
+
+  const [items, setItems] = useState<any[]>([
+    { id: 1, icon: 'box', type: 'DRY BOX(S)', unitPrice: 50, quantity: 3, total: 150, paid: true },
+  ]);
+
+  // Fetch Locations
+  useEffect(() => {
+    async function fetchLocations() {
+      try {
+        const res = await apiFetch('/api/locations');
+        if (res.ok) {
+          const data = await res.json();
+          setLocations(data.locations);
+          if (data.locations.length > 0) {
+            setFromLocation(data.locations[0].code);
+            if (data.locations.length > 1) setToLocation(data.locations[1].code);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch locations:", err);
+      }
+    }
+    fetchLocations();
+  }, [apiFetch]);
+
+  // Handle Form Submission
+  const handleSubmit = async () => {
+    if (!fromLocation || !toLocation || !contactName) {
+      toast.error("Please fill in required fields");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const res = await apiFetch('/api/bookings/cargo', {
+        method: 'POST',
+        body: JSON.stringify({
+          service, cargoSize, quantity, pallets, type, containerNo,
+          size, height, reeferNo: reefer, material, color, chassisNo,
+          temperature, decksNo, boxContains, bookingDate,
+          fromLocation, toLocation,
+          contactName, contactEmail, contactPhone, address, idType,
+          damageFound, damageLocation, deficiencyComment: comment,
+          paymentStatus, remark, items
+        })
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        toast.success(`Booking created successfully! Invoice: #${data.invoiceNo}`);
+        // Optional: redirect or reset form
+      } else {
+        const error = await res.json();
+        toast.error(error.error || "Failed to create booking");
+      }
+    } catch (err) {
+      toast.error("An error occurred during submission");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const cargoRadioTypes = ['Small', 'Medium', 'Large', 'Fragile', 'Hazardous', 'Live'];
 
@@ -112,11 +175,11 @@ function CargoBookingContent() {
             {cargoRadioTypes.map((type) => (
               <label key={type} className="flex items-center gap-4 cursor-pointer group">
                 <div
-                  className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${cargoType === type ? 'border-[#296341]' : 'border-gray-300'
+                  className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${cargoSize === type ? 'border-[#296341]' : 'border-gray-300'
                     }`}
-                  onClick={() => setCargoType(type)}
+                  onClick={() => setCargoSize(type)}
                 >
-                  {cargoType === type && <div className="w-3 h-3 rounded-full bg-[#296341]" />}
+                  {cargoSize === type && <div className="w-3 h-3 rounded-full bg-[#296341]" />}
                 </div>
                 <span className="text-[18px] font-medium text-gray-700 group-hover:text-black">{type}</span>
               </label>
@@ -227,7 +290,9 @@ function CargoBookingContent() {
               </label>
               <div className="relative">
                 <select value={fromLocation} onChange={(e) => setFromLocation(e.target.value)} className="w-full h-[50px] bg-white border border-gray-200 rounded-md px-4 shadow-sm appearance-none outline-none focus:ring-2 focus:ring-[#296341] text-[18px] font-bold">
-                  <option value="NAS">NAS</option>
+                  {locations.map(loc => (
+                    <option key={loc.id} value={loc.code}>{loc.code} - {loc.name}</option>
+                  ))}
                 </select>
                 <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-[#296341]" />
               </div>
@@ -238,7 +303,9 @@ function CargoBookingContent() {
               </label>
               <div className="relative">
                 <select value={toLocation} onChange={(e) => setToLocation(e.target.value)} className="w-full h-[50px] bg-white border border-gray-200 rounded-md px-4 shadow-sm appearance-none outline-none focus:ring-2 focus:ring-[#296341] text-[18px] font-bold">
-                  <option value="MAH">MAH</option>
+                  {locations.map(loc => (
+                    <option key={loc.id} value={loc.code}>{loc.code} - {loc.name}</option>
+                  ))}
                 </select>
                 <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-[#296341]" />
               </div>
@@ -281,8 +348,12 @@ function CargoBookingContent() {
               <div className="space-y-1">
                 <label className="text-[14px] font-bold text-gray-500">Damage Found</label>
                 <div className="relative">
-                  <select value={deficiency} onChange={(e) => setDeficiency(e.target.value)} className="w-full h-[45px] border-b border-gray-300 outline-none focus:border-[#296341] text-[18px] font-bold appearance-none bg-transparent">
+                  <select value={damageFound} onChange={(e) => setDamageFound(e.target.value)} className="w-full h-[45px] border-b border-gray-300 outline-none focus:border-[#296341] text-[18px] font-bold appearance-none bg-transparent">
+                    <option value="">None</option>
                     <option value="Broken">Broken</option>
+                    <option value="Scratched">Scratched</option>
+                    <option value="Dented">Dented</option>
+                    <option value="Wet">Wet</option>
                   </select>
                   <ChevronDown className="absolute right-0 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
                 </div>
@@ -308,8 +379,12 @@ function CargoBookingContent() {
             <button className="bg-[#132540] text-white px-12 py-3 rounded-lg text-[22px] font-bold hover:bg-[#1a3254] transition-all shadow-md active:scale-95 flex items-center gap-3">
               <Plus className="w-6 h-6" /> ADD ITEM
             </button>
-            <button className="bg-[#132540] text-white px-16 py-3 rounded-lg text-[22px] font-bold hover:bg-[#1a3254] transition-all shadow-md active:scale-95">
-              SUBMIT
+            <button
+              onClick={handleSubmit}
+              disabled={isSubmitting}
+              className="bg-[#132540] text-white px-16 py-3 rounded-lg text-[22px] font-bold hover:bg-[#1a3254] transition-all shadow-md active:scale-95 flex items-center gap-2"
+            >
+              {isSubmitting ? <Loader2 className="animate-spin" /> : "SUBMIT"}
             </button>
           </div>
 
@@ -385,14 +460,13 @@ function CargoBookingContent() {
 
           {/* Cargo Items Rounded Cards */}
           <div className="space-y-4 mb-10 max-w-[1000px]">
-            {cargoItemsList.map((item) => (
-              <div key={item.id} className="bg-white rounded-xl py-3 px-8 flex items-center shadow-sm group">
+            {items.map((item) => (
+              <div key={item.id} className="bg-white rounded-xl py-4 px-8 flex items-center shadow-sm group">
                 <div className="w-12 h-12 flex items-center justify-center text-[#296341]">
-                  {item.icon === 'box' ? <Box /> : <Container />}
+                  {item.icon === 'box' || item.type.includes('BOX') ? <Box /> : <Container />}
                 </div>
-                <div className="flex-1 text-[20px] font-bold text-gray-700 ml-4">{item.type}</div>
-                <div className="text-[20px] font-bold text-gray-600 mr-12">{item.amount}</div>
-                <div className="text-[20px] font-bold text-black mr-12">{item.total}</div>
+                <div className="flex-1 text-[20px] font-bold text-gray-700 ml-4">{item.type} {item.unitPrice ? `($${item.unitPrice})` : ''} x {item.quantity}</div>
+                <div className="text-[20px] font-black text-black mr-12">${(item.total || item.unitPrice * item.quantity).toLocaleString()}</div>
                 <div className="flex gap-4">
                   <Edit2 className="w-6 h-6 text-gray-400 group-hover:text-[#296341] cursor-pointer transition-colors" />
                   <Trash2 className="w-6 h-6 text-gray-400 group-hover:text-[#296341] cursor-pointer transition-colors" />
@@ -479,7 +553,12 @@ function CargoBookingContent() {
           <button className="bg-[#1e4a2e] text-white px-16 py-3 rounded-lg text-[20px] font-bold tracking-widest hover:bg-emerald-800 transition-all shadow-lg active:scale-95">
             Preview
           </button>
-          <button className="bg-[#1e4a2e] text-white px-16 py-3 rounded-lg text-[20px] font-bold tracking-widest hover:bg-emerald-800 transition-all shadow-lg active:scale-95">
+          <button
+            onClick={handleSubmit}
+            disabled={isSubmitting}
+            className="bg-[#1e4a2e] text-white px-16 py-3 rounded-lg text-[20px] font-bold tracking-widest hover:bg-emerald-800 transition-all shadow-lg active:scale-95 flex items-center gap-2"
+          >
+            {isSubmitting && <Loader2 className="w-5 h-5 animate-spin" />}
             Save & Send
           </button>
         </div>
@@ -498,8 +577,4 @@ function CargoBookingContent() {
       </footer>
     </div>
   );
-}
-
-export default function CargoBooking() {
-  return <CargoBookingContent />;
 }

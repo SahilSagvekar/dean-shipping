@@ -28,7 +28,7 @@ export function Header({ currentPage, onNavigate }: { currentPage: string; onNav
         <nav className="flex items-center gap-12">
           {/* const router = useRouter(); */}
           <div className="relative">
-            <button  onClick={() => router.push('/schedule')} className="text-xl text-black hover:text-[#296341] transition-colors">
+            <button  onClick={() => router.push('/schedule')} className="text-xl text-black hover:text-[#296341] transition-colors cursor-pointer">
               Schedule
             </button>
             {currentPage === 'schedule' && (
@@ -36,23 +36,23 @@ export function Header({ currentPage, onNavigate }: { currentPage: string; onNav
             )}
           </div>
           <div className="relative">
-            <button onClick={() => router.push('/about')}  className="text-xl text-black hover:text-[#296341] transition-colors">
+            <button onClick={() => router.push('/about')}  className="text-xl text-black hover:text-[#296341] transition-colors cursor-pointer">
               About Us
             </button>
             {/* {currentPage === 'home' && (
               <div className="absolute left-0 right-0 h-[3px] bg-[#296341] rounded-full mt-1" />
             )} */}
           </div>
-          <button onClick={() => router.push('/shipment')} className="text-xl text-black hover:text-[#296341] transition-colors">
+          <button onClick={() => router.push('/shipment')} className="text-xl text-black hover:text-[#296341] transition-colors cursor-pointer">
             Your Shipment
           </button>
-          <button onClick={() => router.push('/pay-now')} className="text-xl text-black hover:text-[#296341] transition-colors">
+          <button onClick={() => router.push('/pay-now')} className="text-xl text-black hover:text-[#296341] transition-colors cursor-pointer">
             Pay Now
           </button>
-          <button onClick={() => router.push('/contact')} className="text-xl text-black hover:text-[#296341] transition-colors">
+          <button onClick={() => router.push('/contact')} className="text-xl text-black hover:text-[#296341] transition-colors cursor-pointer">
             Contact Us
           </button>
-          <button onClick={() => router.push('/login')} className="bg-[#296341] border border-[#296341] text-white px-8 py-3 rounded-[10px] text-xl font-bold hover:bg-[#1e4a2f] transition-colors">
+          <button onClick={() => router.push('/login')} className="bg-[#296341] border border-[#296341] text-white px-8 py-3 rounded-[10px] text-xl font-bold hover:bg-[#1e4a2f] transition-colors cursor-pointer">
             LOGIN
           </button>
         </nav>
