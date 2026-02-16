@@ -9,79 +9,83 @@ import SchedulePage from '@/components/SchedulePage';
 
 export default function Footer() {
   return (
-    <footer className="bg-[#5f8a71] text-white py-16 px-8">
+    <footer className="bg-[#5f8a71] text-white py-10 md:py-16 px-4 md:px-8">
       <div className="max-w-[1440px] mx-auto">
         {/* Logo */}
-        <div className="mb-12">
-          <img alt="Dean's Shipping Ltd." className="h-[86px] w-[298px] object-cover" src={imgRectangle44.src} />
+        <div className="mb-8 md:mb-12 flex justify-center md:justify-start">
+          <img
+            alt="Dean's Shipping Ltd."
+            className="h-[60px] md:h-[86px] w-auto object-cover"
+            src={imgRectangle44.src}
+          />
         </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-12 mb-12">
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-10 md:gap-12 mb-12">
           {/* Head Office */}
-          <div>
+          <div className="text-center md:text-left">
             <h3 className="text-2xl font-semibold mb-6">Head office</h3>
-            
-            <div className="space-y-6 text-xl">
+
+            <div className="space-y-6 text-lg md:text-xl">
               <div>
-                <p className="text-[22px] font-semibold mb-2">Nassau, The Bahamas</p>
+                <p className="text-xl md:text-[22px] font-semibold mb-2">Nassau, The Bahamas</p>
                 <p className="font-normal">Parkgate Road</p>
                 <p className="font-normal">P.O. Box EE-17318</p>
                 <p className="font-normal mt-2">CALL: 1.242.394.0245/6</p>
               </div>
-              
+
               <div>
-                <p className="text-[22px] font-semibold mb-2">Potter's Cay</p>
+                <p className="text-xl md:text-[22px] font-semibold mb-2">Potter's Cay</p>
                 <p className="font-normal">CALL: 1.242.601.5121</p>
               </div>
-              
+
               <div>
-                <p className="text-[22px] font-semibold mb-2">Abaco, The Bahamas</p>
+                <p className="text-xl md:text-[22px] font-semibold mb-2">Abaco, The Bahamas</p>
                 <p className="font-normal">Queen's Highway (at Port)</p>
                 <p className="font-normal">CALL: 1.242.367.2389</p>
               </div>
             </div>
           </div>
-          
+
           {/* Quick Links */}
-          <div>
+          <div className="text-center md:text-left">
             <h3 className="text-2xl font-semibold mb-6">Quick Links</h3>
-            <ul className="space-y-3 text-xl font-medium">
-              <li><a href="#about" className="hover:underline">About Us</a></li>
-              <li><a href="#book" className="hover:underline">Book now</a></li>
-              <li><a href="#contact" className="hover:underline">Contact us</a></li>
-              <li><a href="#terms" className="hover:underline">Terms & Condition</a></li>
-              <li><a href="#privacy" className="hover:underline">Privacy Policy</a></li>
+            <ul className="space-y-4 text-lg md:text-xl font-medium">
+              <li><a href="#about" className="hover:underline transition-all">About Us</a></li>
+              <li><a href="#book" className="hover:underline transition-all">Book now</a></li>
+              <li><a href="#contact" className="hover:underline transition-all">Contact us</a></li>
+              <li><a href="#terms" className="hover:underline transition-all">Terms & Condition</a></li>
+              <li><a href="#privacy" className="hover:underline transition-all">Privacy Policy</a></li>
             </ul>
           </div>
-          
+
           {/* Contact Us */}
-          <div>
+          <div className="text-center md:text-left col-span-1 sm:col-span-2 md:col-span-1">
             <h3 className="text-2xl font-semibold mb-6">Contact Us</h3>
-            
-            <div className="space-y-4">
+
+            <div className="space-y-4 flex flex-col items-center md:items-start text-lg md:text-xl">
               <div className="flex items-center gap-3">
-                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24">
+                <svg className="w-6 h-6 flex-shrink-0" fill="none" viewBox="0 0 24 24">
                   <path d={svgPaths.p995f500} fill="white" />
                 </svg>
-                <a href="mailto:contact@contact.com" className="text-xl font-light hover:underline">
+                <a href="mailto:contact@contact.com" className="font-light hover:underline">
                   contact@contact.com
                 </a>
               </div>
-              
+
               <div className="flex items-center gap-3">
-                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24">
+                <svg className="w-6 h-6 flex-shrink-0" fill="none" viewBox="0 0 24 24">
                   <path d={svgPaths.pe263670} fill="white" />
                   <path d={svgPaths.p5e7740} fill="white" />
                 </svg>
-                <span className="text-xl font-light">+1 98765 43210</span>
+                <span className="font-light">+1 98765 43210</span>
               </div>
             </div>
-            
-            <div className="mt-8">
+
+            <div className="mt-10 md:mt-8">
               <p className="text-2xl font-medium mb-4">Follow us on</p>
-              <div className="flex items-center gap-4">
-                <a href="#instagram" className="hover:opacity-80 transition-opacity" aria-label="Instagram">
-                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24">
+              <div className="flex items-center justify-center md:justify-start gap-6 md:gap-4">
+                <a href="#instagram" className="hover:scale-110 transition-transform" aria-label="Instagram">
+                  <svg className="w-8 h-8 md:w-6 md:h-6" fill="none" viewBox="0 0 24 24">
                     <path d={svgPaths.p24edac00} fill="url(#paint0_radial_footer)" />
                     <path d={svgPaths.p24edac00} fill="url(#paint1_radial_footer)" />
                     <path d={svgPaths.p3f139100} fill="white" />
@@ -100,24 +104,23 @@ export default function Footer() {
                     </defs>
                   </svg>
                 </a>
-                
-                <a href="#facebook" className="hover:opacity-80 transition-opacity" aria-label="Facebook">
-                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24">
+
+                <a href="#facebook" className="hover:scale-110 transition-transform" aria-label="Facebook">
+                  <svg className="w-8 h-8 md:w-6 md:h-6" fill="none" viewBox="0 0 24 24">
                     <path d={svgPaths.p1fdd2200} fill="#1877F2" />
                     <path d={svgPaths.p23faaa00} fill="white" />
                   </svg>
                 </a>
-                
-                <a href="#linkedin" className="hover:opacity-80 transition-opacity" aria-label="LinkedIn">
-                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24">
-                    <path d={svgPaths.p24edac00} fill="white" />
+
+                <a href="#linkedin" className="hover:scale-110 transition-transform" aria-label="LinkedIn">
+                  <svg className="w-8 h-8 md:w-6 md:h-6" fill="none" viewBox="0 0 24 24">
                     <path d={svgPaths.p24edac00} fill="#0A66C2" />
                     <path d={svgPaths.pf9a8e00} fill="white" />
                   </svg>
                 </a>
-                
-                <a href="#twitter" className="hover:opacity-80 transition-opacity" aria-label="Twitter">
-                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24">
+
+                <a href="#twitter" className="hover:scale-110 transition-transform" aria-label="Twitter">
+                  <svg className="w-8 h-8 md:w-6 md:h-6" fill="none" viewBox="0 0 24 24">
                     <rect fill="white" height="16" width="18" x="3" y="4" />
                     <path clipRule="evenodd" d={svgPaths.p2a062900} fill="#5F8A71" fillRule="evenodd" />
                   </svg>
@@ -126,10 +129,10 @@ export default function Footer() {
             </div>
           </div>
         </div>
-        
+
         {/* Copyright */}
-        <div className="border-t border-white/30 pt-8 text-center">
-          <p className="text-xl font-medium">Dean's Shipping Ltd. Â© 2025. All rights reserved</p>
+        <div className="border-t border-white/30 pt-8 text-center text-base md:text-xl">
+          <p className="font-medium">Dean&apos;s Shipping Ltd. &copy; 2025. All rights reserved</p>
         </div>
       </div>
     </footer>

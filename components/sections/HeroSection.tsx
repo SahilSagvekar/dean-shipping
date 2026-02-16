@@ -29,14 +29,14 @@ export default function HeroSection({ isLoaded }: HeroSectionProps) {
         backgroundPosition: 'center',
         filter: 'brightness(0.7)',
       }} />
-      
+
       {/* Gradient Overlay */}
       <div style={{
         position: 'absolute',
         inset: 0,
         background: 'linear-gradient(180deg, rgba(27, 77, 62, 0.4) 0%, rgba(27, 77, 62, 0.7) 100%)',
       }} />
-      
+
       {/* Content */}
       <div className={`fade-in ${isLoaded ? 'visible' : ''}`} style={{
         position: 'relative',
@@ -53,7 +53,7 @@ export default function HeroSection({ isLoaded }: HeroSectionProps) {
           letterSpacing: '3px',
           // text-color: 'var(--accent-gold)',         
         }}>Welcome to</p>
-        
+
         <h1 style={{
           fontFamily: "'Playfair Display', serif",
           fontSize: 'clamp(3rem, 8vw, 6rem)',
@@ -65,7 +65,7 @@ export default function HeroSection({ isLoaded }: HeroSectionProps) {
         }}>
           Dean&apos;s Shipping Ltd.
         </h1>
-        
+
         <p style={{
           fontSize: '1.2rem',
           color: 'var(--text-muted)',
@@ -75,14 +75,9 @@ export default function HeroSection({ isLoaded }: HeroSectionProps) {
         }}>
           Your trusted partner for mailboat services and international aggregate chartering across the Bahamas and Caribbean
         </p>
-        
+
         {/* Service Icons */}
-        <div style={{
-          display: 'flex',
-          justifyContent: 'center',
-          gap: '4rem',
-          marginTop: '2rem',
-        }}>
+        <div className="flex flex-row justify-center gap-6 md:gap-16 mt-8">
           <ServiceIcon icon="vehicle" label="Vehicle" delay="delay-2" isLoaded={isLoaded} />
           <ServiceIcon icon="cargo" label="Cargo" delay="delay-3" isLoaded={isLoaded} />
           <ServiceIcon icon="passenger" label="Passenger" delay="delay-4" isLoaded={isLoaded} />
@@ -98,9 +93,9 @@ export default function HeroSection({ isLoaded }: HeroSectionProps) {
         animation: 'bounce 2s infinite',
       }}>
         <svg width="30" height="50" viewBox="0 0 30 50" fill="none">
-          <rect x="1" y="1" width="28" height="48" rx="14" stroke="rgba(255,255,255,0.5)" strokeWidth="2"/>
+          <rect x="1" y="1" width="28" height="48" rx="14" stroke="rgba(255,255,255,0.5)" strokeWidth="2" />
           <circle cx="15" cy="15" r="5" fill="var(--accent-gold)">
-            <animate attributeName="cy" values="15;30;15" dur="2s" repeatCount="indefinite"/>
+            <animate attributeName="cy" values="15;30;15" dur="2s" repeatCount="indefinite" />
           </circle>
         </svg>
       </div>

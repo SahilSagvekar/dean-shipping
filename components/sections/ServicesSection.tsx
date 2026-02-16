@@ -10,142 +10,61 @@ export default function ServicesSection() {
   return (
     <>
       {/* Main Services Section */}
-      <section id="services" style={{
-        padding: '6rem 2rem',
-        backgroundColor: 'var(--bg-section)',
-      }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+      <section id="services" className="py-12 md:py-24 px-4 md:px-8 bg-[var(--bg-section)]">
+        <div className="max-w-[1200px] mx-auto">
           {/* Section Header */}
-          <div style={{ textAlign: 'center', marginBottom: '4rem' }}>
-            <p style={{
-              color: 'var(--accent-gold)',
-              textTransform: 'uppercase',
-              letterSpacing: '3px',
-              fontSize: '0.9rem',
-              marginBottom: '1rem',
-            }}>What We Offer</p>
-            <h2 style={{
-              fontFamily: "'Playfair Display', serif",
-              fontSize: '2.8rem',
-              color: 'var(--primary-dark)',
-            }}>Our Services</h2>
+          <div className="text-center mb-10 md:mb-16">
+            <p className="text-[var(--accent-gold)] uppercase tracking-[3px] text-sm mb-4 font-semibold">What We Offer</p>
+            <h2 className="font-['Playfair_Display'] text-3xl md:text-5xl text-[var(--primary-dark)]">Our Services</h2>
           </div>
 
           {/* Mailboat Services */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: '1fr 1fr',
-            gap: '4rem',
-            alignItems: 'center',
-            marginBottom: '6rem',
-          }}>
-            <div>
-              <h3 style={{
-                fontFamily: "'Playfair Display', serif",
-                fontSize: '2rem',
-                color: 'var(--primary-dark)',
-                marginBottom: '1.5rem',
-              }}>Mailboat Shipping Services</h3>
-              <p style={{
-                color: '#555',
-                lineHeight: 1.9,
-                marginBottom: '1.5rem',
-              }}>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-16 items-center mb-16 md:mb-24">
+            <div className="order-2 md:order-1">
+              <h3 className="font-['Playfair_Display'] text-2xl md:text-[2rem] text-[var(--primary-dark)] mb-6">Mailboat Shipping Services</h3>
+              <p className="text-[#555] leading-relaxed mb-6">
                 Our mailboat shipping services offer a reliable and affordable way to transport mail and packages throughout the Bahamas and other Caribbean islands. With a regular weekly schedule to North Abaco, we ensure timely delivery of your mail and packages to any destination within our network.
               </p>
-              <p style={{
-                color: '#555',
-                lineHeight: 1.9,
-              }}>
+              <p className="text-[#555] leading-relaxed">
                 Dean&apos;s Shipping has over 70 years of experience, ensuring timely delivery of your mail and packages to any destination within our network. Our vessels are equipped with advanced technology and staffed by experienced professionals, ensuring that your shipments arrive safely and on time.
               </p>
-              <div style={{ marginTop: '2rem' }}>
+              <div className="mt-10">
                 <PrimaryButton>Learn More →</PrimaryButton>
               </div>
             </div>
-            <div style={{
-              position: 'relative',
-              borderRadius: '8px',
-              overflow: 'hidden',
-              boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)',
-            }}>
-              <img 
+            <div className="relative rounded-lg overflow-hidden shadow-2xl order-1 md:order-2">
+              <img
                 src={Image1.src}
                 alt="Lighthouse and cargo ship"
-                style={{ width: '100%', height: '400px', objectFit: 'cover' }}
+                className="w-full h-64 md:h-[400px] object-cover focus-ring"
               />
-              <div style={{
-                position: 'absolute',
-                bottom: 0,
-                left: 0,
-                right: 0,
-                padding: '2rem',
-                background: 'linear-gradient(transparent, rgba(27, 77, 62, 0.9))',
-              }}>
-                <p style={{
-                  // color: 'var(--accent-gold)',
-                  color: '#ffffff',
-                  fontFamily: "'Playfair Display', serif",
-                  fontSize: '1.2rem',
-                }}>Weekly Schedule to North Abaco</p>
+              <div className="absolute inset-x-0 bottom-0 p-6 md:p-8 bg-gradient-to-t from-[rgba(27,77,62,0.9)] to-transparent">
+                <p className="text-white font-['Playfair_Display'] text-xl">Weekly Schedule to North Abaco</p>
               </div>
             </div>
           </div>
 
           {/* Aggregate Chartering */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: '1fr 1fr',
-            gap: '4rem',
-            alignItems: 'center',
-          }}>
-            <div style={{
-              position: 'relative',
-              borderRadius: '8px',
-              overflow: 'hidden',
-              boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)',
-            }}>
-              <img 
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-16 items-center">
+            <div className="relative rounded-lg overflow-hidden shadow-2xl">
+              <img
                 src="https://images.unsplash.com/photo-1578575437130-527eed3abbec?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
                 alt="Cargo containers"
-                style={{ width: '100%', height: '400px', objectFit: 'cover' }}
+                className="w-full h-64 md:h-[400px] object-cover"
               />
-              <div style={{
-                position: 'absolute',
-                bottom: 0,
-                left: 0,
-                right: 0,
-                padding: '2rem',
-                background: 'linear-gradient(transparent, rgba(27, 77, 62, 0.9))',
-              }}>
-                <p style={{
-                  color: '#ffffff',
-                  fontFamily: "'Playfair Display', serif",
-                  fontSize: '1.2rem',
-                }}>M/V Champion III</p>
+              <div className="absolute inset-x-0 bottom-0 p-6 md:p-8 bg-gradient-to-t from-[rgba(27,77,62,0.9)] to-transparent">
+                <p className="text-white font-['Playfair_Display'] text-xl">M/V Champion III</p>
               </div>
             </div>
             <div>
-              <h3 style={{
-                fontFamily: "'Playfair Display', serif",
-                fontSize: '2rem',
-                color: 'var(--primary-dark)',
-                marginBottom: '1.5rem',
-              }}>International Aggregate Chartering</h3>
-              <p style={{
-                color: '#555',
-                lineHeight: 1.9,
-                marginBottom: '1.5rem',
-              }}>
+              <h3 className="font-['Playfair_Display'] text-2xl md:text-[2rem] text-[var(--primary-dark)] mb-6">International Aggregate Chartering</h3>
+              <p className="text-[#555] leading-relaxed mb-6">
                 In addition to our mailboat shipping services, we also offer international aggregate chartering services. Our vessels specialize in transporting various types of aggregate materials, including sand, gravel, and crushed stone, to destinations around the world.
               </p>
-              <p style={{
-                color: '#555',
-                lineHeight: 1.9,
-              }}>
+              <p className="text-[#555] leading-relaxed">
                 With our real-time monitoring and tracking capabilities, we provide reliable and efficient delivery of your cargo, ensuring that it arrives at its destination on time and in excellent condition.
               </p>
-              <div style={{ marginTop: '2rem' }}>
+              <div className="mt-10">
                 <PrimaryButton>Learn More →</PrimaryButton>
               </div>
             </div>
@@ -154,51 +73,36 @@ export default function ServicesSection() {
       </section>
 
       {/* Services Include Section */}
-      <section style={{
-        backgroundColor: 'var(--primary-dark)',
-        padding: '6rem 2rem',
-      }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: '1fr 1fr',
-            gap: '4rem',
-            alignItems: 'center',
-          }}>
+      <section className="bg-[var(--primary-dark)] py-12 md:py-24 px-4 md:px-8">
+        <div className="max-w-[1200px] mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 md:gap-16 items-center">
             <div>
-              <h2 style={{
-                fontFamily: "'Playfair Display', serif",
-                fontSize: '2.5rem',
-                color: 'var(--text-light)',
-                marginBottom: '2rem',
-              }}>Our Services Include</h2>
-              
-              <ServiceItem 
-                title="Private Shipments"
-                description="Safe and secure transportation of your private goods between islands and throughout the Caribbean."
-              />
-              <ServiceItem 
-                title="Large Aggregate Shipping"
-                description="We specialize in handling large cargo like construction materials, machinery, and more, ensuring safe delivery to your destination."
-              />
-              <ServiceItem 
-                title="Vehicle Shipments"
-                description="Transport your cars, trucks, and other vehicles with ease and reliability."
-              />
-              <ServiceItem 
-                title="Charter Services"
-                description="Affordable charter services to Florida and the Northern Caribbean."
-              />
+              <h2 className="font-['Playfair_Display'] text-3xl md:text-[2.5rem] text-[var(--text-light)] mb-8">Our Services Include</h2>
+
+              <div className="space-y-2">
+                <ServiceItem
+                  title="Private Shipments"
+                  description="Safe and secure transportation of your private goods between islands and throughout the Caribbean."
+                />
+                <ServiceItem
+                  title="Large Aggregate Shipping"
+                  description="We specialize in handling large cargo like construction materials, machinery, and more, ensuring safe delivery to your destination."
+                />
+                <ServiceItem
+                  title="Vehicle Shipments"
+                  description="Transport your cars, trucks, and other vehicles with ease and reliability."
+                />
+                <ServiceItem
+                  title="Charter Services"
+                  description="Affordable charter services to Florida and the Northern Caribbean."
+                />
+              </div>
             </div>
-            <div style={{
-              borderRadius: '8px',
-              overflow: 'hidden',
-              boxShadow: '0 25px 50px -12px rgba(0,0,0,0.4)',
-            }}>
-              <img 
+            <div className="rounded-lg overflow-hidden shadow-2xl hidden md:block">
+              <img
                 src={Image3.src}
                 alt="Captain at work"
-                style={{ width: '100%', height: '500px', objectFit: 'cover' }}
+                className="w-full h-[500px] object-cover"
               />
             </div>
           </div>

@@ -27,114 +27,71 @@ export default function Contact() {
   };
 
   return (
-    <div className="bg-white min-h-screen pt-[135px]">
+    <div className="bg-white min-h-screen pt-[80px] md:pt-[135px]">
       {/* Hero Section */}
-      <section className="relative bg-[#296341] py-20">
-        <div className="max-w-[1440px] mx-auto px-8">
-          <h1 className="font-['Inter'] font-bold text-[48px] text-white text-center mb-4">
+      <section className="relative bg-[#296341] py-12 md:py-20">
+        <div className="max-w-[1440px] mx-auto px-4 md:px-8">
+          <h1 className="font-['Inter'] font-bold text-3xl md:text-[48px] text-white text-center mb-4">
             Contact Us
           </h1>
-          <p className="font-['Inter'] font-normal text-[24px] text-white text-center max-w-[800px] mx-auto">
+          <p className="font-['Inter'] font-normal text-lg md:text-[24px] text-white text-center max-w-[800px] mx-auto">
             Have questions or need assistance? We're here to help. Get in touch with us today.
           </p>
         </div>
       </section>
 
       {/* Main Content */}
-      <section className="relative py-24">
-        <div className="max-w-[1440px] mx-auto px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
+      <section className="relative py-12 md:py-24">
+        <div className="max-w-[1440px] mx-auto px-4 md:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 md:gap-16">
             {/* Contact Form */}
-            <div className="bg-white border-3 border-[#296341] rounded-[10px] px-12 py-12">
-              <h2 className="font-['Inter'] font-semibold text-[32px] text-[#296341] mb-8">
+            <div className="bg-white border-2 md:border-3 border-[#296341] rounded-xl md:rounded-[10px] px-6 md:px-12 py-8 md:py-12 shadow-sm">
+              <h2 className="font-['Inter'] font-semibold text-2xl md:text-[32px] text-[#296341] mb-6 md:mb-8 text-center md:text-left">
                 Send us a message
               </h2>
 
-              <form onSubmit={handleSubmit} className="space-y-6">
-                {/* Name */}
-                <div>
-                  <label className="block font-['Inter'] font-medium text-[20px] text-black mb-3">
-                    Name<span className="text-red-600">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleChange}
-                    placeholder="Enter your name"
-                    className="w-full h-[52px] px-4 border border-black rounded-[5px] font-['Inter'] font-normal text-[18px] text-[#585858] placeholder:text-[#585858] focus:outline-none focus:ring-2 focus:ring-[#296341]"
-                    required
-                  />
-                </div>
+              <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
+                {[
+                  { label: "Name", name: "name", type: "text", placeholder: "Enter your name", required: true },
+                  { label: "Email", name: "email", type: "email", placeholder: "Enter your email", required: true },
+                  { label: "Phone", name: "phone", type: "tel", placeholder: "Enter your phone number", required: false },
+                  { label: "Subject", name: "subject", type: "text", placeholder: "Enter subject", required: true }
+                ].map((field, idx) => (
+                  <div key={idx}>
+                    <label className="block font-['Inter'] font-medium text-base md:text-[20px] text-black mb-2 md:mb-3">
+                      {field.label}{field.required && <span className="text-red-600 ml-1">*</span>}
+                    </label>
+                    <input
+                      type={field.type}
+                      name={field.name}
+                      value={(formData as any)[field.name]}
+                      onChange={handleChange}
+                      placeholder={field.placeholder}
+                      className="w-full h-11 md:h-[52px] px-4 border border-black rounded-[5px] font-['Inter'] font-normal text-base md:text-[18px] text-[#585858] placeholder:text-[#585858]/50 focus:outline-none focus:ring-2 focus:ring-[#296341]"
+                      required={field.required}
+                    />
+                  </div>
+                ))}
 
-                {/* Email */}
                 <div>
-                  <label className="block font-['Inter'] font-medium text-[20px] text-black mb-3">
-                    Email<span className="text-red-600">*</span>
-                  </label>
-                  <input
-                    type="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    placeholder="Enter your email"
-                    className="w-full h-[52px] px-4 border border-black rounded-[5px] font-['Inter'] font-normal text-[18px] text-[#585858] placeholder:text-[#585858] focus:outline-none focus:ring-2 focus:ring-[#296341]"
-                    required
-                  />
-                </div>
-
-                {/* Phone */}
-                <div>
-                  <label className="block font-['Inter'] font-medium text-[20px] text-black mb-3">
-                    Phone
-                  </label>
-                  <input
-                    type="tel"
-                    name="phone"
-                    value={formData.phone}
-                    onChange={handleChange}
-                    placeholder="Enter your phone number"
-                    className="w-full h-[52px] px-4 border border-black rounded-[5px] font-['Inter'] font-normal text-[18px] text-[#585858] placeholder:text-[#585858] focus:outline-none focus:ring-2 focus:ring-[#296341]"
-                  />
-                </div>
-
-                {/* Subject */}
-                <div>
-                  <label className="block font-['Inter'] font-medium text-[20px] text-black mb-3">
-                    Subject<span className="text-red-600">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="subject"
-                    value={formData.subject}
-                    onChange={handleChange}
-                    placeholder="Enter subject"
-                    className="w-full h-[52px] px-4 border border-black rounded-[5px] font-['Inter'] font-normal text-[18px] text-[#585858] placeholder:text-[#585858] focus:outline-none focus:ring-2 focus:ring-[#296341]"
-                    required
-                  />
-                </div>
-
-                {/* Message */}
-                <div>
-                  <label className="block font-['Inter'] font-medium text-[20px] text-black mb-3">
-                    Message<span className="text-red-600">*</span>
+                  <label className="block font-['Inter'] font-medium text-base md:text-[20px] text-black mb-2 md:mb-3">
+                    Message<span className="text-red-600 ml-1">*</span>
                   </label>
                   <textarea
                     name="message"
                     value={formData.message}
                     onChange={handleChange}
                     placeholder="Enter your message"
-                    rows={6}
-                    className="w-full px-4 py-3 border border-black rounded-[5px] font-['Inter'] font-normal text-[18px] text-[#585858] placeholder:text-[#585858] focus:outline-none focus:ring-2 focus:ring-[#296341] resize-none"
+                    rows={4}
+                    className="w-full px-4 py-3 border border-black rounded-[5px] font-['Inter'] font-normal text-base md:text-[18px] text-[#585858] placeholder:text-[#585858]/50 focus:outline-none focus:ring-2 focus:ring-[#296341] resize-none"
                     required
                   />
                 </div>
 
-                {/* Submit Button */}
                 <div className="pt-4">
                   <button
                     type="submit"
-                    className="w-full h-[52px] bg-[#296341] hover:bg-[#1e4d30] transition-colors text-white font-['Inter'] font-medium text-[25px] rounded-[10px]"
+                    className="w-full h-12 md:h-[52px] bg-[#296341] hover:bg-[#1e4d30] transition-colors text-white font-['Inter'] font-medium text-xl md:text-[25px] rounded-[10px] active:scale-[0.98]"
                   >
                     Send Message
                   </button>
@@ -144,32 +101,32 @@ export default function Contact() {
 
             {/* Contact Information */}
             <div className="space-y-8">
-              <div>
-                <h2 className="font-['Inter'] font-semibold text-[32px] text-[#296341] mb-8">
+              <div className="text-center md:text-left">
+                <h2 className="font-['Inter'] font-semibold text-2xl md:text-[32px] text-[#296341] mb-4 md:mb-8">
                   Get in touch
                 </h2>
-                <p className="font-['Inter'] font-normal text-[20px] text-black leading-relaxed mb-12">
+                <p className="font-['Inter'] font-normal text-base md:text-[20px] text-black leading-relaxed">
                   We're here to assist you with all your shipping needs. Reach out to us through any of the channels below.
                 </p>
               </div>
 
               {/* Contact Cards */}
-              <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-6">
                 {/* Email Card */}
-                <div className="bg-white border-2 border-[#296341] rounded-[10px] px-8 py-6">
+                <div className="bg-white border-2 border-[#296341] rounded-xl px-6 md:px-8 py-6 hover:bg-emerald-50/30 transition-colors shadow-sm">
                   <div className="flex items-start gap-4">
-                    <div className="w-[40px] h-[40px] flex-shrink-0 mt-1">
+                    <div className="w-8 h-8 md:w-10 md:h-10 flex-shrink-0 mt-1">
                       <svg className="w-full h-full" fill="none" viewBox="0 0 24 24">
                         <path d={svgPaths.p995f500} fill="#296341" />
                       </svg>
                     </div>
                     <div>
-                      <h3 className="font-['Inter'] font-semibold text-[24px] text-[#296341] mb-2">
+                      <h3 className="font-['Inter'] font-semibold text-xl md:text-[24px] text-[#296341] mb-1 md:mb-2">
                         Email
                       </h3>
                       <a
                         href="mailto:contact@contact.com"
-                        className="font-['Inter'] font-normal text-[20px] text-black hover:text-[#296341] transition-colors"
+                        className="font-['Inter'] font-normal text-base md:text-[20px] text-black hover:text-[#296341] transition-colors break-words"
                       >
                         contact@contact.com
                       </a>
@@ -178,9 +135,9 @@ export default function Contact() {
                 </div>
 
                 {/* Phone Card */}
-                <div className="bg-white border-2 border-[#296341] rounded-[10px] px-8 py-6">
+                <div className="bg-white border-2 border-[#296341] rounded-xl px-6 md:px-8 py-6 hover:bg-emerald-50/30 transition-colors shadow-sm">
                   <div className="flex items-start gap-4">
-                    <div className="w-[40px] h-[40px] flex-shrink-0 mt-1">
+                    <div className="w-8 h-8 md:w-10 md:h-10 flex-shrink-0 mt-1">
                       <svg className="w-full h-full" fill="none" viewBox="0 0 24 24">
                         <g>
                           <path d={svgPaths.pe263670} fill="#296341" />
@@ -189,10 +146,10 @@ export default function Contact() {
                       </svg>
                     </div>
                     <div>
-                      <h3 className="font-['Inter'] font-semibold text-[24px] text-[#296341] mb-2">
+                      <h3 className="font-['Inter'] font-semibold text-xl md:text-[24px] text-[#296341] mb-1 md:mb-2">
                         Phone
                       </h3>
-                      <p className="font-['Inter'] font-normal text-[20px] text-black">
+                      <p className="font-['Inter'] font-normal text-base md:text-[20px] text-black">
                         +1 98765 43210
                       </p>
                     </div>
@@ -200,44 +157,33 @@ export default function Contact() {
                 </div>
 
                 {/* Office Locations Card */}
-                <div className="bg-white border-2 border-[#296341] rounded-[10px] px-8 py-6">
+                <div className="bg-white border-2 border-[#296341] rounded-xl px-6 md:px-8 py-6 col-span-1 md:col-span-2 lg:col-span-1 shadow-sm">
                   <div className="flex items-start gap-4">
-                    <div className="w-[40px] h-[40px] flex-shrink-0 mt-1">
+                    <div className="w-8 h-8 md:w-10 md:h-10 flex-shrink-0 mt-1">
                       <svg className="w-full h-full" fill="none" viewBox="0 0 24 24">
                         <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" fill="#296341" />
                       </svg>
                     </div>
-                    <div>
-                      <h3 className="font-['Inter'] font-semibold text-[24px] text-[#296341] mb-4">
+                    <div className="flex-1">
+                      <h3 className="font-['Inter'] font-semibold text-xl md:text-[24px] text-[#296341] mb-6">
                         Office Locations
                       </h3>
-                      <div className="space-y-4">
-                        <div>
-                          <h4 className="font-['Inter'] font-semibold text-[20px] text-black">
-                            Nassau, The Bahamas
-                          </h4>
-                          <p className="font-['Inter'] font-normal text-[18px] text-black leading-relaxed">
-                            Parkgate Road, P.O. Box EE-17318<br />
-                            CALL: 1.242.394.0245/6
-                          </p>
-                        </div>
-                        <div>
-                          <h4 className="font-['Inter'] font-semibold text-[20px] text-black">
-                            Potter's Cay
-                          </h4>
-                          <p className="font-['Inter'] font-normal text-[18px] text-black">
-                            CALL: 1.242.601.5121
-                          </p>
-                        </div>
-                        <div>
-                          <h4 className="font-['Inter'] font-semibold text-[20px] text-black">
-                            Abaco, The Bahamas
-                          </h4>
-                          <p className="font-['Inter'] font-normal text-[18px] text-black leading-relaxed">
-                            Queen's Highway (at Port)<br />
-                            CALL: 1.242.367.2389
-                          </p>
-                        </div>
+                      <div className="space-y-6">
+                        {[
+                          { title: "Nassau, The Bahamas", detail: "Parkgate Road, P.O. Box EE-17318", call: "1.242.394.0245/6" },
+                          { title: "Potter's Cay", call: "1.242.601.5121" },
+                          { title: "Abaco, The Bahamas", detail: "Queen's Highway (at Port)", call: "1.242.367.2389" }
+                        ].map((loc, idx) => (
+                          <div key={idx} className="border-b border-emerald-50 pb-4 last:border-0 last:pb-0">
+                            <h4 className="font-['Inter'] font-semibold text-lg md:text-[20px] text-black mb-1">
+                              {loc.title}
+                            </h4>
+                            {loc.detail && <p className="font-['Inter'] font-normal text-sm md:text-[18px] text-black leading-relaxed opacity-70">{loc.detail}</p>}
+                            <p className="font-['Inter'] font-bold text-sm md:text-[18px] text-[#296341] mt-1">
+                              CALL: {loc.call}
+                            </p>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   </div>
@@ -245,23 +191,21 @@ export default function Contact() {
               </div>
 
               {/* Business Hours */}
-              <div className="bg-[#f5f5f5] border border-[#296341] rounded-[10px] px-8 py-6 mt-8">
-                <h3 className="font-['Inter'] font-semibold text-[24px] text-[#296341] mb-4">
+              <div className="bg-[#f5f5f5] border border-[#296341] rounded-xl px-6 md:px-8 py-6 mt-8">
+                <h3 className="font-['Inter'] font-semibold text-xl md:text-[24px] text-[#296341] mb-4">
                   Business Hours
                 </h3>
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span className="font-['Inter'] font-normal text-[18px] text-black">Monday - Friday</span>
-                    <span className="font-['Inter'] font-medium text-[18px] text-black">8:00 AM - 5:00 PM</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="font-['Inter'] font-normal text-[18px] text-black">Saturday</span>
-                    <span className="font-['Inter'] font-medium text-[18px] text-black">9:00 AM - 1:00 PM</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="font-['Inter'] font-normal text-[18px] text-black">Sunday</span>
-                    <span className="font-['Inter'] font-medium text-[18px] text-black">Closed</span>
-                  </div>
+                <div className="space-y-3">
+                  {[
+                    { day: "Monday - Friday", hours: "8:00 AM - 5:00 PM" },
+                    { day: "Saturday", hours: "9:00 AM - 1:00 PM" },
+                    { day: "Sunday", hours: "Closed" }
+                  ].map((row, idx) => (
+                    <div key={idx} className="flex justify-between items-center text-sm md:text-[18px]">
+                      <span className="font-['Inter'] font-normal text-black opacity-70">{row.day}</span>
+                      <span className="font-['Inter'] font-semibold text-black">{row.hours}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>

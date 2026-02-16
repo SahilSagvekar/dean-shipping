@@ -132,7 +132,7 @@ export default function CargoBooking() {
 
 
       {/* Hero Illustration */}
-      <div className="flex justify-center mb-6 px-8">
+      <div className="flex justify-center mb-6 px-4 sm:px-8">
         <img
           src={imgCargoShip.src}
           alt="Cargo Booking Illustration"
@@ -140,10 +140,10 @@ export default function CargoBooking() {
         />
       </div>
 
-      <main className="max-w-[1400px] mx-auto px-8 pb-16 flex-1 w-full">
+      <main className="max-w-[1400px] mx-auto px-4 sm:px-8 pb-32 flex-1 w-full relative">
         {/* Title Section */}
-        <div className="mb-10">
-          <h1 className="text-[32px] font-bold text-black tracking-wide">
+        <div className="mb-6 md:mb-10 text-center md:text-left">
+          <h1 className="text-2xl md:text-[32px] font-bold text-black tracking-wide">
             <span className="border-b-4 border-black pb-1">CARGO</span> BOOKING
           </h1>
         </div>
@@ -151,8 +151,8 @@ export default function CargoBooking() {
         {/* Form Section */}
         <div className="space-y-10 max-w-[1100px]">
           {/* Service Dropdown */}
-          <div className="flex items-center gap-6">
-            <label className="text-[20px] font-bold text-gray-800 min-w-[80px]">Service</label>
+          <div className="flex flex-col md:flex-row md:items-center gap-4 md:gap-6">
+            <label className="text-lg md:text-[20px] font-bold text-gray-800 md:min-w-[80px]">Service</label>
             <div className="relative w-full max-w-[500px]">
               <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-2 text-[#296341]">
                 <Container className="w-5 h-5" />
@@ -160,7 +160,7 @@ export default function CargoBooking() {
               <select
                 value={service}
                 onChange={(e) => setService(e.target.value)}
-                className="w-full h-[54px] bg-[#eef6f2] border border-[#d1e5da] rounded-md pl-14 pr-10 text-[18px] font-bold text-[#244234] appearance-none outline-none focus:ring-2 focus:ring-[#296341]"
+                className="w-full h-12 md:h-[54px] bg-[#eef6f2] border border-[#d1e5da] rounded-md pl-14 pr-10 text-base md:text-[18px] font-bold text-[#244234] appearance-none outline-none focus:ring-2 focus:ring-[#296341]"
               >
                 <option value="CONTAINER">CONTAINER</option>
                 <option value="PALLET">PALLET</option>
@@ -313,21 +313,21 @@ export default function CargoBooking() {
           </div>
 
           {/* Image Gallery UI */}
-          <div className="flex gap-4 items-start pt-6">
-            <div className="flex flex-col gap-4 mt-2">
+          <div className="flex flex-col sm:flex-row gap-4 items-start pt-6">
+            <div className="flex sm:flex-col gap-4 mt-2 w-full sm:w-auto justify-center">
               <Camera className="w-10 h-10 text-[#296341] cursor-pointer hover:scale-110 transition-transform" />
               <Paperclip className="w-10 h-10 text-[#296341] cursor-pointer hover:scale-110 transition-transform" />
             </div>
 
-            <div className="flex gap-4 flex-1">
-              <div className="flex-[2] rounded-xl overflow-hidden shadow-md border-2 border-[#296341]/20">
+            <div className="flex flex-col md:flex-row gap-4 flex-1 w-full">
+              <div className="flex-[2] rounded-xl overflow-hidden shadow-md border-2 border-[#296341]/20 aspect-video md:aspect-auto">
                 <img src={imgContainer.src} alt="Container main" className="w-full h-full object-cover" />
               </div>
-              <div className="flex-1 grid grid-cols-2 gap-2">
-                <div className="rounded-lg overflow-hidden border border-gray-100 shadow-sm"><img src={imgContainer.src} className="w-full h-full object-cover" /></div>
-                <div className="rounded-lg overflow-hidden border border-gray-100 shadow-sm"><img src={imgContainer.src} className="w-full h-full object-cover" /></div>
-                <div className="rounded-lg overflow-hidden border border-gray-100 shadow-sm"><img src={imgContainer.src} className="w-full h-full object-cover" /></div>
-                <div className="rounded-lg overflow-hidden relative group cursor-pointer shadow-sm">
+              <div className="flex-1 grid grid-cols-2 lg:grid-cols-2 gap-2">
+                <div className="rounded-lg overflow-hidden border border-gray-100 shadow-sm aspect-square"><img src={imgContainer.src} className="w-full h-full object-cover" /></div>
+                <div className="rounded-lg overflow-hidden border border-gray-100 shadow-sm aspect-square"><img src={imgContainer.src} className="w-full h-full object-cover" /></div>
+                <div className="rounded-lg overflow-hidden border border-gray-100 shadow-sm aspect-square"><img src={imgContainer.src} className="w-full h-full object-cover" /></div>
+                <div className="rounded-lg overflow-hidden relative group cursor-pointer shadow-sm aspect-square">
                   <img src={imgContainer.src} className="w-full h-full object-cover" />
                   <div className="absolute inset-0 bg-black/60 flex items-center justify-center text-white text-[20px] font-bold font-['Inter']">+2</div>
                 </div>
@@ -375,14 +375,14 @@ export default function CargoBooking() {
           </div>
 
           {/* Add Item / Submit buttons */}
-          <div className="flex gap-6 py-6">
-            <button className="bg-[#132540] text-white px-12 py-3 rounded-lg text-[22px] font-bold hover:bg-[#1a3254] transition-all shadow-md active:scale-95 flex items-center gap-3">
+          <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 py-6">
+            <button className="bg-[#132540] text-white px-8 md:px-12 py-3 rounded-lg text-lg md:text-[22px] font-bold hover:bg-[#1a3254] transition-all shadow-md active:scale-95 flex items-center justify-center gap-3">
               <Plus className="w-6 h-6" /> ADD ITEM
             </button>
             <button
               onClick={handleSubmit}
               disabled={isSubmitting}
-              className="bg-[#132540] text-white px-16 py-3 rounded-lg text-[22px] font-bold hover:bg-[#1a3254] transition-all shadow-md active:scale-95 flex items-center gap-2"
+              className="bg-[#132540] text-white px-8 md:px-16 py-3 rounded-lg text-lg md:text-[22px] font-bold hover:bg-[#1a3254] transition-all shadow-md active:scale-95 flex items-center justify-center gap-2"
             >
               {isSubmitting ? <Loader2 className="animate-spin" /> : "SUBMIT"}
             </button>
@@ -423,23 +423,23 @@ export default function CargoBooking() {
             </div>
 
             {/* User ID Gallery */}
-            <div className="flex gap-4 items-start pt-6">
-              <div className="flex flex-col gap-4 mt-2">
+            <div className="flex flex-col sm:flex-row gap-4 items-start pt-6">
+              <div className="flex sm:flex-col gap-4 mt-2 w-full sm:w-auto justify-center">
                 <Camera className="w-10 h-10 text-[#296341] cursor-pointer" />
                 <Paperclip className="w-10 h-10 text-[#296341] cursor-pointer" />
               </div>
-              <div className="flex gap-4 flex-1 items-center">
-                <div className="w-[200px] h-[260px] rounded-xl overflow-hidden border-2 border-emerald-100 shadow-md">
+              <div className="flex flex-col md:flex-row gap-4 flex-1 items-center w-full">
+                <div className="w-full md:w-[200px] aspect-[3/4] md:h-[260px] rounded-xl overflow-hidden border-2 border-emerald-100 shadow-md">
                   <img src={imgPassport.src} className="w-full h-full object-cover" />
                 </div>
-                <div className="w-[200px] h-[260px] rounded-xl overflow-hidden border-2 border-emerald-100 shadow-md">
+                <div className="w-full md:w-[200px] aspect-[3/4] md:h-[260px] rounded-xl overflow-hidden border-2 border-emerald-100 shadow-md">
                   <img src={imgPassport.src} className="w-full h-full object-cover" />
                 </div>
-                <div className="grid grid-rows-2 grid-cols-2 gap-4 h-[260px]">
-                  <div className="w-[140px] rounded-lg overflow-hidden shadow-sm border border-gray-100"><img src={imgIdCard.src} className="w-full h-full object-cover" /></div>
-                  <div className="w-[140px] rounded-lg overflow-hidden shadow-sm border border-gray-100"><img src={imgPassport.src} className="w-full h-full object-cover" /></div>
-                  <div className="w-[140px] rounded-lg overflow-hidden shadow-sm border border-gray-100"><img src={imgIdCard.src} className="w-full h-full object-cover" /></div>
-                  <div className="w-[140px] rounded-lg overflow-hidden shadow-sm border border-gray-100 relative">
+                <div className="grid grid-rows-2 grid-cols-2 gap-4 h-auto md:h-[260px] w-full md:w-auto">
+                  <div className="rounded-lg overflow-hidden shadow-sm border border-gray-100 aspect-square md:w-[140px]"><img src={imgIdCard.src} className="w-full h-full object-cover" /></div>
+                  <div className="rounded-lg overflow-hidden shadow-sm border border-gray-100 aspect-square md:w-[140px]"><img src={imgPassport.src} className="w-full h-full object-cover" /></div>
+                  <div className="rounded-lg overflow-hidden shadow-sm border border-gray-100 aspect-square md:w-[140px]"><img src={imgIdCard.src} className="w-full h-full object-cover" /></div>
+                  <div className="rounded-lg overflow-hidden relative aspect-square md:w-[140px] shadow-sm border border-gray-100">
                     <img src={imgIdCard.src} className="w-full h-full object-cover" />
                     <div className="absolute inset-0 bg-black/60 flex items-center justify-center text-white text-[24px] font-bold font-['Inter']">+2</div>
                   </div>
@@ -461,13 +461,13 @@ export default function CargoBooking() {
           {/* Cargo Items Rounded Cards */}
           <div className="space-y-4 mb-10 max-w-[1000px]">
             {items.map((item) => (
-              <div key={item.id} className="bg-white rounded-xl py-4 px-8 flex items-center shadow-sm group">
+              <div key={item.id} className="bg-white rounded-xl py-4 px-4 sm:px-8 flex flex-col sm:flex-row items-center shadow-sm group gap-4 sm:gap-0">
                 <div className="w-12 h-12 flex items-center justify-center text-[#296341]">
                   {item.icon === 'box' || item.type.includes('BOX') ? <Box /> : <Container />}
                 </div>
-                <div className="flex-1 text-[20px] font-bold text-gray-700 ml-4">{item.type} {item.unitPrice ? `($${item.unitPrice})` : ''} x {item.quantity}</div>
-                <div className="text-[20px] font-black text-black mr-12">${(item.total || item.unitPrice * item.quantity).toLocaleString()}</div>
-                <div className="flex gap-4">
+                <div className="flex-1 text-lg md:text-[20px] font-bold text-gray-700 sm:ml-4 text-center sm:text-left">{item.type} {item.unitPrice ? `($${item.unitPrice})` : ''} x {item.quantity}</div>
+                <div className="text-[20px] font-black text-black sm:mr-12 underline sm:no-underline">${(item.total || item.unitPrice * item.quantity).toLocaleString()}</div>
+                <div className="flex gap-6 sm:gap-4">
                   <Edit2 className="w-6 h-6 text-gray-400 group-hover:text-[#296341] cursor-pointer transition-colors" />
                   <Trash2 className="w-6 h-6 text-gray-400 group-hover:text-[#296341] cursor-pointer transition-colors" />
                 </div>
@@ -541,22 +541,22 @@ export default function CargoBooking() {
           </div>
 
           {/* Overlapping Total Card */}
-          <div className="absolute left-1/2 -translate-x-1/2 -bottom-16 bg-white rounded-3xl p-8 shadow-2xl border-2 border-gray-50 flex flex-col items-center min-w-[320px]">
-            <p className="text-[18px] font-bold text-gray-400 tracking-widest uppercase">Total Amount</p>
-            <p className="text-[48px] font-black text-black leading-tight">$728.00</p>
+          <div className="static md:absolute md:left-1/2 md:-translate-x-1/2 md:-bottom-16 bg-white rounded-3xl p-6 md:p-8 shadow-2xl border-2 border-gray-50 flex flex-col items-center w-full md:min-w-[320px] mt-8 md:mt-0">
+            <p className="text-[16px] md:text-[18px] font-bold text-gray-400 tracking-widest uppercase">Total Amount</p>
+            <p className="text-[36px] md:text-[48px] font-black text-black leading-tight">$728.00</p>
             <p className="text-[12px] text-gray-400 font-bold uppercase tracking-tight">(Including 12% VAT)</p>
           </div>
         </div>
 
         {/* Action Buttons */}
-        <div className="mt-32 flex justify-center gap-8">
-          <button className="bg-[#1e4a2e] text-white px-16 py-3 rounded-lg text-[20px] font-bold tracking-widest hover:bg-emerald-800 transition-all shadow-lg active:scale-95">
+        <div className="mt-16 md:mt-32 flex flex-col sm:flex-row justify-center gap-4 md:gap-8">
+          <button className="bg-[#1e4a2e] text-white px-12 md:px-16 py-3 rounded-lg text-lg md:text-[20px] font-bold tracking-widest hover:bg-emerald-800 transition-all shadow-lg active:scale-95">
             Preview
           </button>
           <button
             onClick={handleSubmit}
             disabled={isSubmitting}
-            className="bg-[#1e4a2e] text-white px-16 py-3 rounded-lg text-[20px] font-bold tracking-widest hover:bg-emerald-800 transition-all shadow-lg active:scale-95 flex items-center gap-2"
+            className="bg-[#1e4a2e] text-white px-12 md:px-16 py-3 rounded-lg text-lg md:text-[20px] font-bold tracking-widest hover:bg-emerald-800 transition-all shadow-lg active:scale-95 flex items-center justify-center gap-2"
           >
             {isSubmitting && <Loader2 className="w-5 h-5 animate-spin" />}
             Save & Send
@@ -565,12 +565,12 @@ export default function CargoBooking() {
       </main>
 
       {/* Brand Footer */}
-      <footer className="bg-[#296341] py-8 mt-12">
-        <div className="max-w-[1400px] mx-auto px-8 flex items-center justify-between">
+      <footer className="bg-[#296341] py-6 md:py-8 mt-12">
+        <div className="max-w-[1400px] mx-auto px-4 md:px-8 flex flex-col md:flex-row items-center justify-between gap-6 md:gap-0">
           <div className="flex items-center gap-4">
-            <img src={imgLogo.src} alt="Dean's Shipping Ltd" className="h-[75px]" />
+            <img src={imgLogo.src} alt="Dean's Shipping Ltd." className="h-12 md:h-[75px]" />
           </div>
-          <div className="text-white text-[28px] font-semibold">
+          <div className="text-white text-xl md:text-[28px] font-semibold text-center md:text-left">
             Freight Agent | <span className="font-normal">Smith Frank</span>
           </div>
         </div>
