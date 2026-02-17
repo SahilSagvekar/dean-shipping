@@ -91,10 +91,11 @@ enum IncidentStatus {
 }
 
 enum VehicleStatus {
-  WAITING
-  LOADED
-  DEPARTED
-  COMPLETED
+  PENDING
+  IN_DOCK
+  IN_TRANSIT
+  DELIVERED
+  CANCELLED
 }
 
 enum VoyageStatus {
@@ -567,13 +568,15 @@ model EquipmentAssignment {
 
 model Vehicle {
   id             String        @id @default(cuid())
+  invoiceNo      String?       @unique
   registrationNo String
   ownerName      String
-  contactNo      String
+  ownerEmail     String?
+  contactNo      String    @default("")
   vehicleType    String
   fromLocation   String
   toLocation     String
-  status         VehicleStatus @default(WAITING)
+  status         VehicleStatus @default(PENDING)
   bookingDate    DateTime
 
   // Optional voyage assignment
@@ -585,6 +588,7 @@ model Vehicle {
 
   @@index([status])
   @@index([bookingDate])
+  @@index([registrationNo])
 }
 
 // ============================================
