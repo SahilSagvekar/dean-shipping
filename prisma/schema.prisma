@@ -421,6 +421,20 @@ model CargoItem {
 // PASSENGER BOOKING
 // ============================================
 
+model PassengerLuggage {
+  id                  String            @id @default(cuid())
+  passengerBookingId  String
+  passengerBooking    PassengerBooking  @relation(fields: [passengerBookingId], references: [id], onDelete: Cascade)
+  type                String            // CARRY_ON, CHECKED_BAG, OVERSIZED, SPECIAL
+  weight              Float             @default(0)
+  quantity            Int               @default(1)
+  price               Float             @default(0)
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+
+  @@index([passengerBookingId])
+}
+
 model PassengerBooking {
   id        String @id @default(cuid())
   invoiceNo String @unique @default(cuid())
@@ -459,6 +473,7 @@ model PassengerBooking {
   images        BookingImage[]
   invoice       Invoice?
   manifestItems ManifestItem[]
+  luggage       PassengerLuggage[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

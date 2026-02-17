@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   Camera,
   Paperclip,
@@ -10,11 +10,14 @@ import {
   ChevronDown,
   MapPin,
   Calendar,
-  Package,
   Box,
   Container,
   ArrowRight,
-  Loader2
+  Loader2,
+  X,
+  Eye,
+  Upload,
+  Image as ImageIcon
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { toast } from 'sonner';
@@ -24,10 +27,35 @@ import imgPassport from "@/app/assets/bbad37ee24906289e97d640c601d7cafe55963b5.p
 import imgIdCard from "@/app/assets/10ad04e365367f2edb1a23ad5021caa2d9bfde6f.png";
 import imgLogo from "@/app/assets/0630bc807bbd9122cb449e66c33d18d13536d121.png";
 
+interface CargoItem {
+  id: number;
+  icon: string;
+  type: string;
+  unitPrice: number;
+  quantity: number;
+  total: number;
+  isPaid: boolean;
+}
+
+interface Location {
+  id: string;
+  code: string;
+  name: string;
+}
+
+interface UploadedImage {
+  id: string;
+  url: string;
+  file?: File;
+  caption?: string;
+  preview?: string;
+}
+
 export default function CargoBooking() {
   const { apiFetch, user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [locations, setLocations] = useState<any[]>([]);
+  const [isLoadingLocations, setIsLoadingLocations] = useState(true);
+  const [locations, setLocations] = useState<Location[]>([]);
 
   // Form State
   const [service, setService] = useState('CONTAINER');
@@ -44,15 +72,16 @@ export default function CargoBooking() {
   const [chassisNo, setChassisNo] = useState("");
   const [temperature, setTemperature] = useState("");
   const [decksNo, setDecksNo] = useState("");
-  const [boxContains, setBoxContains] = useState("clothing, shoes, non-perishables");
+  const [boxContains, setBoxContains] = useState("");
+  const [voyageNo, setVoyageNo] = useState("");
 
   const [bookingDate, setBookingDate] = useState(new Date().toISOString().split('T')[0]);
   const [fromLocation, setFromLocation] = useState("");
   const [toLocation, setToLocation] = useState("");
 
-  const [contactName, setContactName] = useState(user ? `${user.firstName} ${user.lastName}` : "");
-  const [contactEmail, setContactEmail] = useState(user?.email || "");
-  const [contactPhone, setContactPhone] = useState(user?.mobileNumber || "");
+  const [contactName, setContactName] = useState("");
+  const [contactEmail, setContactEmail] = useState("");
+  const [contactPhone, setContactPhone] = useState("");
   const [address, setAddress] = useState("");
   const [idType, setIdType] = useState("Passport");
 
@@ -62,74 +91,470 @@ export default function CargoBooking() {
   const [paymentStatus, setPaymentStatus] = useState("UNPAID");
   const [remark, setRemark] = useState("");
 
-  const [items, setItems] = useState<any[]>([
-    { id: 1, icon: 'box', type: 'DRY BOX(S)', unitPrice: 50, quantity: 3, total: 150, paid: true },
-  ]);
+  // Items state
+  const [items, setItems] = useState<CargoItem[]>([]);
+  
+  // Image upload state
+  const [containerImages, setContainerImages] = useState<UploadedImage[]>([]);
+  const [userDocuments, setUserDocuments] = useState<UploadedImage[]>([]);
+  const containerImageRef = useRef<HTMLInputElement>(null);
+  const userDocumentRef = useRef<HTMLInputElement>(null);
+  
+  // Modal states
+  const [showAddItemModal, setShowAddItemModal] = useState(false);
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
+  const [editingItem, setEditingItem] = useState<CargoItem | null>(null);
+  const [newItemType, setNewItemType] = useState("DRY BOX(S)");
+  const [newItemUnitPrice, setNewItemUnitPrice] = useState("");
+  const [newItemQuantity, setNewItemQuantity] = useState("");
+  const [newItemIsPaid, setNewItemIsPaid] = useState(false);
+
+  // Created booking state
+  const [createdBooking, setCreatedBooking] = useState<any>(null);
+
+  // Set user details when user loads
+  useEffect(() => {
+    if (user) {
+      setContactName(`${user.firstName || ''} ${user.lastName || ''}`.trim());
+      setContactEmail(user.email || "");
+      setContactPhone(user.mobileNumber || "");
+    }
+  }, [user]);
 
   // Fetch Locations
   useEffect(() => {
     async function fetchLocations() {
+      setIsLoadingLocations(true);
       try {
         const res = await apiFetch('/api/locations');
         if (res.ok) {
           const data = await res.json();
-          setLocations(data.locations);
-          if (data.locations.length > 0) {
+          setLocations(data.locations || []);
+          if (data.locations && data.locations.length > 0) {
             setFromLocation(data.locations[0].code);
-            if (data.locations.length > 1) setToLocation(data.locations[1].code);
+            if (data.locations.length > 1) {
+              setToLocation(data.locations[1].code);
+            }
           }
+        } else {
+          toast.error("Failed to load locations");
         }
       } catch (err) {
         console.error("Failed to fetch locations:", err);
+        toast.error("Failed to load locations");
+      } finally {
+        setIsLoadingLocations(false);
       }
     }
     fetchLocations();
   }, [apiFetch]);
 
-  // Handle Form Submission
-  const handleSubmit = async () => {
-    if (!fromLocation || !toLocation || !contactName) {
-      toast.error("Please fill in required fields");
-      return;
-    }
+  // Calculate totals
+  const calculateTotals = () => {
+    const subtotal = items.reduce((sum, item) => sum + item.total, 0);
+    const vatAmount = subtotal * 0.12;
+    const grandTotal = subtotal + vatAmount;
+    return { subtotal, vatAmount, grandTotal };
+  };
 
-    setIsSubmitting(true);
-    try {
-      const res = await apiFetch('/api/bookings/cargo', {
-        method: 'POST',
-        body: JSON.stringify({
-          service, cargoSize, quantity, pallets, type, containerNo,
-          size, height, reeferNo: reefer, material, color, chassisNo,
-          temperature, decksNo, boxContains, bookingDate,
-          fromLocation, toLocation,
-          contactName, contactEmail, contactPhone, address, idType,
-          damageFound, damageLocation, deficiencyComment: comment,
-          paymentStatus, remark, items
-        })
-      });
+  // Image upload handlers
+  const handleContainerImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
 
-      if (res.ok) {
-        const data = await res.json();
-        toast.success(`Booking created successfully! Invoice: #${data.invoiceNo}`);
-        // Optional: redirect or reset form
-      } else {
-        const error = await res.json();
-        toast.error(error.error || "Failed to create booking");
+    const newImages: UploadedImage[] = [];
+    Array.from(files).forEach((file) => {
+      if (file.type.startsWith('image/')) {
+        const preview = URL.createObjectURL(file);
+        newImages.push({
+          id: `img-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          url: '', // Will be set after upload
+          file,
+          preview,
+        });
       }
-    } catch (err) {
-      toast.error("An error occurred during submission");
-    } finally {
-      setIsSubmitting(false);
+    });
+
+    setContainerImages([...containerImages, ...newImages]);
+    toast.success(`${newImages.length} image(s) added`);
+    
+    // Reset input
+    if (containerImageRef.current) {
+      containerImageRef.current.value = '';
     }
   };
 
+  const handleUserDocumentUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+
+    const newDocs: UploadedImage[] = [];
+    Array.from(files).forEach((file) => {
+      if (file.type.startsWith('image/') || file.type === 'application/pdf') {
+        const preview = file.type.startsWith('image/') ? URL.createObjectURL(file) : undefined;
+        newDocs.push({
+          id: `doc-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          url: '',
+          file,
+          preview,
+          caption: idType,
+        });
+      }
+    });
+
+    setUserDocuments([...userDocuments, ...newDocs]);
+    toast.success(`${newDocs.length} document(s) added`);
+    
+    if (userDocumentRef.current) {
+      userDocumentRef.current.value = '';
+    }
+  };
+
+  const removeContainerImage = (id: string) => {
+    setContainerImages(containerImages.filter(img => img.id !== id));
+    toast.success("Image removed");
+  };
+
+  const removeUserDocument = (id: string) => {
+    setUserDocuments(userDocuments.filter(doc => doc.id !== id));
+    toast.success("Document removed");
+  };
+
+  // Upload image to server (you'll need to implement this endpoint)
+  // const uploadImage = async (file: File): Promise<string> => {
+  //   const formData = new FormData();
+  //   formData.append('file', file);
+  //   formData.append('folder', 'cargo-bookings');
+
+  //   try {
+  //     const res = await apiFetch('/api/upload', {
+  //       method: 'POST',
+  //       body: formData,
+  //       // Don't set Content-Type header - browser will set it with boundary
+  //     });
+
+  //     if (res.ok) {
+  //       const data = await res.json();
+  //       return data.url;
+  //     }
+  //     throw new Error('Upload failed');
+  //   } catch (error) {
+  //     console.error('Upload error:', error);
+  //     throw error;
+  //   }
+  // };
+
+  // Add/Edit Item Handler
+  const handleAddItem = () => {
+    if (!newItemUnitPrice || !newItemQuantity) {
+      toast.error("Please fill in unit price and quantity");
+      return;
+    }
+
+    const unitPrice = parseFloat(newItemUnitPrice);
+    const qty = parseInt(newItemQuantity);
+
+    if (unitPrice <= 0) {
+      toast.error("Unit price must be greater than 0");
+      return;
+    }
+
+    if (qty <= 0) {
+      toast.error("Quantity must be greater than 0");
+      return;
+    }
+
+    const total = unitPrice * qty;
+
+    if (editingItem) {
+      setItems(items.map(item => 
+        item.id === editingItem.id 
+          ? { ...item, type: newItemType, unitPrice, quantity: qty, total, isPaid: newItemIsPaid }
+          : item
+      ));
+      toast.success("Item updated successfully");
+    } else {
+      const newItem: CargoItem = {
+        id: Date.now(),
+        icon: newItemType.includes('BOX') ? 'box' : 'container',
+        type: newItemType,
+        unitPrice,
+        quantity: qty,
+        total,
+        isPaid: newItemIsPaid
+      };
+      setItems([...items, newItem]);
+      toast.success("Item added successfully");
+    }
+
+    // Reset modal
+    setShowAddItemModal(false);
+    setEditingItem(null);
+    setNewItemType("DRY BOX(S)");
+    setNewItemUnitPrice("");
+    setNewItemQuantity("");
+    setNewItemIsPaid(false);
+  };
+
+  const handleEditItem = (item: CargoItem) => {
+    setEditingItem(item);
+    setNewItemType(item.type);
+    setNewItemUnitPrice(item.unitPrice.toString());
+    setNewItemQuantity(item.quantity.toString());
+    setNewItemIsPaid(item.isPaid);
+    setShowAddItemModal(true);
+  };
+
+  const handleDeleteItem = (itemId: number) => {
+    setItems(items.filter(item => item.id !== itemId));
+    toast.success("Item removed");
+  };
+
+  // Reset Form
+  const resetForm = () => {
+    // Show confirmation
+    if (items.length > 0 || containerImages.length > 0 || userDocuments.length > 0) {
+      if (!confirm("Are you sure you want to reset the form? All data will be lost.")) {
+        return;
+      }
+    }
+
+    setService('CONTAINER');
+    setCargoSize('Medium');
+    setQuantity("");
+    setPallets("");
+    setType("DRY");
+    setContainerNo("");
+    setSize("");
+    setHeight("");
+    setReefer("");
+    setMaterial("");
+    setColor("");
+    setChassisNo("");
+    setTemperature("");
+    setDecksNo("");
+    setBoxContains("");
+    setVoyageNo("");
+    setBookingDate(new Date().toISOString().split('T')[0]);
+    setDamageFound("");
+    setDamageLocation("");
+    setComment("");
+    setPaymentStatus("UNPAID");
+    setRemark("");
+    setItems([]);
+    setContainerImages([]);
+    setUserDocuments([]);
+    setCreatedBooking(null);
+    
+    if (locations.length > 0) {
+      setFromLocation(locations[0].code);
+      if (locations.length > 1) {
+        setToLocation(locations[1].code);
+      }
+    }
+
+    toast.success("Form has been reset");
+  };
+
+  // Form Validation with toast messages
+  const validateForm = (): boolean => {
+    const errors: string[] = [];
+
+    if (!service) errors.push("Please select a service type");
+    if (!fromLocation) errors.push("Please select a 'From' location");
+    if (!toLocation) errors.push("Please select a 'To' location");
+    if (fromLocation && toLocation && fromLocation === toLocation) {
+      errors.push("'From' and 'To' locations cannot be the same");
+    }
+    if (!contactName.trim()) errors.push("Please enter contact name");
+    if (!bookingDate) errors.push("Please select a booking date");
+    if (items.length === 0) errors.push("Please add at least one cargo item");
+
+    if (errors.length > 0) {
+      errors.forEach(error => toast.error(error));
+      return false;
+    }
+    return true;
+  };
+
+  // Handle Form Submission
+  const handleSubmit = async () => {
+  if (!validateForm()) {
+    console.log("Validation failed");
+    return;
+  }
+
+  setIsSubmitting(true);
+  
+  try {
+    // First, create the booking WITHOUT images
+    const payload = {
+      service,
+      cargoSize: cargoSize.toUpperCase(),
+      quantity: quantity ? parseInt(quantity) : null,
+      pallets: pallets ? parseInt(pallets) : null,
+      type,
+      containerNo: containerNo || null,
+      size: size || null,
+      height: height || null,
+      reeferNo: reefer || null,
+      material: material || null,
+      color: color || null,
+      chassisNo: chassisNo || null,
+      temperature: temperature || null,
+      decksNo: decksNo || null,
+      boxContains: boxContains || null,
+      voyageNo: voyageNo || null,
+      bookingDate,
+      fromLocation,
+      toLocation,
+      contactName: contactName.trim(),
+      contactEmail: contactEmail || null,
+      contactPhone: contactPhone || null,
+      address: address || null,
+      idType,
+      damageFound: damageFound || null,
+      damageLocation: damageLocation || null,
+      deficiencyComment: comment || null,
+      paymentStatus,
+      remark: remark || null,
+      items: items.map(item => ({
+        itemType: item.type,
+        unitPrice: item.unitPrice,
+        quantity: item.quantity,
+        total: item.total,
+        isPaid: item.isPaid
+      })),
+      // Don't send images here initially
+      containerImages: [],
+      userDocuments: [],
+    };
+
+    console.log("Submitting payload:", payload);
+
+    const res = await apiFetch('/api/bookings/cargo', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await res.json();
+    console.log("Response:", data);
+
+    if (!res.ok) {
+      if (data.errors && Array.isArray(data.errors)) {
+        data.errors.forEach((err: string) => toast.error(err));
+      } else {
+        toast.error(data.error || "Failed to create booking");
+      }
+      return;
+    }
+
+    // Booking created successfully, now upload images
+    const bookingId = data.booking.id;
+    let uploadErrors = 0;
+
+    // Upload container images
+    for (const img of containerImages) {
+      if (img.file) {
+        try {
+          await uploadImage(img.file, bookingId, 'CONTAINER', img.caption);
+        } catch (error) {
+          console.error('Failed to upload container image:', error);
+          uploadErrors++;
+        }
+      }
+    }
+
+    // Upload user documents
+    for (const doc of userDocuments) {
+      if (doc.file) {
+        try {
+          await uploadImage(doc.file, bookingId, 'USER_DOCUMENT', doc.caption);
+        } catch (error) {
+          console.error('Failed to upload user document:', error);
+          uploadErrors++;
+        }
+      }
+    }
+
+    setCreatedBooking(data);
+    
+    if (uploadErrors > 0) {
+      toast.success(`Booking created! Invoice: #${data.invoiceNo}`);
+      toast.warning(`${uploadErrors} image(s) failed to upload`);
+    } else {
+      toast.success(`Booking created successfully! Invoice: #${data.invoiceNo}`);
+    }
+
+  } catch (err: any) {
+    console.error("Submission error:", err);
+    toast.error(err.message || "An error occurred during submission");
+  } finally {
+    setIsSubmitting(false);
+  }
+};
+
+// Updated upload function with required parameters
+const uploadImage = async (
+  file: File, 
+  bookingId: string, 
+  imageType: 'CONTAINER' | 'USER_DOCUMENT',
+  caption?: string
+): Promise<string> => {
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('bookingId', bookingId);
+  formData.append('imageType', imageType);
+  if (caption) {
+    formData.append('caption', caption);
+  }
+
+  const res = await apiFetch('/api/upload', {
+    method: 'POST',
+    body: formData,
+  });
+
+  if (res.ok) {
+    const data = await res.json();
+    return data.url;
+  }
+  
+  const errorData = await res.json().catch(() => ({}));
+  throw new Error(errorData.error || 'Upload failed');
+};
+
   const cargoRadioTypes = ['Small', 'Medium', 'Large', 'Fragile', 'Hazardous', 'Live'];
+  const itemTypes = ['DRY BOX(S)', 'FROZEN BOX(S)', 'CONTAINER', 'PALLET', 'CRATE', 'OTHER'];
+  const { subtotal, vatAmount, grandTotal } = calculateTotals();
+
+  // Get location name by code
+  const getLocationName = (code: string) => {
+    const loc = locations.find(l => l.code === code);
+    return loc ? `${loc.code} - ${loc.name}` : code;
+  };
 
   return (
     <div>
-
-      {/* Sidebar and Hamburger are now handled by the dashboard layout */}
-
+      {/* Hidden file inputs */}
+      <input
+        type="file"
+        ref={containerImageRef}
+        onChange={handleContainerImageUpload}
+        accept="image/*"
+        multiple
+        className="hidden"
+      />
+      <input
+        type="file"
+        ref={userDocumentRef}
+        onChange={handleUserDocumentUpload}
+        accept="image/*,.pdf"
+        multiple
+        className="hidden"
+      />
 
       {/* Hero Illustration */}
       <div className="flex justify-center mb-6 px-4 sm:px-8">
@@ -152,7 +577,9 @@ export default function CargoBooking() {
         <div className="space-y-10 max-w-[1100px]">
           {/* Service Dropdown */}
           <div className="flex flex-col md:flex-row md:items-center gap-4 md:gap-6">
-            <label className="text-lg md:text-[20px] font-bold text-gray-800 md:min-w-[80px]">Service</label>
+            <label className="text-lg md:text-[20px] font-bold text-gray-800 md:min-w-[80px]">
+              Service <span className="text-red-500">*</span>
+            </label>
             <div className="relative w-full max-w-[500px]">
               <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-2 text-[#296341]">
                 <Container className="w-5 h-5" />
@@ -172,16 +599,15 @@ export default function CargoBooking() {
 
           {/* Radio Grid (2x3) */}
           <div className="grid grid-cols-2 md:grid-cols-3 gap-y-4 gap-x-12 max-w-[900px]">
-            {cargoRadioTypes.map((type) => (
-              <label key={type} className="flex items-center gap-4 cursor-pointer group">
+            {cargoRadioTypes.map((sizeType) => (
+              <label key={sizeType} className="flex items-center gap-4 cursor-pointer group">
                 <div
-                  className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${cargoSize === type ? 'border-[#296341]' : 'border-gray-300'
-                    }`}
-                  onClick={() => setCargoSize(type)}
+                  className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${cargoSize === sizeType ? 'border-[#296341]' : 'border-gray-300'}`}
+                  onClick={() => setCargoSize(sizeType)}
                 >
-                  {cargoSize === type && <div className="w-3 h-3 rounded-full bg-[#296341]" />}
+                  {cargoSize === sizeType && <div className="w-3 h-3 rounded-full bg-[#296341]" />}
                 </div>
-                <span className="text-[18px] font-medium text-gray-700 group-hover:text-black">{type}</span>
+                <span className="text-[18px] font-medium text-gray-700 group-hover:text-black">{sizeType}</span>
               </label>
             ))}
           </div>
@@ -190,41 +616,65 @@ export default function CargoBooking() {
 
           {/* Detailed Form Grid */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {/* Row 1 */}
             <div className="space-y-2">
               <label className="text-[16px] font-bold text-gray-500">Quantity</label>
-              <input value={quantity || ""} onChange={(e) => setQuantity(e.target.value)} className="w-full h-[45px] border-b border-gray-300 outline-none focus:border-[#296341] text-[18px] py-2" />
+              <input 
+                type="number"
+                value={quantity} 
+                onChange={(e) => setQuantity(e.target.value)} 
+                placeholder="Enter quantity"
+                className="w-full h-[45px] border-b border-gray-300 outline-none focus:border-[#296341] text-[18px] py-2" 
+              />
             </div>
             <div className="space-y-2">
               <label className="text-[16px] font-bold text-gray-500">Pallets#</label>
-              <input value={pallets || ""} onChange={(e) => setPallets(e.target.value)} className="w-full h-[45px] border-b border-gray-300 outline-none focus:border-[#296341] text-[18px] py-2" />
+              <input 
+                type="number"
+                value={pallets} 
+                onChange={(e) => setPallets(e.target.value)} 
+                placeholder="Number of pallets"
+                className="w-full h-[45px] border-b border-gray-300 outline-none focus:border-[#296341] text-[18px] py-2" 
+              />
             </div>
             <div className="space-y-2">
               <label className="text-[16px] font-bold text-gray-500">Type</label>
               <div className="relative">
-                <select value={type} onChange={(e) => setType(e.target.value)} className="w-full h-[45px] border-b border-gray-300 outline-none focus:border-[#296341] text-[18px] py-2 appearance-none font-bold">
+                <select 
+                  value={type} 
+                  onChange={(e) => setType(e.target.value)} 
+                  className="w-full h-[45px] border-b border-gray-300 outline-none focus:border-[#296341] text-[18px] py-2 appearance-none font-bold"
+                >
                   <option value="DRY">DRY</option>
                   <option value="FROZEN">FROZEN</option>
+                  <option value="REFRIGERATED">REFRIGERATED</option>
+                  <option value="HAZARDOUS">HAZARDOUS</option>
                 </select>
                 <ChevronDown className="absolute right-0 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
               </div>
             </div>
 
-            {/* Row 2 */}
             <div className="space-y-2">
               <label className="text-[16px] font-bold text-gray-500">Container#</label>
-              <div className="relative">
-                <select value={containerNo} onChange={(e) => setContainerNo(e.target.value)} className="w-full h-[45px] border-b border-gray-300 outline-none focus:border-[#296341] text-[18px] py-2 appearance-none font-bold">
-                  <option value="134">134</option>
-                </select>
-                <ChevronDown className="absolute right-0 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-              </div>
+              <input 
+                value={containerNo} 
+                onChange={(e) => setContainerNo(e.target.value)} 
+                placeholder="Container number"
+                className="w-full h-[45px] border-b border-gray-300 outline-none focus:border-[#296341] text-[18px] py-2 font-bold"
+              />
             </div>
             <div className="space-y-2">
               <label className="text-[16px] font-bold text-gray-500">Size</label>
               <div className="relative">
-                <select value={size} onChange={(e) => setSize(e.target.value)} className="w-full h-[45px] border-b border-gray-300 outline-none focus:border-[#296341] text-[18px] py-2 appearance-none font-bold">
-                  <option value=""></option>
+                <select 
+                  value={size} 
+                  onChange={(e) => setSize(e.target.value)} 
+                  className="w-full h-[45px] border-b border-gray-300 outline-none focus:border-[#296341] text-[18px] py-2 appearance-none font-bold"
+                >
+                  <option value="">Select size</option>
+                  <option value="20FT">20 FT</option>
+                  <option value="40FT">40 FT</option>
+                  <option value="40FT_HC">40 FT HC</option>
+                  <option value="45FT">45 FT</option>
                 </select>
                 <ChevronDown className="absolute right-0 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
               </div>
@@ -232,44 +682,82 @@ export default function CargoBooking() {
             <div className="space-y-2">
               <label className="text-[16px] font-bold text-gray-500">Height</label>
               <div className="relative">
-                <select value={height} onChange={(e) => setHeight(e.target.value)} className="w-full h-[45px] border-b border-gray-300 outline-none focus:border-[#296341] text-[18px] py-2 appearance-none font-bold">
-                  <option value=""></option>
+                <select 
+                  value={height} 
+                  onChange={(e) => setHeight(e.target.value)} 
+                  className="w-full h-[45px] border-b border-gray-300 outline-none focus:border-[#296341] text-[18px] py-2 appearance-none font-bold"
+                >
+                  <option value="">Select height</option>
+                  <option value="STANDARD">Standard (8'6")</option>
+                  <option value="HIGH_CUBE">High Cube (9'6")</option>
                 </select>
                 <ChevronDown className="absolute right-0 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
               </div>
             </div>
 
-            {/* Row 3 */}
             <div className="space-y-2">
               <label className="text-[16px] font-bold text-gray-500">Reefer#</label>
-              <input value={reefer || ""} onChange={(e) => setReefer(e.target.value)} className="w-full h-[45px] border-b border-gray-300 outline-none focus:border-[#296341] text-[18px] py-2" />
+              <input 
+                value={reefer} 
+                onChange={(e) => setReefer(e.target.value)} 
+                placeholder="Reefer number"
+                className="w-full h-[45px] border-b border-gray-300 outline-none focus:border-[#296341] text-[18px] py-2" 
+              />
             </div>
             <div className="space-y-2">
               <label className="text-[16px] font-bold text-gray-500">Material</label>
-              <input value={material || ""} onChange={(e) => setMaterial(e.target.value)} className="w-full h-[45px] border-b border-gray-300 outline-none focus:border-[#296341] text-[18px] py-2" />
+              <input 
+                value={material} 
+                onChange={(e) => setMaterial(e.target.value)} 
+                placeholder="Material type"
+                className="w-full h-[45px] border-b border-gray-300 outline-none focus:border-[#296341] text-[18px] py-2" 
+              />
             </div>
             <div className="space-y-2">
               <label className="text-[16px] font-bold text-gray-500">Color</label>
               <div className="relative">
-                <select value={color} onChange={(e) => setColor(e.target.value)} className="w-full h-[45px] border-b border-gray-300 outline-none focus:border-[#296341] text-[18px] py-2 appearance-none font-bold">
-                  <option value=""></option>
+                <select 
+                  value={color} 
+                  onChange={(e) => setColor(e.target.value)} 
+                  className="w-full h-[45px] border-b border-gray-300 outline-none focus:border-[#296341] text-[18px] py-2 appearance-none font-bold"
+                >
+                  <option value="">Select color</option>
+                  <option value="WHITE">White</option>
+                  <option value="BLUE">Blue</option>
+                  <option value="GREEN">Green</option>
+                  <option value="RED">Red</option>
+                  <option value="GRAY">Gray</option>
                 </select>
                 <ChevronDown className="absolute right-0 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
               </div>
             </div>
 
-            {/* Row 4 */}
             <div className="space-y-2">
               <label className="text-[16px] font-bold text-gray-500">Chassis#</label>
-              <input value={chassisNo || ""} onChange={(e) => setChassisNo(e.target.value)} className="w-full h-[45px] border border-gray-200 rounded-md px-4 shadow-sm outline-none focus:ring-2 focus:ring-[#296341] text-[18px]" />
+              <input 
+                value={chassisNo} 
+                onChange={(e) => setChassisNo(e.target.value)} 
+                placeholder="Chassis number"
+                className="w-full h-[45px] border border-gray-200 rounded-md px-4 shadow-sm outline-none focus:ring-2 focus:ring-[#296341] text-[18px]" 
+              />
             </div>
             <div className="space-y-2">
               <label className="text-[16px] font-bold text-gray-500">Temperature</label>
-              <input value={temperature || ""} onChange={(e) => setTemperature(e.target.value)} className="w-full h-[45px] border border-gray-200 rounded-md px-4 shadow-sm outline-none focus:ring-2 focus:ring-[#296341] text-[18px]" />
+              <input 
+                value={temperature} 
+                onChange={(e) => setTemperature(e.target.value)} 
+                placeholder="e.g., -18°C"
+                className="w-full h-[45px] border border-gray-200 rounded-md px-4 shadow-sm outline-none focus:ring-2 focus:ring-[#296341] text-[18px]" 
+              />
             </div>
             <div className="space-y-2">
               <label className="text-[16px] font-bold text-gray-500">Decks#</label>
-              <input value={decksNo || ""} onChange={(e) => setDecksNo(e.target.value)} className="w-full h-[45px] border border-gray-200 rounded-md px-4 shadow-sm outline-none focus:ring-2 focus:ring-[#296341] text-[18px]" />
+              <input 
+                value={decksNo} 
+                onChange={(e) => setDecksNo(e.target.value)} 
+                placeholder="Number of decks"
+                className="w-full h-[45px] border border-gray-200 rounded-md px-4 shadow-sm outline-none focus:ring-2 focus:ring-[#296341] text-[18px]" 
+              />
             </div>
           </div>
 
@@ -278,67 +766,156 @@ export default function CargoBooking() {
           {/* Date / Location row */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="space-y-2">
-              <label className="text-[18px] font-bold text-gray-700">Date</label>
+              <label className="text-[18px] font-bold text-gray-700">
+                Date <span className="text-red-500">*</span>
+              </label>
               <div className="relative">
-                <input value={bookingDate} onChange={(e) => setBookingDate(e.target.value)} className="w-full h-[50px] bg-white border border-gray-200 rounded-md px-4 shadow-sm outline-none focus:ring-2 focus:ring-[#296341] text-[18px]" />
-                <Calendar className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <input 
+                  type="date"
+                  value={bookingDate} 
+                  onChange={(e) => setBookingDate(e.target.value)} 
+                  min={new Date().toISOString().split('T')[0]}
+                  className="w-full h-[50px] bg-white border border-gray-200 rounded-md px-4 shadow-sm outline-none focus:ring-2 focus:ring-[#296341] text-[18px]" 
+                />
+                <Calendar className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
               </div>
             </div>
             <div className="space-y-2">
               <label className="text-[18px] font-bold text-gray-700 flex items-center gap-2">
-                <MapPin className="text-[#296341] w-5 h-5 fill-[#296341]/10" /> From
+                <MapPin className="text-[#296341] w-5 h-5 fill-[#296341]/10" /> 
+                From <span className="text-red-500">*</span>
               </label>
               <div className="relative">
-                <select value={fromLocation} onChange={(e) => setFromLocation(e.target.value)} className="w-full h-[50px] bg-white border border-gray-200 rounded-md px-4 shadow-sm appearance-none outline-none focus:ring-2 focus:ring-[#296341] text-[18px] font-bold">
-                  {locations.map(loc => (
-                    <option key={loc.id} value={loc.code}>{loc.code} - {loc.name}</option>
-                  ))}
+                <select 
+                  value={fromLocation} 
+                  onChange={(e) => setFromLocation(e.target.value)} 
+                  disabled={isLoadingLocations}
+                  className="w-full h-[50px] bg-white border border-gray-200 rounded-md px-4 shadow-sm appearance-none outline-none focus:ring-2 focus:ring-[#296341] text-[18px] font-bold disabled:bg-gray-100"
+                >
+                  {isLoadingLocations ? (
+                    <option>Loading...</option>
+                  ) : locations.length === 0 ? (
+                    <option>No locations available</option>
+                  ) : (
+                    locations.map(loc => (
+                      <option key={loc.id} value={loc.code}>{loc.code} - {loc.name}</option>
+                    ))
+                  )}
                 </select>
                 <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-[#296341]" />
               </div>
             </div>
             <div className="space-y-2">
               <label className="text-[18px] font-bold text-gray-700 flex items-center gap-2">
-                <MapPin className="text-[#296341] w-5 h-5 fill-[#296341]/10" /> To
+                <MapPin className="text-[#296341] w-5 h-5 fill-[#296341]/10" /> 
+                To <span className="text-red-500">*</span>
               </label>
               <div className="relative">
-                <select value={toLocation} onChange={(e) => setToLocation(e.target.value)} className="w-full h-[50px] bg-white border border-gray-200 rounded-md px-4 shadow-sm appearance-none outline-none focus:ring-2 focus:ring-[#296341] text-[18px] font-bold">
-                  {locations.map(loc => (
-                    <option key={loc.id} value={loc.code}>{loc.code} - {loc.name}</option>
-                  ))}
+                <select 
+                  value={toLocation} 
+                  onChange={(e) => setToLocation(e.target.value)} 
+                  disabled={isLoadingLocations}
+                  className="w-full h-[50px] bg-white border border-gray-200 rounded-md px-4 shadow-sm appearance-none outline-none focus:ring-2 focus:ring-[#296341] text-[18px] font-bold disabled:bg-gray-100"
+                >
+                  {isLoadingLocations ? (
+                    <option>Loading...</option>
+                  ) : locations.length === 0 ? (
+                    <option>No locations available</option>
+                  ) : (
+                    locations.map(loc => (
+                      <option key={loc.id} value={loc.code}>{loc.code} - {loc.name}</option>
+                    ))
+                  )}
                 </select>
                 <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-[#296341]" />
               </div>
             </div>
           </div>
 
-          {/* Image Gallery UI */}
-          <div className="flex flex-col sm:flex-row gap-4 items-start pt-6">
-            <div className="flex sm:flex-col gap-4 mt-2 w-full sm:w-auto justify-center">
-              <Camera className="w-10 h-10 text-[#296341] cursor-pointer hover:scale-110 transition-transform" />
-              <Paperclip className="w-10 h-10 text-[#296341] cursor-pointer hover:scale-110 transition-transform" />
+          {/* Voyage Number */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="space-y-2">
+              <label className="text-[18px] font-bold text-gray-700">Voyage Number</label>
+              <input 
+                value={voyageNo} 
+                onChange={(e) => setVoyageNo(e.target.value)} 
+                placeholder="e.g., VOY-209"
+                className="w-full h-[50px] bg-white border border-gray-200 rounded-md px-4 shadow-sm outline-none focus:ring-2 focus:ring-[#296341] text-[18px]" 
+              />
             </div>
+          </div>
 
-            <div className="flex flex-col md:flex-row gap-4 flex-1 w-full">
-              <div className="flex-[2] rounded-xl overflow-hidden shadow-md border-2 border-[#296341]/20 aspect-video md:aspect-auto">
-                <img src={imgContainer.src} alt="Container main" className="w-full h-full object-cover" />
+          {/* Container Image Gallery */}
+          <div className="space-y-4 pt-6">
+            <h3 className="text-[20px] font-bold text-gray-700">Container Images</h3>
+            <div className="flex flex-col sm:flex-row gap-4 items-start">
+              <div className="flex sm:flex-col gap-4 mt-2 w-full sm:w-auto justify-center">
+                <button 
+                  onClick={() => containerImageRef.current?.click()}
+                  className="w-12 h-12 flex items-center justify-center bg-[#eef6f2] rounded-lg hover:bg-[#d1e5da] transition-colors"
+                >
+                  <Camera className="w-6 h-6 text-[#296341]" />
+                </button>
+                <button 
+                  onClick={() => containerImageRef.current?.click()}
+                  className="w-12 h-12 flex items-center justify-center bg-[#eef6f2] rounded-lg hover:bg-[#d1e5da] transition-colors"
+                >
+                  <Paperclip className="w-6 h-6 text-[#296341]" />
+                </button>
               </div>
-              <div className="flex-1 grid grid-cols-2 lg:grid-cols-2 gap-2">
-                <div className="rounded-lg overflow-hidden border border-gray-100 shadow-sm aspect-square"><img src={imgContainer.src} className="w-full h-full object-cover" /></div>
-                <div className="rounded-lg overflow-hidden border border-gray-100 shadow-sm aspect-square"><img src={imgContainer.src} className="w-full h-full object-cover" /></div>
-                <div className="rounded-lg overflow-hidden border border-gray-100 shadow-sm aspect-square"><img src={imgContainer.src} className="w-full h-full object-cover" /></div>
-                <div className="rounded-lg overflow-hidden relative group cursor-pointer shadow-sm aspect-square">
-                  <img src={imgContainer.src} className="w-full h-full object-cover" />
-                  <div className="absolute inset-0 bg-black/60 flex items-center justify-center text-white text-[20px] font-bold font-['Inter']">+2</div>
-                </div>
+
+              <div className="flex flex-wrap gap-4 flex-1 w-full">
+                {containerImages.length === 0 ? (
+                  <div 
+                    onClick={() => containerImageRef.current?.click()}
+                    className="w-full h-[200px] border-2 border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center cursor-pointer hover:border-[#296341] transition-colors"
+                  >
+                    <Upload className="w-12 h-12 text-gray-400 mb-2" />
+                    <p className="text-gray-500">Click to upload container images</p>
+                  </div>
+                ) : (
+                  containerImages.map((img, index) => (
+                    <div key={img.id} className="relative w-[150px] h-[150px] rounded-lg overflow-hidden border border-gray-200 shadow-sm group">
+                      <img 
+                        src={img.preview || img.url || imgContainer.src} 
+                        alt={`Container ${index + 1}`}
+                        className="w-full h-full object-cover"
+                      />
+                      <button
+                        onClick={() => removeContainerImage(img.id)}
+                        className="absolute top-2 right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                      {index === 0 && (
+                        <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs text-center py-1">
+                          Main Image
+                        </div>
+                      )}
+                    </div>
+                  ))
+                )}
+                {containerImages.length > 0 && (
+                  <div 
+                    onClick={() => containerImageRef.current?.click()}
+                    className="w-[150px] h-[150px] border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center cursor-pointer hover:border-[#296341] transition-colors"
+                  >
+                    <Plus className="w-8 h-8 text-gray-400" />
+                  </div>
+                )}
               </div>
             </div>
           </div>
 
           {/* Box Contains row */}
-          <div className="flex items-center gap-6 pt-4 border-b border-gray-100 pb-4">
-            <span className="text-[18px] font-bold text-gray-500 whitespace-nowrap">Box Contains</span>
-            <span className="text-[18px] font-medium text-[#244234]">clothing, shoes, non-perishables</span>
+          <div className="space-y-2 pt-4 border-b border-gray-100 pb-4">
+            <label className="text-[18px] font-bold text-gray-500">Box Contains</label>
+            <input 
+              value={boxContains} 
+              onChange={(e) => setBoxContains(e.target.value)} 
+              placeholder="e.g., clothing, shoes, non-perishables"
+              className="w-full h-[45px] border-b border-gray-300 outline-none focus:border-[#296341] text-[18px] py-2"
+            />
           </div>
 
           {/* Deficiency Section */}
@@ -348,12 +925,18 @@ export default function CargoBooking() {
               <div className="space-y-1">
                 <label className="text-[14px] font-bold text-gray-500">Damage Found</label>
                 <div className="relative">
-                  <select value={damageFound} onChange={(e) => setDamageFound(e.target.value)} className="w-full h-[45px] border-b border-gray-300 outline-none focus:border-[#296341] text-[18px] font-bold appearance-none bg-transparent">
+                  <select 
+                    value={damageFound} 
+                    onChange={(e) => setDamageFound(e.target.value)} 
+                    className="w-full h-[45px] border-b border-gray-300 outline-none focus:border-[#296341] text-[18px] font-bold appearance-none bg-transparent"
+                  >
                     <option value="">None</option>
-                    <option value="Broken">Broken</option>
-                    <option value="Scratched">Scratched</option>
-                    <option value="Dented">Dented</option>
-                    <option value="Wet">Wet</option>
+                    <option value="BROKEN">Broken</option>
+                    <option value="SCRATCHED">Scratched</option>
+                    <option value="DENTED">Dented</option>
+                    <option value="WET">Wet</option>
+                    <option value="TORN">Torn</option>
+                    <option value="OTHER">Other</option>
                   </select>
                   <ChevronDown className="absolute right-0 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
                 </div>
@@ -361,30 +944,51 @@ export default function CargoBooking() {
               <div className="space-y-1">
                 <label className="text-[14px] font-bold text-gray-500">Damage Location</label>
                 <div className="relative">
-                  <select value={damageLocation} onChange={(e) => setDamageLocation(e.target.value)} className="w-full h-[45px] border-b border-gray-300 outline-none focus:border-[#296341] text-[18px] font-bold appearance-none bg-transparent">
-                    <option value="Left Center">Left Center</option>
+                  <select 
+                    value={damageLocation} 
+                    onChange={(e) => setDamageLocation(e.target.value)} 
+                    className="w-full h-[45px] border-b border-gray-300 outline-none focus:border-[#296341] text-[18px] font-bold appearance-none bg-transparent"
+                  >
+                    <option value="">Select location</option>
+                    <option value="TOP">Top</option>
+                    <option value="BOTTOM">Bottom</option>
+                    <option value="LEFT">Left</option>
+                    <option value="RIGHT">Right</option>
+                    <option value="LEFT_CENTER">Left Center</option>
+                    <option value="RIGHT_CENTER">Right Center</option>
+                    <option value="FRONT">Front</option>
+                    <option value="BACK">Back</option>
+                    <option value="MULTIPLE">Multiple Areas</option>
                   </select>
                   <ChevronDown className="absolute right-0 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
                 </div>
               </div>
               <div className="space-y-1">
                 <label className="text-[14px] font-bold text-gray-500">Comment</label>
-                <input value={comment || ""} onChange={(e) => setComment(e.target.value)} className="w-full h-[45px] border-b border-gray-300 outline-none focus:border-[#296341] text-[18px]" />
+                <input 
+                  value={comment} 
+                  onChange={(e) => setComment(e.target.value)} 
+                  placeholder="Describe the deficiency..."
+                  className="w-full h-[45px] border-b border-gray-300 outline-none focus:border-[#296341] text-[18px]" 
+                />
               </div>
             </div>
           </div>
 
-          {/* Add Item / Submit buttons */}
+          {/* Add Item Button */}
           <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 py-6">
-            <button className="bg-[#132540] text-white px-8 md:px-12 py-3 rounded-lg text-lg md:text-[22px] font-bold hover:bg-[#1a3254] transition-all shadow-md active:scale-95 flex items-center justify-center gap-3">
-              <Plus className="w-6 h-6" /> ADD ITEM
-            </button>
-            <button
-              onClick={handleSubmit}
-              disabled={isSubmitting}
-              className="bg-[#132540] text-white px-8 md:px-16 py-3 rounded-lg text-lg md:text-[22px] font-bold hover:bg-[#1a3254] transition-all shadow-md active:scale-95 flex items-center justify-center gap-2"
+            <button 
+              onClick={() => {
+                setEditingItem(null);
+                setNewItemType("DRY BOX(S)");
+                setNewItemUnitPrice("");
+                setNewItemQuantity("");
+                setNewItemIsPaid(false);
+                setShowAddItemModal(true);
+              }}
+              className="bg-[#132540] text-white px-8 md:px-12 py-3 rounded-lg text-lg md:text-[22px] font-bold hover:bg-[#1a3254] transition-all shadow-md active:scale-95 flex items-center justify-center gap-3"
             >
-              {isSubmitting ? <Loader2 className="animate-spin" /> : "SUBMIT"}
+              <Plus className="w-6 h-6" /> ADD ITEM <span className="text-red-300">*</span>
             </button>
           </div>
 
@@ -395,121 +999,194 @@ export default function CargoBooking() {
             <h2 className="text-[26px] font-bold text-[#296341]">USER DETAILS</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
               <div className="space-y-2 border-l-4 border-gray-100 pl-4">
-                <label className="text-[14px] font-bold text-gray-500">Full Name</label>
-                <input value={contactName} onChange={(e) => setContactName(e.target.value)} className="w-full h-[45px] text-[18px] font-bold uppercase outline-none" />
+                <label className="text-[14px] font-bold text-gray-500">
+                  Full Name <span className="text-red-500">*</span>
+                </label>
+                <input 
+                  value={contactName} 
+                  onChange={(e) => setContactName(e.target.value)} 
+                  placeholder="Enter full name"
+                  className="w-full h-[45px] text-[18px] font-bold uppercase outline-none border-b border-transparent focus:border-[#296341]" 
+                />
               </div>
               <div className="space-y-2 border-l-4 border-gray-100 pl-4">
                 <label className="text-[14px] font-bold text-gray-500">Address</label>
-                <input value={address} onChange={(e) => setAddress(e.target.value)} className="w-full h-[45px] text-[18px] font-bold outline-none" />
-                <ChevronDown className="float-right -mt-8 text-gray-400 w-4 h-4" />
+                <input 
+                  value={address} 
+                  onChange={(e) => setAddress(e.target.value)} 
+                  placeholder="Enter address"
+                  className="w-full h-[45px] text-[18px] font-bold outline-none border-b border-transparent focus:border-[#296341]" 
+                />
               </div>
               <div className="space-y-2 border-l-4 border-gray-100 pl-4">
                 <label className="text-[14px] font-bold text-gray-500">Email Address</label>
-                <input value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} className="w-full h-[45px] bg-[#f9fafb] border border-gray-100 rounded-md px-4 shadow-sm outline-none focus:ring-2 focus:ring-[#296341]" />
+                <input 
+                  type="email"
+                  value={contactEmail} 
+                  onChange={(e) => setContactEmail(e.target.value)} 
+                  placeholder="Enter email"
+                  className="w-full h-[45px] bg-[#f9fafb] border border-gray-100 rounded-md px-4 shadow-sm outline-none focus:ring-2 focus:ring-[#296341]" 
+                />
               </div>
               <div className="space-y-2 border-l-4 border-gray-100 pl-4">
                 <label className="text-[14px] font-bold text-gray-500">Contact Number</label>
-                <input value={contactPhone} onChange={(e) => setContactPhone(e.target.value)} className="w-full h-[45px] bg-[#f9fafb] border border-gray-100 rounded-md px-4 shadow-sm outline-none focus:ring-2 focus:ring-[#296341]" />
+                <input 
+                  type="tel"
+                  value={contactPhone} 
+                  onChange={(e) => setContactPhone(e.target.value)} 
+                  placeholder="Enter phone number"
+                  className="w-full h-[45px] bg-[#f9fafb] border border-gray-100 rounded-md px-4 shadow-sm outline-none focus:ring-2 focus:ring-[#296341]" 
+                />
               </div>
               <div className="flex items-center gap-4">
                 <span className="text-[16px] font-bold text-gray-600">ID Type :</span>
                 <div className="relative flex-1">
-                  <select value={idType} onChange={(e) => setIdType(e.target.value)} className="w-full h-[45px] bg-white border border-gray-100 rounded-md px-4 shadow-sm appearance-none outline-none focus:ring-2 focus:ring-[#296341] font-bold">
+                  <select 
+                    value={idType} 
+                    onChange={(e) => setIdType(e.target.value)} 
+                    className="w-full h-[45px] bg-white border border-gray-100 rounded-md px-4 shadow-sm appearance-none outline-none focus:ring-2 focus:ring-[#296341] font-bold"
+                  >
                     <option value="Passport">Passport</option>
+                    <option value="Driver License">Driver License</option>
+                    <option value="National ID">National ID</option>
+                    <option value="Other">Other</option>
                   </select>
                   <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-[#296341]" />
                 </div>
               </div>
             </div>
 
-            {/* User ID Gallery */}
-            <div className="flex flex-col sm:flex-row gap-4 items-start pt-6">
-              <div className="flex sm:flex-col gap-4 mt-2 w-full sm:w-auto justify-center">
-                <Camera className="w-10 h-10 text-[#296341] cursor-pointer" />
-                <Paperclip className="w-10 h-10 text-[#296341] cursor-pointer" />
-              </div>
-              <div className="flex flex-col md:flex-row gap-4 flex-1 items-center w-full">
-                <div className="w-full md:w-[200px] aspect-[3/4] md:h-[260px] rounded-xl overflow-hidden border-2 border-emerald-100 shadow-md">
-                  <img src={imgPassport.src} className="w-full h-full object-cover" />
+            {/* User Document Upload */}
+            <div className="space-y-4 pt-6">
+              <h3 className="text-[20px] font-bold text-gray-700">Identity Documents</h3>
+              <div className="flex flex-col sm:flex-row gap-4 items-start">
+                <div className="flex sm:flex-col gap-4 mt-2 w-full sm:w-auto justify-center">
+                  <button 
+                    onClick={() => userDocumentRef.current?.click()}
+                    className="w-12 h-12 flex items-center justify-center bg-[#eef6f2] rounded-lg hover:bg-[#d1e5da] transition-colors"
+                  >
+                    <Camera className="w-6 h-6 text-[#296341]" />
+                  </button>
+                  <button 
+                    onClick={() => userDocumentRef.current?.click()}
+                    className="w-12 h-12 flex items-center justify-center bg-[#eef6f2] rounded-lg hover:bg-[#d1e5da] transition-colors"
+                  >
+                    <Paperclip className="w-6 h-6 text-[#296341]" />
+                  </button>
                 </div>
-                <div className="w-full md:w-[200px] aspect-[3/4] md:h-[260px] rounded-xl overflow-hidden border-2 border-emerald-100 shadow-md">
-                  <img src={imgPassport.src} className="w-full h-full object-cover" />
-                </div>
-                <div className="grid grid-rows-2 grid-cols-2 gap-4 h-auto md:h-[260px] w-full md:w-auto">
-                  <div className="rounded-lg overflow-hidden shadow-sm border border-gray-100 aspect-square md:w-[140px]"><img src={imgIdCard.src} className="w-full h-full object-cover" /></div>
-                  <div className="rounded-lg overflow-hidden shadow-sm border border-gray-100 aspect-square md:w-[140px]"><img src={imgPassport.src} className="w-full h-full object-cover" /></div>
-                  <div className="rounded-lg overflow-hidden shadow-sm border border-gray-100 aspect-square md:w-[140px]"><img src={imgIdCard.src} className="w-full h-full object-cover" /></div>
-                  <div className="rounded-lg overflow-hidden relative aspect-square md:w-[140px] shadow-sm border border-gray-100">
-                    <img src={imgIdCard.src} className="w-full h-full object-cover" />
-                    <div className="absolute inset-0 bg-black/60 flex items-center justify-center text-white text-[24px] font-bold font-['Inter']">+2</div>
-                  </div>
-                </div>
-              </div>
-            </div>
 
-            <div className="flex justify-center pt-8">
-              <button className="bg-[#296341]/80 hover:bg-[#296341] text-white px-10 py-3 rounded-lg font-bold text-[18px] transition-all shadow-md active:scale-95">
-                + Add New Vehicle
-              </button>
+                <div className="flex flex-wrap gap-4 flex-1 w-full">
+                  {userDocuments.length === 0 ? (
+                    <div 
+                      onClick={() => userDocumentRef.current?.click()}
+                      className="w-full h-[200px] border-2 border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center cursor-pointer hover:border-[#296341] transition-colors"
+                    >
+                      <ImageIcon className="w-12 h-12 text-gray-400 mb-2" />
+                      <p className="text-gray-500">Click to upload {idType} images</p>
+                    </div>
+                  ) : (
+                    userDocuments.map((doc, index) => (
+                      <div key={doc.id} className="relative w-[150px] h-[200px] rounded-lg overflow-hidden border border-gray-200 shadow-sm group">
+                        <img 
+                          src={doc.preview || doc.url || imgPassport.src} 
+                          alt={`${idType} ${index + 1}`}
+                          className="w-full h-full object-cover"
+                        />
+                        <button
+                          onClick={() => removeUserDocument(doc.id)}
+                          className="absolute top-2 right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                        <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs text-center py-1">
+                          {idType}
+                        </div>
+                      </div>
+                    ))
+                  )}
+                  {userDocuments.length > 0 && userDocuments.length < 4 && (
+                    <div 
+                      onClick={() => userDocumentRef.current?.click()}
+                      className="w-[150px] h-[200px] border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center cursor-pointer hover:border-[#296341] transition-colors"
+                    >
+                      <Plus className="w-8 h-8 text-gray-400" />
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Cargo Summary Section (Light Green Box) */}
+        {/* Cargo Summary Section */}
         <div className="mt-16 bg-[#c2dccf] rounded-[40px] p-8 lg:p-12 shadow-inner border-b-8 border-emerald-800/20">
-
-          {/* Cargo Items Rounded Cards */}
+          {/* Cargo Items */}
           <div className="space-y-4 mb-10 max-w-[1000px]">
-            {items.map((item) => (
-              <div key={item.id} className="bg-white rounded-xl py-4 px-4 sm:px-8 flex flex-col sm:flex-row items-center shadow-sm group gap-4 sm:gap-0">
-                <div className="w-12 h-12 flex items-center justify-center text-[#296341]">
-                  {item.icon === 'box' || item.type.includes('BOX') ? <Box /> : <Container />}
-                </div>
-                <div className="flex-1 text-lg md:text-[20px] font-bold text-gray-700 sm:ml-4 text-center sm:text-left">{item.type} {item.unitPrice ? `($${item.unitPrice})` : ''} x {item.quantity}</div>
-                <div className="text-[20px] font-black text-black sm:mr-12 underline sm:no-underline">${(item.total || item.unitPrice * item.quantity).toLocaleString()}</div>
-                <div className="flex gap-6 sm:gap-4">
-                  <Edit2 className="w-6 h-6 text-gray-400 group-hover:text-[#296341] cursor-pointer transition-colors" />
-                  <Trash2 className="w-6 h-6 text-gray-400 group-hover:text-[#296341] cursor-pointer transition-colors" />
-                </div>
+            {items.length === 0 ? (
+              <div className="bg-white rounded-xl py-8 px-4 text-center text-gray-500">
+                No items added yet. Click "ADD ITEM" to add cargo items.
               </div>
-            ))}
+            ) : (
+              items.map((item) => (
+                <div key={item.id} className="bg-white rounded-xl py-4 px-4 sm:px-8 flex flex-col sm:flex-row items-center shadow-sm group gap-4 sm:gap-0">
+                  <div className="w-12 h-12 flex items-center justify-center text-[#296341]">
+                    {item.icon === 'box' || item.type.includes('BOX') ? <Box /> : <Container />}
+                  </div>
+                  <div className="flex-1 text-lg md:text-[20px] font-bold text-gray-700 sm:ml-4 text-center sm:text-left">
+                    {item.type} (${item.unitPrice}) x {item.quantity}
+                    {item.isPaid && <span className="ml-2 text-green-600 text-sm">(Paid)</span>}
+                  </div>
+                  <div className="text-[20px] font-black text-black sm:mr-12">
+                    ${item.total.toLocaleString()}
+                  </div>
+                  <div className="flex gap-6 sm:gap-4">
+                    <Edit2 
+                      onClick={() => handleEditItem(item)}
+                      className="w-6 h-6 text-gray-400 group-hover:text-[#296341] cursor-pointer transition-colors" 
+                    />
+                    <Trash2 
+                      onClick={() => handleDeleteItem(item.id)}
+                      className="w-6 h-6 text-gray-400 group-hover:text-red-500 cursor-pointer transition-colors" 
+                    />
+                  </div>
+                </div>
+              ))
+            )}
           </div>
 
-          <div className="flex justify-center mb-12">
-            <button className="bg-[#296341] text-white px-10 py-3 rounded-lg font-bold text-[18px] uppercase tracking-wider shadow-md hover:bg-emerald-800 transition-colors">
-              + ADDITIONAL SERVICES
-            </button>
-          </div>
-
-          {/* Final Summary Grid */}
+          {/* Summary Grid */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-y-12 gap-x-12 mb-20">
             <div className="space-y-6">
               <div>
                 <p className="text-[14px] font-bold text-gray-500 uppercase">Name</p>
-                <p className="text-[20px] font-black">{contactName}</p>
+                <p className="text-[20px] font-black">{contactName || '-'}</p>
               </div>
               <div>
                 <p className="text-[14px] font-bold text-gray-500 uppercase">Invoice Date</p>
-                <p className="text-[20px] font-black">20 / 12 / 2025</p>
+                <p className="text-[20px] font-black">
+                  {new Date().toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, ' / ')}
+                </p>
               </div>
               <div>
-                <p className="text-[14px] font-bold text-gray-500 uppercase">Voyage 209</p>
+                <p className="text-[14px] font-bold text-gray-500 uppercase">Voyage {voyageNo || '-'}</p>
               </div>
             </div>
 
             <div className="space-y-6">
               <div>
                 <p className="text-[14px] font-bold text-gray-500 uppercase">Contact no.</p>
-                <p className="text-[20px] font-black">{contactPhone}</p>
+                <p className="text-[20px] font-black">{contactPhone || '-'}</p>
               </div>
               <div>
                 <p className="text-[14px] font-bold text-gray-500 uppercase">Location</p>
-                <p className="text-[22px] font-black flex items-center gap-2">NAS <ArrowRight className="w-5 h-5" /> MAH</p>
+                <p className="text-[22px] font-black flex items-center gap-2">
+                  {fromLocation || '-'} <ArrowRight className="w-5 h-5" /> {toLocation || '-'}
+                </p>
               </div>
               <div className="flex gap-2">
                 <button
                   onClick={() => setPaymentStatus("PAID")}
-                  className={`flex-1 py-1 rounded-full font-bold transition-all shadow-sm ${paymentStatus === 'PAID' ? 'bg-[#ff4b4b] text-white' : 'bg-white text-gray-400'}`}
+                  className={`flex-1 py-1 rounded-full font-bold transition-all shadow-sm ${paymentStatus === 'PAID' ? 'bg-[#296341] text-white' : 'bg-white text-gray-400'}`}
                 >
                   PAID
                 </button>
@@ -525,11 +1202,13 @@ export default function CargoBooking() {
             <div className="space-y-6">
               <div>
                 <p className="text-[14px] font-bold text-gray-500 uppercase">Booking Date</p>
-                <p className="text-[20px] font-black">20 / 12 / 2025</p>
+                <p className="text-[20px] font-black">
+                  {bookingDate ? new Date(bookingDate).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, ' / ') : '-'}
+                </p>
               </div>
               <div>
                 <p className="text-[14px] font-bold text-gray-500 uppercase">Invoice No.</p>
-                <p className="text-[22px] font-black">#1672870</p>
+                <p className="text-[22px] font-black">{createdBooking?.invoiceNo ? `#${createdBooking.invoiceNo}` : 'Pending'}</p>
               </div>
               <input
                 placeholder="Remark"
@@ -540,31 +1219,48 @@ export default function CargoBooking() {
             </div>
           </div>
 
-          {/* Overlapping Total Card */}
-          <div className="static md:absolute md:left-1/2 md:-translate-x-1/2 md:-bottom-16 bg-white rounded-3xl p-6 md:p-8 shadow-2xl border-2 border-gray-50 flex flex-col items-center w-full md:min-w-[320px] mt-8 md:mt-0">
+          {/* Total Card */}
+          <div className="bg-white rounded-3xl p-6 md:p-8 shadow-2xl border-2 border-gray-50 flex flex-col items-center w-full max-w-[320px] mx-auto">
             <p className="text-[16px] md:text-[18px] font-bold text-gray-400 tracking-widest uppercase">Total Amount</p>
-            <p className="text-[36px] md:text-[48px] font-black text-black leading-tight">$728.00</p>
+            <p className="text-[36px] md:text-[48px] font-black text-black leading-tight">
+              ${grandTotal.toFixed(2)}
+            </p>
             <p className="text-[12px] text-gray-400 font-bold uppercase tracking-tight">(Including 12% VAT)</p>
+            {subtotal > 0 && (
+              <p className="text-[14px] text-gray-500 mt-2">
+                Subtotal: ${subtotal.toFixed(2)} + VAT: ${vatAmount.toFixed(2)}
+              </p>
+            )}
           </div>
         </div>
 
         {/* Action Buttons */}
-        <div className="mt-16 md:mt-32 flex flex-col sm:flex-row justify-center gap-4 md:gap-8">
-          <button className="bg-[#1e4a2e] text-white px-12 md:px-16 py-3 rounded-lg text-lg md:text-[20px] font-bold tracking-widest hover:bg-emerald-800 transition-all shadow-lg active:scale-95">
-            Preview
+        <div className="mt-16 flex flex-col sm:flex-row justify-center gap-4 md:gap-8">
+          <button 
+            onClick={resetForm}
+            className="bg-gray-500 text-white px-12 md:px-16 py-3 rounded-lg text-lg md:text-[20px] font-bold tracking-widest hover:bg-gray-600 transition-all shadow-lg active:scale-95"
+          >
+            Reset
+          </button>
+          <button 
+            onClick={() => setShowPreviewModal(true)}
+            className="bg-[#1e4a2e] text-white px-12 md:px-16 py-3 rounded-lg text-lg md:text-[20px] font-bold tracking-widest hover:bg-emerald-800 transition-all shadow-lg active:scale-95 flex items-center justify-center gap-2"
+          >
+            <Eye className="w-5 h-5" /> Preview
           </button>
           <button
             onClick={handleSubmit}
+            // onClick={() => console.log("Submitting booking...")}
             disabled={isSubmitting}
-            className="bg-[#1e4a2e] text-white px-12 md:px-16 py-3 rounded-lg text-lg md:text-[20px] font-bold tracking-widest hover:bg-emerald-800 transition-all shadow-lg active:scale-95 flex items-center justify-center gap-2"
+            className="bg-[#1e4a2e] text-white px-12 md:px-16 py-3 rounded-lg text-lg md:text-[20px] font-bold tracking-widest hover:bg-emerald-800 transition-all shadow-lg active:scale-95 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isSubmitting && <Loader2 className="w-5 h-5 animate-spin" />}
-            Save & Send
+            {isSubmitting ? 'Saving...' : 'Save & Send'}
           </button>
         </div>
       </main>
 
-      {/* Brand Footer */}
+      {/* Footer */}
       <footer className="bg-[#296341] py-6 md:py-8 mt-12">
         <div className="max-w-[1400px] mx-auto px-4 md:px-8 flex flex-col md:flex-row items-center justify-between gap-6 md:gap-0">
           <div className="flex items-center gap-4">
@@ -575,6 +1271,209 @@ export default function CargoBooking() {
           </div>
         </div>
       </footer>
+
+      {/* Add Item Modal */}
+      {showAddItemModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-6 md:p-8 w-full max-w-[500px] shadow-2xl">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-[24px] font-bold text-[#296341]">
+                {editingItem ? 'Edit Item' : 'Add New Item'}
+              </h3>
+              <button 
+                onClick={() => {
+                  setShowAddItemModal(false);
+                  setEditingItem(null);
+                }}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <label className="text-[14px] font-bold text-gray-500">Item Type</label>
+                <div className="relative">
+                  <select 
+                    value={newItemType} 
+                    onChange={(e) => setNewItemType(e.target.value)}
+                    className="w-full h-[50px] border border-gray-200 rounded-lg px-4 text-[18px] font-bold appearance-none outline-none focus:ring-2 focus:ring-[#296341]"
+                  >
+                    {itemTypes.map(t => (
+                      <option key={t} value={t}>{t}</option>
+                    ))}
+                  </select>
+                  <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-[14px] font-bold text-gray-500">Unit Price ($)</label>
+                  <input 
+                    type="number"
+                    value={newItemUnitPrice}
+                    onChange={(e) => setNewItemUnitPrice(e.target.value)}
+                    placeholder="0.00"
+                    min="0"
+                    step="0.01"
+                    className="w-full h-[50px] border border-gray-200 rounded-lg px-4 text-[18px] outline-none focus:ring-2 focus:ring-[#296341]"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[14px] font-bold text-gray-500">Quantity</label>
+                  <input 
+                    type="number"
+                    value={newItemQuantity}
+                    onChange={(e) => setNewItemQuantity(e.target.value)}
+                    placeholder="0"
+                    min="1"
+                    className="w-full h-[50px] border border-gray-200 rounded-lg px-4 text-[18px] outline-none focus:ring-2 focus:ring-[#296341]"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <input 
+                  type="checkbox"
+                  id="isPaid"
+                  checked={newItemIsPaid}
+                  onChange={(e) => setNewItemIsPaid(e.target.checked)}
+                  className="w-5 h-5 accent-[#296341]"
+                />
+                <label htmlFor="isPaid" className="text-[16px] font-medium text-gray-700">
+                  Mark as Paid
+                </label>
+              </div>
+
+              {newItemUnitPrice && newItemQuantity && (
+                <div className="bg-[#eef6f2] rounded-lg p-4 text-center">
+                  <p className="text-[14px] text-gray-500">Total</p>
+                  <p className="text-[28px] font-black text-[#296341]">
+                    ${(parseFloat(newItemUnitPrice || '0') * parseInt(newItemQuantity || '0')).toFixed(2)}
+                  </p>
+                </div>
+              )}
+
+              <div className="flex gap-4 pt-4">
+                <button 
+                  onClick={() => {
+                    setShowAddItemModal(false);
+                    setEditingItem(null);
+                  }}
+                  className="flex-1 py-3 rounded-lg border border-gray-300 text-gray-600 font-bold hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button 
+                  onClick={handleAddItem}
+                  className="flex-1 py-3 rounded-lg bg-[#296341] text-white font-bold hover:bg-emerald-800 transition-colors"
+                >
+                  {editingItem ? 'Update Item' : 'Add Item'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Preview Modal */}
+      {showPreviewModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-auto">
+          <div className="bg-white rounded-2xl p-6 md:p-8 w-full max-w-[800px] shadow-2xl max-h-[90vh] overflow-auto">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-[24px] font-bold text-[#296341]">Booking Preview</h3>
+              <button 
+                onClick={() => setShowPreviewModal(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            <div className="space-y-6">
+              {/* Service Details */}
+              <div className="border-b pb-4">
+                <h4 className="font-bold text-gray-700 mb-2">Service Details</h4>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
+                  <div><span className="text-gray-500">Service:</span> <strong>{service}</strong></div>
+                  <div><span className="text-gray-500">Size:</span> <strong>{cargoSize}</strong></div>
+                  <div><span className="text-gray-500">Type:</span> <strong>{type}</strong></div>
+                  {containerNo && <div><span className="text-gray-500">Container#:</span> <strong>{containerNo}</strong></div>}
+                  {quantity && <div><span className="text-gray-500">Quantity:</span> <strong>{quantity}</strong></div>}
+                </div>
+              </div>
+
+              {/* Route */}
+              <div className="border-b pb-4">
+                <h4 className="font-bold text-gray-700 mb-2">Route</h4>
+                <div className="flex items-center gap-4">
+                  <span className="font-bold">{getLocationName(fromLocation)}</span>
+                  <ArrowRight className="w-5 h-5 text-[#296341]" />
+                  <span className="font-bold">{getLocationName(toLocation)}</span>
+                </div>
+                <p className="text-sm text-gray-500 mt-2">Booking Date: {new Date(bookingDate).toLocaleDateString()}</p>
+              </div>
+
+              {/* Items */}
+              <div className="border-b pb-4">
+                <h4 className="font-bold text-gray-700 mb-2">Items ({items.length})</h4>
+                {items.map(item => (
+                  <div key={item.id} className="flex justify-between py-2 border-b border-gray-100 last:border-0">
+                    <span>{item.type} x {item.quantity}</span>
+                    <span className="font-bold">${item.total.toFixed(2)}</span>
+                  </div>
+                ))}
+                <div className="flex justify-between py-2 mt-2 border-t-2">
+                  <span className="font-bold">Total (incl. 12% VAT)</span>
+                  <span className="font-black text-[#296341]">${grandTotal.toFixed(2)}</span>
+                </div>
+              </div>
+
+              {/* Contact */}
+              <div className="border-b pb-4">
+                <h4 className="font-bold text-gray-700 mb-2">Contact Information</h4>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div><span className="text-gray-500">Name:</span> <strong>{contactName}</strong></div>
+                  <div><span className="text-gray-500">Phone:</span> <strong>{contactPhone || '-'}</strong></div>
+                  <div><span className="text-gray-500">Email:</span> <strong>{contactEmail || '-'}</strong></div>
+                  <div><span className="text-gray-500">ID Type:</span> <strong>{idType}</strong></div>
+                </div>
+              </div>
+
+              {/* Images */}
+              {(containerImages.length > 0 || userDocuments.length > 0) && (
+                <div>
+                  <h4 className="font-bold text-gray-700 mb-2">Attachments</h4>
+                  <p className="text-sm text-gray-500">
+                    {containerImages.length} container image(s), {userDocuments.length} document(s)
+                  </p>
+                </div>
+              )}
+
+              <div className="flex gap-4 pt-4">
+                <button 
+                  onClick={() => setShowPreviewModal(false)}
+                  className="flex-1 py-3 rounded-lg border border-gray-300 text-gray-600 font-bold hover:bg-gray-50 transition-colors"
+                >
+                  Close
+                </button>
+                <button 
+                  onClick={() => {
+                    setShowPreviewModal(false);
+                    handleSubmit();
+                  }}
+                  disabled={isSubmitting}
+                  className="flex-1 py-3 rounded-lg bg-[#296341] text-white font-bold hover:bg-emerald-800 transition-colors disabled:opacity-50"
+                >
+                  {isSubmitting ? 'Saving...' : 'Confirm & Submit'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
