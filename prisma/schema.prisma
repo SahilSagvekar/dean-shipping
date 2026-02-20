@@ -64,11 +64,12 @@ enum PaymentStatus {
 
 enum EquipmentType {
   FORKLIFT
-  MULE_TRACTOR
+  MULE
   CHASSIS
-  CONTAINER_EQ
+  CONTAINER
   FLAT_RACK
 }
+
 
 enum EquipmentStatus {
   AVAILABLE
