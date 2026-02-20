@@ -274,7 +274,7 @@ export default function NotificationsPage() {
   // Fetch notifications
   const fetchNotifications = async () => {
     try {
-      const res = await apiFetch('/api/notifications?limit=10');
+      const res = await apiFetch('/api/notification?limit=10');
       if (res.ok) {
         const data = await res.json();
         setNotifications(data.notifications || []);
@@ -294,7 +294,7 @@ export default function NotificationsPage() {
   const handleSendReminders = async () => {
     setIsSending(true);
     try {
-      const res = await apiFetch('/api/notifications/send-reminders', {
+      const res = await apiFetch('/api/notification/send-reminders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ frequency: reminderFrequency }),
