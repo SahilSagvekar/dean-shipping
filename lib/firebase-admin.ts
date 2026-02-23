@@ -43,14 +43,17 @@ export interface DecodedFirebaseToken {
  * Includes dev bypass for testing without Firebase billing
  */
 export async function verifyFirebaseToken(token: string): Promise<DecodedFirebaseToken> {
-    // DEV BYPASS - Remove or disable in production
-    if (process.env.NODE_ENV === "development" && token.startsWith("dev-mock-token-")) {
-        console.log("DEV MODE: Bypassing Firebase token verification");
+    // ── TEMPORARY BYPASS ──────────────────────────────────────────────────────
+    // Active when NEXT_PUBLIC_BYPASS_OTP=true (works in both dev & production).
+    // Remove this block — or unset the env var — before going live.
+    if (process.env.NEXT_PUBLIC_BYPASS_OTP === "true" && token.startsWith("bypass-mock-token-")) {
+        console.warn("[OTP BYPASS] Skipping Firebase token verification.");
         return {
-            uid: "dev-uid-" + token.split("-").pop(),
-            phone_number: null,
+            uid: "bypass-uid-" + token.split("-").pop(),
+            phone_number: null, // mobileNumber from request body is used instead
         };
     }
+    // ──────────────────────────────────────────────────────────────────────────
 
     try {
         const decodedToken = await adminAuth.verifyIdToken(token);

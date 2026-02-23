@@ -1,843 +1,619 @@
-import svgPaths from "../../imports/svg-m0ur0okj4e";
+"use client";
+
+import { useState, useEffect, useCallback } from "react";
+import {
+    MapPin,
+    ChevronRight,
+    ChevronDown,
+    ChevronUp,
+    Printer,
+    ArrowRight,
+} from "lucide-react";
+import Image from "next/image";
+import { useAuth } from "@/lib/auth-context";
 import imgRectangle228 from "@/app/assets/0630bc807bbd9122cb449e66c33d18d13536d121.png";
 import imgRectangle2 from "@/app/assets/7bfea36700cced4af0de8d5f4074e11966bfadd9.png";
 
-function StashBurgerClassicDuotone() {
-  return (
-    <div className="absolute left-[108px] size-[70px] top-[22px]" data-name="stash:burger-classic-duotone">
-      <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 70 70">
-        <g id="stash:burger-classic-duotone">
-          <path d={svgPaths.p60c6800} fill="var(--fill-0, white)" id="Vector" />
-        </g>
-      </svg>
-    </div>
-  );
+// ── Types ────────────────────────────────────────────────────────────────────
+
+interface VoyageSummary {
+    id: string;
+    voyageNo: number;
+    shipName: string;
+    date: string;
+    status: string;
+    from: { code: string; name: string };
+    to: { code: string; name: string };
+    summary: {
+        totalBookings: number;
+        dry: number;
+        frozen: number;
+        cooler: number;
+        totalAmount: number;
+        paidAmount: number;
+        unpaidAmount: number;
+    };
 }
 
-function MaterialSymbolsHomeOutline() {
-  return (
-    <div className="absolute left-[1266px] size-[70px] top-[17px]" data-name="material-symbols:home-outline">
-      <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 70 70">
-        <g id="material-symbols:home-outline">
-          <path d={svgPaths.p546f400} fill="var(--fill-0, white)" id="Vector" />
-        </g>
-      </svg>
-    </div>
-  );
+interface CargoBooking {
+    id: string;
+    invoiceNo: string;
+    user: { firstName: string; lastName: string };
+    contactName: string;
+    items: { itemType: string; quantity: number; total: number }[];
+    invoice: { paymentMode: string | null; paymentStatus: string } | null;
+    totalAmount: number;
+    paymentStatus: string;
+    updatedAt: string;
+    type: string;
 }
 
-function StashBurgerClassicDuotone1() {
-  return (
-    <div className="absolute left-[108px] size-[70px] top-[22px]" data-name="stash:burger-classic-duotone">
-      <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 70 70">
-        <g id="stash:burger-classic-duotone">
-          <path d={svgPaths.p60c6800} fill="var(--fill-0, white)" id="Vector" />
-        </g>
-      </svg>
-    </div>
-  );
+interface VoyageDetail {
+    voyage: {
+        id: string;
+        voyageNo: number;
+        shipName: string;
+        date: string;
+        status: string;
+        from: { code: string; name: string };
+        to: { code: string; name: string };
+    };
+    bookings: {
+        dry: CargoBooking[];
+        frozen: CargoBooking[];
+        cooler: CargoBooking[];
+    };
+    summary: {
+        totalBookings: number;
+        dry: number;
+        frozen: number;
+        cooler: number;
+        totalAmount: number;
+        paidAmount: number;
+        unpaidAmount: number;
+    };
 }
 
-function MaterialSymbolsHomeOutline1() {
-  return (
-    <div className="absolute left-[1266px] size-[70px] top-[17px]" data-name="material-symbols:home-outline">
-      <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 70 70">
-        <g id="material-symbols:home-outline">
-          <path d={svgPaths.p546f400} fill="var(--fill-0, white)" id="Vector" />
-        </g>
-      </svg>
-    </div>
-  );
+// ── StatusBadge ──────────────────────────────────────────────────────────────
+
+function StatusBadge({ status }: { status: string }) {
+    const isPaid = status === "PAID";
+    return (
+        <span
+            className={`inline-flex items-center justify-center px-3 py-1 rounded text-sm font-semibold min-w-[70px] ${isPaid
+                    ? "bg-green-100 text-green-600 border border-green-300"
+                    : "bg-red-100 text-red-500 border border-red-300"
+                }`}
+        >
+            {isPaid ? "Paid" : "Unpaid"}
+        </span>
+    );
 }
 
-function WeuiArrowOutlined() {
-  return (
-    <div className="h-[75px] relative w-[38px]" data-name="weui:arrow-outlined">
-      <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 38 75">
-        <g id="weui:arrow-outlined">
-          <path d={svgPaths.p29943540} fill="var(--fill-0, white)" id="Vector" />
-        </g>
-      </svg>
-    </div>
-  );
-}
+// ── CargoTypeTable ────────────────────────────────────────────────────────────
+// Renders one DRY / FROZEN / COOLER section table, matching the dashboard style.
 
-function MdiLocation() {
-  return (
-    <div className="absolute left-[197px] size-[30px] top-[661px]" data-name="mdi:location">
-      <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 30 30">
-        <g id="mdi:location">
-          <path d={svgPaths.p33fa4080} fill="var(--fill-0, #296341)" id="Vector" />
-        </g>
-      </svg>
-    </div>
-  );
-}
+const BADGE_COLOR: Record<string, string> = {
+    DRY:    "bg-amber-500",
+    FROZEN: "bg-blue-500",
+    COOLER: "bg-cyan-500",
+};
 
-function WeuiArrowOutlined1() {
-  return (
-    <div className="absolute h-[40px] left-[1242px] top-[660px] w-[20px]" data-name="weui:arrow-outlined">
-      <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 20 40">
-        <g id="weui:arrow-outlined">
-          <path d={svgPaths.p28436f80} fill="var(--fill-0, #296341)" id="Vector" />
-        </g>
-      </svg>
-    </div>
-  );
-}
+function CargoTypeTable({
+    title,
+    badge,
+    bookings,
+    statusFilter,
+    onStatusChange,
+}: {
+    title: string;
+    badge: "DRY" | "FROZEN" | "COOLER";
+    bookings: CargoBooking[];
+    statusFilter: string;
+    onStatusChange: (v: string) => void;
+}) {
+    const filtered = bookings.filter((b) => {
+        if (statusFilter === "paid")   return b.paymentStatus === "PAID";
+        if (statusFilter === "unpaid") return b.paymentStatus !== "PAID";
+        return true; // "all"
+    });
 
-function RecentShipment() {
-  return (
-    <div className="absolute contents left-[166px] top-[858.5px]" data-name="recent shipment1">
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[166px] not-italic text-[15px] text-black top-[871.5px] whitespace-nowrap">
-        <p className="leading-[normal]">76803</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[260px] not-italic text-[15px] text-black top-[871.5px] whitespace-nowrap">
-        <p className="leading-[normal]">Jhon Doe</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[400px] not-italic text-[15px] text-black top-[871.5px] whitespace-nowrap">
-        <p className="leading-[normal]">Smith Jane</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[535px] not-italic text-[15px] text-black top-[872px] whitespace-nowrap">
-        <p className="leading-[normal]">Dry Cargo(S) x 4</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Bold',sans-serif] font-bold justify-center leading-[0] left-[1008px] not-italic text-[#70cf5d] text-[15px] top-[872.5px] whitespace-nowrap">
-        <p className="leading-[normal]">Paid</p>
-      </div>
-      <div className="absolute border border-black border-solid h-[27px] left-[966px] top-[858.5px] w-[116px]" />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[1106px] not-italic text-[15px] text-black top-[871.5px] whitespace-nowrap">
-        <p className="leading-[normal]">{`2024-12-12,  12.45`}</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[733px] not-italic text-[15px] text-black top-[873px] whitespace-nowrap">
-        <p className="leading-[normal]">Cash</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[734px] not-italic text-[15px] text-black top-[924px] whitespace-nowrap">
-        <p className="leading-[normal]">------</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[720px] not-italic text-[15px] text-black top-[973px] whitespace-nowrap">
-        <p className="leading-[normal]">Credit Card</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[735px] not-italic text-[15px] text-black top-[1022px] whitespace-nowrap">
-        <p className="leading-[normal]">------</p>
-      </div>
-    </div>
-  );
-}
+    return (
+        <div className="bg-white rounded-xl border border-emerald-200 shadow-sm overflow-hidden mb-5">
+            {/* Section header */}
+            <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between bg-gray-50">
+                <div>
+                    <h4 className="text-lg font-bold text-gray-800 italic">{title}</h4>
+                    <p className="text-sm text-gray-500">
+                        {bookings.length} booking{bookings.length !== 1 ? "s" : ""}
+                    </p>
+                </div>
+                <div className="flex items-center gap-4">
+                    <span
+                        className={`px-5 py-1.5 rounded-lg text-white font-black text-xl ${BADGE_COLOR[badge] ?? "bg-gray-500"
+                            }`}
+                    >
+                        {badge}
+                    </span>
+                    <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors active:scale-95">
+                        <Printer className="w-5 h-5 text-gray-600" />
+                    </button>
+                </div>
+            </div>
 
-function RecentShipment1() {
-  return (
-    <div className="absolute contents left-[166px] top-[910px]" data-name="recent shipment1">
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[166px] not-italic text-[15px] text-black top-[923px] whitespace-nowrap">
-        <p className="leading-[normal]">76799</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[260px] not-italic text-[15px] text-black top-[923px] whitespace-nowrap">
-        <p className="leading-[normal]">Anni Jane</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[400px] not-italic text-[15px] text-black top-[923px] whitespace-nowrap">
-        <p className="leading-[normal]">Smith Jane</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[541px] not-italic text-[15px] text-black top-[924px] whitespace-nowrap">
-        <p className="leading-[normal]">{`Container 20ft `}</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Bold',sans-serif] font-bold justify-center leading-[0] left-[1000px] not-italic text-[#cf5d5d] text-[15px] top-[924px] whitespace-nowrap">
-        <p className="leading-[normal]">Unpaid</p>
-      </div>
-      <div className="absolute border border-black border-solid h-[27px] left-[966px] top-[910px] w-[116px]" />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[1106px] not-italic text-[15px] text-black top-[923px] whitespace-nowrap">
-        <p className="leading-[normal]">{`2024-12-12,  12.40`}</p>
-      </div>
-    </div>
-  );
-}
+            {/* Table */}
+            <div className="overflow-x-auto">
+                <table className="w-full min-w-[900px]">
+                    <thead>
+                        <tr className="bg-emerald-100">
+                            <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 w-[110px]">Invoice</th>
+                            <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 w-[130px]">Sender</th>
+                            <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 w-[130px]">Receiver</th>
+                            <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Item Details</th>
+                            <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 w-[130px]">Payment Mode</th>
+                            <th className="px-4 py-3 text-right text-sm font-semibold text-gray-700 w-[100px]">Amount</th>
+                            <th className="px-4 py-3 text-center text-sm font-semibold text-gray-700 w-[120px]">
+                                {/* Inline status filter */}
+                                <select
+                                    value={statusFilter}
+                                    onChange={(e) => onStatusChange(e.target.value)}
+                                    className="bg-white border border-gray-300 rounded px-2 py-1 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                                >
+                                    <option value="all">All</option>
+                                    <option value="paid">Paid</option>
+                                    <option value="unpaid">Unpaid</option>
+                                </select>
+                            </th>
+                            <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 w-[160px]">Updated At</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                        {filtered.length === 0 ? (
+                            <tr>
+                                <td colSpan={8} className="px-4 py-10 text-center text-gray-400 font-medium">
+                                    No {badge.toLowerCase()} cargo shipments found.
+                                </td>
+                            </tr>
+                        ) : (
+                            filtered.map((booking) => {
+                                const sender      = `${booking.user.firstName} ${booking.user.lastName}`;
+                                const receiver    = booking.contactName || "N/A";
+                                const itemDetails = booking.items.length > 0
+                                    ? booking.items.map((i) => `${i.itemType}${i.quantity > 1 ? ` ×${i.quantity}` : ""}`).join(", ")
+                                    : "N/A";
+                                const paymentMode = booking.invoice?.paymentMode || "---";
 
-function RecentShipment2() {
-  return (
-    <div className="absolute contents left-[166px] top-[960px]" data-name="recent shipment1">
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[166px] not-italic text-[15px] text-black top-[973px] whitespace-nowrap">
-        <p className="leading-[normal]">76798</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[260px] not-italic text-[15px] text-black top-[973px] whitespace-nowrap">
-        <p className="leading-[normal]">Sarah Lee</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[400px] not-italic text-[15px] text-black top-[973px] whitespace-nowrap">
-        <p className="leading-[normal]">Emily Davis</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[538px] not-italic text-[15px] text-black top-[973px] whitespace-nowrap">
-        <p className="leading-[normal]">Luggage(M) x 1</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Bold',sans-serif] font-bold justify-center leading-[0] left-[1008px] not-italic text-[#70cf5d] text-[15px] top-[973px] whitespace-nowrap">
-        <p className="leading-[normal]">Paid</p>
-      </div>
-      <div className="absolute border border-black border-solid h-[27px] left-[966px] top-[960px] w-[116px]" />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[1106px] not-italic text-[15px] text-black top-[973px] whitespace-nowrap">
-        <p className="leading-[normal]">{`2024-12-12,  12.20`}</p>
-      </div>
-    </div>
-  );
-}
+                                return (
+                                    <tr
+                                        key={booking.id}
+                                        className="hover:bg-gray-50 transition-colors cursor-pointer"
+                                    >
+                                        <td className="px-4 py-3 text-sm text-gray-800 font-bold italic">
+                                            #{booking.invoiceNo}
+                                        </td>
+                                        <td className="px-4 py-3 text-sm text-gray-700 font-medium">{sender}</td>
+                                        <td className="px-4 py-3 text-sm text-gray-700 font-medium">{receiver}</td>
+                                        <td className="px-4 py-3 text-sm text-gray-700">{itemDetails}</td>
+                                        <td className="px-4 py-3 text-sm text-gray-700">{paymentMode}</td>
+                                        <td className="px-4 py-3 text-sm text-gray-800 font-black text-right">
+                                            ${booking.totalAmount.toLocaleString("en-US", {
+                                                minimumFractionDigits: 2,
+                                                maximumFractionDigits: 2,
+                                            })}
+                                        </td>
+                                        <td className="px-4 py-3 text-center">
+                                            <StatusBadge status={booking.paymentStatus} />
+                                        </td>
+                                        <td className="px-4 py-3 text-sm text-gray-600">
+                                            {new Date(booking.updatedAt).toLocaleString()}
+                                        </td>
+                                    </tr>
+                                );
+                            })
+                        )}
+                    </tbody>
+                </table>
+            </div>
 
-function RecentShipment3() {
-  return (
-    <div className="absolute contents left-[166px] top-[1011px]" data-name="recent shipment1">
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[166px] not-italic text-[15px] text-black top-[1024px] whitespace-nowrap">
-        <p className="leading-[normal]">76797</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[260px] not-italic text-[15px] text-black top-[1024px] whitespace-nowrap">
-        <p className="leading-[normal]">David Clerk</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[400px] not-italic text-[15px] text-black top-[1024px] whitespace-nowrap">
-        <p className="leading-[normal]">Smith Jane</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[534px] not-italic text-[15px] text-black top-[1024px] whitespace-nowrap">
-        <p className="leading-[normal]">Vehicle (BD 2314)</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Bold',sans-serif] font-bold justify-center leading-[0] left-[1000px] not-italic text-[#cf5d5d] text-[15px] top-[1025px] whitespace-nowrap">
-        <p className="leading-[normal]">Unpaid</p>
-      </div>
-      <div className="absolute border border-black border-solid h-[27px] left-[966px] top-[1011px] w-[116px]" />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[1106px] not-italic text-[15px] text-black top-[1024px] whitespace-nowrap">
-        <p className="leading-[normal]">{`2024-12-12,  12.18`}</p>
-      </div>
-    </div>
-  );
-}
-
-function RecentShipment4() {
-  return (
-    <div className="absolute contents left-[166px] top-[1061px]" data-name="recent shipment1">
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[166px] not-italic text-[15px] text-black top-[1074px] whitespace-nowrap">
-        <p className="leading-[normal]">76791</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[260px] not-italic text-[15px] text-black top-[1074px] whitespace-nowrap">
-        <p className="leading-[normal]">Alice Brown</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[400px] not-italic text-[15px] text-black top-[1074px] whitespace-nowrap">
-        <p className="leading-[normal]">Emily Davis</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[537px] not-italic text-[15px] text-black top-[1074px] whitespace-nowrap">
-        <p className="leading-[normal]">{`Pallet  4ft(M) x 1 `}</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Bold',sans-serif] font-bold justify-center leading-[0] left-[1008px] not-italic text-[#70cf5d] text-[15px] top-[1074px] whitespace-nowrap">
-        <p className="leading-[normal]">Paid</p>
-      </div>
-      <div className="absolute border border-black border-solid h-[27px] left-[966px] top-[1061px] w-[116px]" />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[1106px] not-italic text-[15px] text-black top-[1074px] whitespace-nowrap">
-        <p className="leading-[normal]">{`2024-12-12,  12.15`}</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[738px] not-italic text-[15px] text-black top-[1074px] whitespace-nowrap">
-        <p className="leading-[normal]">Cash</p>
-      </div>
-    </div>
-  );
-}
-
-function IcBaselinePrint() {
-  return <div className="absolute left-[1217px] size-[40px] top-[739px]" data-name="ic:baseline-print" />;
-}
-
-function EpArrowUpBold() {
-  return (
-    <div className="relative size-[20px]" data-name="ep:arrow-up-bold">
-      <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 20 20">
-        <g id="ep:arrow-up-bold">
-          <path d={svgPaths.p2b20d4f0} fill="var(--fill-0, black)" id="Vector" />
-        </g>
-      </svg>
-    </div>
-  );
-}
-
-function Frame() {
-  return (
-    <div className="absolute content-stretch flex items-center justify-center left-[853px] p-[10px] top-[807px]">
-      <div className="flex flex-col font-['Inter:Semi_Bold',sans-serif] font-semibold justify-center leading-[0] not-italic relative shrink-0 text-[16px] text-black whitespace-nowrap">
-        <p className="leading-[normal]">Amount</p>
-      </div>
-    </div>
-  );
-}
-
-function MdiLocation1() {
-  return (
-    <div className="absolute left-[196px] size-[30px] top-[1205px]" data-name="mdi:location">
-      <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 30 30">
-        <g id="mdi:location">
-          <path d={svgPaths.p33fa4080} fill="var(--fill-0, #296341)" id="Vector" />
-        </g>
-      </svg>
-    </div>
-  );
-}
-
-function WeuiArrowOutlined2() {
-  return (
-    <div className="absolute h-[40px] left-[1214px] top-[1200px] w-[20px]" data-name="weui:arrow-outlined">
-      <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 20 40">
-        <g id="weui:arrow-outlined">
-          <path d={svgPaths.p28436f80} fill="var(--fill-0, #296341)" id="Vector" />
-        </g>
-      </svg>
-    </div>
-  );
-}
-
-function MdiLocation2() {
-  return (
-    <div className="absolute left-[197px] size-[30px] top-[1280px]" data-name="mdi:location">
-      <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 30 30">
-        <g id="mdi:location">
-          <path d={svgPaths.p33fa4080} fill="var(--fill-0, #296341)" id="Vector" />
-        </g>
-      </svg>
-    </div>
-  );
-}
-
-function WeuiArrowOutlined3() {
-  return (
-    <div className="absolute h-[40px] left-[1215px] top-[1275px] w-[20px]" data-name="weui:arrow-outlined">
-      <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 20 40">
-        <g id="weui:arrow-outlined">
-          <path d={svgPaths.p28436f80} fill="var(--fill-0, #296341)" id="Vector" />
-        </g>
-      </svg>
-    </div>
-  );
-}
-
-function MdiLocation3() {
-  return (
-    <div className="absolute left-[197px] size-[30px] top-[1353px]" data-name="mdi:location">
-      <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 30 30">
-        <g id="mdi:location">
-          <path d={svgPaths.p33fa4080} fill="var(--fill-0, #296341)" id="Vector" />
-        </g>
-      </svg>
-    </div>
-  );
-}
-
-function WeuiArrowOutlined4() {
-  return (
-    <div className="absolute h-[40px] left-[1215px] top-[1348px] w-[20px]" data-name="weui:arrow-outlined">
-      <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 20 40">
-        <g id="weui:arrow-outlined">
-          <path d={svgPaths.p28436f80} fill="var(--fill-0, #296341)" id="Vector" />
-        </g>
-      </svg>
-    </div>
-  );
-}
-
-function MdiLocation4() {
-  return (
-    <div className="absolute left-[197px] size-[30px] top-[1428px]" data-name="mdi:location">
-      <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 30 30">
-        <g id="mdi:location">
-          <path d={svgPaths.p33fa4080} fill="var(--fill-0, #296341)" id="Vector" />
-        </g>
-      </svg>
-    </div>
-  );
-}
-
-function WeuiArrowOutlined5() {
-  return (
-    <div className="absolute h-[40px] left-[1215px] top-[1423px] w-[20px]" data-name="weui:arrow-outlined">
-      <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 20 40">
-        <g id="weui:arrow-outlined">
-          <path d={svgPaths.p28436f80} fill="var(--fill-0, #296341)" id="Vector" />
-        </g>
-      </svg>
-    </div>
-  );
-}
-
-function MdiLocation5() {
-  return (
-    <div className="absolute left-[196px] size-[30px] top-[1501px]" data-name="mdi:location">
-      <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 30 30">
-        <g id="mdi:location">
-          <path d={svgPaths.p33fa4080} fill="var(--fill-0, #296341)" id="Vector" />
-        </g>
-      </svg>
-    </div>
-  );
-}
-
-function WeuiArrowOutlined6() {
-  return (
-    <div className="absolute h-[40px] left-[1214px] top-[1496px] w-[20px]" data-name="weui:arrow-outlined">
-      <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 20 40">
-        <g id="weui:arrow-outlined">
-          <path d={svgPaths.p28436f80} fill="var(--fill-0, #296341)" id="Vector" />
-        </g>
-      </svg>
-    </div>
-  );
-}
-
-function MdiLocation6() {
-  return (
-    <div className="absolute left-[193px] size-[30px] top-[1576px]" data-name="mdi:location">
-      <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 30 30">
-        <g id="mdi:location">
-          <path d={svgPaths.p33fa4080} fill="var(--fill-0, #296341)" id="Vector" />
-        </g>
-      </svg>
-    </div>
-  );
-}
-
-function WeuiArrowOutlined7() {
-  return (
-    <div className="absolute h-[40px] left-[1211px] top-[1571px] w-[20px]" data-name="weui:arrow-outlined">
-      <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 20 40">
-        <g id="weui:arrow-outlined">
-          <path d={svgPaths.p28436f80} fill="var(--fill-0, #296341)" id="Vector" />
-        </g>
-      </svg>
-    </div>
-  );
-}
-
-function MdiLocation7() {
-  return (
-    <div className="absolute left-[193px] size-[30px] top-[1651px]" data-name="mdi:location">
-      <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 30 30">
-        <g id="mdi:location">
-          <path d={svgPaths.p33fa4080} fill="var(--fill-0, #296341)" id="Vector" />
-        </g>
-      </svg>
-    </div>
-  );
-}
-
-function WeuiArrowOutlined8() {
-  return (
-    <div className="absolute h-[40px] left-[1211px] top-[1646px] w-[20px]" data-name="weui:arrow-outlined">
-      <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 20 40">
-        <g id="weui:arrow-outlined">
-          <path d={svgPaths.p28436f80} fill="var(--fill-0, #296341)" id="Vector" />
-        </g>
-      </svg>
-    </div>
-  );
-}
-
-function MdiLocation8() {
-  return (
-    <div className="absolute left-[196px] size-[30px] top-[1726px]" data-name="mdi:location">
-      <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 30 30">
-        <g id="mdi:location">
-          <path d={svgPaths.p33fa4080} fill="var(--fill-0, #296341)" id="Vector" />
-        </g>
-      </svg>
-    </div>
-  );
-}
-
-function WeuiArrowOutlined9() {
-  return (
-    <div className="absolute h-[40px] left-[1214px] top-[1721px] w-[20px]" data-name="weui:arrow-outlined">
-      <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 20 40">
-        <g id="weui:arrow-outlined">
-          <path d={svgPaths.p28436f80} fill="var(--fill-0, #296341)" id="Vector" />
-        </g>
-      </svg>
-    </div>
-  );
-}
-
-function MdiLocation9() {
-  return (
-    <div className="absolute left-[196px] size-[30px] top-[1801px]" data-name="mdi:location">
-      <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 30 30">
-        <g id="mdi:location">
-          <path d={svgPaths.p33fa4080} fill="var(--fill-0, #296341)" id="Vector" />
-        </g>
-      </svg>
-    </div>
-  );
-}
-
-function WeuiArrowOutlined10() {
-  return (
-    <div className="absolute h-[40px] left-[1214px] top-[1796px] w-[20px]" data-name="weui:arrow-outlined">
-      <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 20 40">
-        <g id="weui:arrow-outlined">
-          <path d={svgPaths.p28436f80} fill="var(--fill-0, #296341)" id="Vector" />
-        </g>
-      </svg>
-    </div>
-  );
-}
-
-function Group() {
-  return (
-    <div className="absolute inset-[32.71%_11.67%_58.86%_86.94%]">
-      <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 20 222">
-        <g id="Group 70">
-          <path d={svgPaths.pfed9f80} fill="var(--fill-0, #296341)" id="Vector" />
-          <path d={svgPaths.p24433d80} fill="var(--fill-0, #296341)" id="Vector_2" />
-          <path d={svgPaths.p298ebf00} fill="var(--fill-0, #296341)" id="Vector_3" />
-          <path d={svgPaths.p1e90480} fill="var(--fill-0, #296341)" id="Vector_4" />
-          <path d={svgPaths.p2c345c72} fill="var(--fill-0, #296341)" id="Vector_5" />
-        </g>
-      </svg>
-    </div>
-  );
-}
-
-function WeuiArrowOutlined11() {
-  return (
-    <div className="h-[75px] relative w-[38px]" data-name="weui:arrow-outlined">
-      <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 38 75">
-        <g id="weui:arrow-outlined">
-          <path d={svgPaths.p29943540} fill="var(--fill-0, black)" id="Vector" />
-        </g>
-      </svg>
-    </div>
-  );
-}
-
-function WeuiArrowOutlined12() {
-  return (
-    <div className="h-[75px] relative w-[38px]" data-name="weui:arrow-outlined">
-      <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 38 75">
-        <g id="weui:arrow-outlined">
-          <path d={svgPaths.p29943540} fill="var(--fill-0, black)" id="Vector" />
-        </g>
-      </svg>
-    </div>
-  );
-}
-
-function WeuiArrowOutlined13() {
-  return (
-    <div className="h-[75px] relative w-[38px]" data-name="weui:arrow-outlined">
-      <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 38 75">
-        <g id="weui:arrow-outlined">
-          <path d={svgPaths.p29943540} fill="var(--fill-0, black)" id="Vector" />
-        </g>
-      </svg>
-    </div>
-  );
-}
-
-function WeuiArrowOutlined14() {
-  return (
-    <div className="h-[75px] relative w-[38px]" data-name="weui:arrow-outlined">
-      <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 38 75">
-        <g id="weui:arrow-outlined">
-          <path d={svgPaths.p29943540} fill="var(--fill-0, black)" id="Vector" />
-        </g>
-      </svg>
-    </div>
-  );
-}
-
-function WeuiArrowOutlined15() {
-  return (
-    <div className="h-[75px] relative w-[38px]" data-name="weui:arrow-outlined">
-      <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 38 75">
-        <g id="weui:arrow-outlined">
-          <path d={svgPaths.p29943540} fill="var(--fill-0, black)" id="Vector" />
-        </g>
-      </svg>
-    </div>
-  );
-}
-
-function WeuiArrowOutlined16() {
-  return (
-    <div className="h-[75px] relative w-[38px]" data-name="weui:arrow-outlined">
-      <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 38 75">
-        <g id="weui:arrow-outlined">
-          <path d={svgPaths.p29943540} fill="var(--fill-0, black)" id="Vector" />
-        </g>
-      </svg>
-    </div>
-  );
-}
-
-export default function Menifest() {
-  return (
-    <div className="bg-white relative size-full" data-name="menifest">
-      <div className="-translate-x-1/2 absolute bg-[#e5f7f1] border border-[#296341] border-solid h-[80px] left-[calc(50%-0.5px)] top-[727px] w-[1173px]" />
-      <div className="-translate-x-1/2 absolute bg-[#5f8a71] border border-[#296341] border-solid h-[1386px] left-1/2 top-[507px] w-[1440px]" />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Semi_Bold',sans-serif] font-semibold justify-center leading-[0] left-[calc(50%-141px)] not-italic text-[40px] text-white top-[343px] whitespace-nowrap">
-        <p className="leading-[normal]">Dock Manager</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[calc(50%-86px)] not-italic text-[30px] text-white top-[384px] whitespace-nowrap">
-        <p className="leading-[normal]">Smith Frank</p>
-      </div>
-      <div className="-translate-x-1/2 absolute h-[132px] left-[calc(50%-0.5px)] top-[6px] w-[483px]">
-        <img alt="" className="absolute inset-0 max-w-none object-cover pointer-events-none size-full" src={imgRectangle228.src} />
-      </div>
-      <StashBurgerClassicDuotone />
-      <MaterialSymbolsHomeOutline />
-      <div className="absolute h-[453px] left-0 rounded-bl-[50px] rounded-br-[50px] top-0 w-[1440px]">
-        <img alt="" className="absolute inset-0 max-w-none object-cover pointer-events-none rounded-bl-[50px] rounded-br-[50px] size-full" src={imgRectangle2.src} />
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Semi_Bold',sans-serif] font-semibold justify-center leading-[0] left-[calc(50%-218px)] not-italic text-[40px] text-white top-[343px] whitespace-nowrap">
-        <p className="leading-[normal]">FREIGHT SUPERVISOR</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[calc(50%-86px)] not-italic text-[30px] text-white top-[384px] whitespace-nowrap">
-        <p className="leading-[normal]">Smith Frank</p>
-      </div>
-      <div className="-translate-x-1/2 absolute h-[132px] left-[calc(50%-0.5px)] top-[6px] w-[483px]">
-        <img alt="" className="absolute inset-0 max-w-none object-cover pointer-events-none size-full" src={imgRectangle228.src} />
-      </div>
-      <StashBurgerClassicDuotone1 />
-      <MaterialSymbolsHomeOutline1 />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[170px] not-italic text-[0px] text-white top-[557px] whitespace-nowrap">
-        <p className="text-[35px]">
-          <span className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[normal] not-italic text-white">{`VOYAGE  209  `}</span>
-          <span className="leading-[normal]">{`                                   01/ 01 / 2026`}</span>
-        </p>
-      </div>
-      <div className="absolute flex h-[38px] items-center justify-center left-[1174px] top-[536px] w-[75px]" style={{ "--transform-inner-width": "1177.1875", "--transform-inner-height": "153.59375" } as React.CSSProperties}>
-        <div className="flex-none rotate-90">
-          <WeuiArrowOutlined />
+            {/* Footer */}
+            <div className="px-6 py-3 border-t border-gray-200 bg-gray-50 flex items-center justify-between">
+                <span className="text-sm text-gray-500">
+                    Showing {filtered.length} of {bookings.length} shipments
+                </span>
+            </div>
         </div>
-      </div>
-      <div className="-translate-x-1/2 absolute bg-[#e5f7f1] border border-[#296341] border-solid h-[539px] left-[calc(50%-1.5px)] rounded-[10px] top-[630px] w-[1139px]" />
-      <MdiLocation />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[248px] not-italic text-[26px] text-black top-[675.5px] whitespace-nowrap">
-        <p className="leading-[normal]">{`NAS              -->              MHA`}</p>
-      </div>
-      <WeuiArrowOutlined1 />
-      <div className="absolute border border-[#296341] border-solid h-[429px] left-[149px] rounded-[5px] top-[740px] w-[1139px]" />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[165px] not-italic text-[20px] text-black top-[766px] w-[285px]">
-        <p className="leading-[normal] whitespace-pre-wrap">{`VOYAGE 209   01 / 01 / 2025`}</p>
-      </div>
-      <div className="absolute bg-[#d4e0d9] border border-[#296341] border-solid h-[48px] left-[149px] top-[800px] w-[1139px]" />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Semi_Bold',sans-serif] font-semibold justify-center leading-[0] left-[166px] not-italic text-[16px] text-black top-[824.5px] whitespace-nowrap">
-        <p className="leading-[normal]">Invoice</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Semi_Bold',sans-serif] font-semibold justify-center leading-[0] left-[266px] not-italic text-[16px] text-black top-[826.5px] whitespace-nowrap">
-        <p className="leading-[normal]">Sender</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Semi_Bold',sans-serif] font-semibold justify-center leading-[0] left-[391px] not-italic text-[16px] text-black top-[826.5px] whitespace-nowrap">
-        <p className="leading-[normal]">Receiver/AGENT</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Semi_Bold',sans-serif] font-semibold justify-center leading-[0] left-[545px] not-italic text-[16px] text-black top-[826.5px] whitespace-nowrap">
-        <p className="leading-[normal]">Item Details</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Semi_Bold',sans-serif] font-semibold justify-center leading-[0] left-[1127px] not-italic text-[16px] text-black top-[826.5px] whitespace-nowrap">
-        <p className="leading-[normal]">Updated at</p>
-      </div>
-      <RecentShipment />
-      <div className="absolute h-0 left-[150px] top-[898px] w-[1137px]">
-        <div className="absolute inset-[-1px_0_0_0]">
-          <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 1137 1">
-            <line id="Line 19" stroke="var(--stroke-0, #5F8A71)" x2="1137" y1="0.5" y2="0.5" />
-          </svg>
+    );
+}
+
+// ── VoyageContent ─────────────────────────────────────────────────────────────
+// Fetches & renders the DRY / FROZEN / COOLER tables for one voyage.
+// Mounts when the accordion is opened, unmounts when closed.
+
+function VoyageContent({
+    voyageId,
+    apiFetch,
+}: {
+    voyageId: string;
+    apiFetch: (url: string, options?: RequestInit) => Promise<Response>;
+}) {
+    const [loading, setLoading]     = useState(true);
+    const [detail, setDetail]       = useState<VoyageDetail | null>(null);
+    const [error, setError]         = useState<string | null>(null);
+    const [dryFilter, setDry]       = useState("all");
+    const [frozenFilter, setFrozen] = useState("all");
+    const [coolerFilter, setCooler] = useState("all");
+
+    useEffect(() => {
+        let cancelled = false;
+
+        async function load() {
+            setLoading(true);
+            setError(null);
+            try {
+                const res = await apiFetch(`/api/manifest/voyages/${voyageId}`);
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const data: VoyageDetail = await res.json();
+                if (!cancelled) setDetail(data);
+            } catch (e: any) {
+                if (!cancelled) setError("Failed to load voyage details. Please try again.");
+            } finally {
+                if (!cancelled) setLoading(false);
+            }
+        }
+
+        load();
+        return () => { cancelled = true; };
+    }, [voyageId, apiFetch]);
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center py-12">
+                <div className="flex flex-col items-center gap-3">
+                    <div className="w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+                    <p className="text-emerald-600 font-semibold animate-pulse">Loading shipments…</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (error || !detail) {
+        return (
+            <div className="py-8 text-center text-red-500 font-medium">
+                {error ?? "No data found."}
+            </div>
+        );
+    }
+
+    return (
+        <div>
+            {/* Route + summary bar */}
+            <div className="bg-white rounded-xl p-4 border border-emerald-200 shadow-sm mb-5">
+                <div className="flex flex-wrap items-center justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                        <MapPin className="w-5 h-5 text-emerald-600" />
+                        <span className="text-xl font-semibold text-gray-800">
+                            {detail.voyage.from.code}
+                        </span>
+                        <ArrowRight className="w-5 h-5 text-emerald-600" />
+                        <span className="text-xl font-semibold text-gray-800">
+                            {detail.voyage.to.code}
+                        </span>
+                        <span className="ml-2 text-sm text-gray-500">
+                            ({detail.voyage.from.name} → {detail.voyage.to.name})
+                        </span>
+                    </div>
+
+                    {/* Counts & revenue */}
+                    <div className="flex items-center gap-5 text-sm font-semibold">
+                        <span className="flex items-center gap-1">
+                            <span className="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block" />
+                            <span className="text-amber-700">{detail.summary.dry} DRY</span>
+                        </span>
+                        <span className="flex items-center gap-1">
+                            <span className="w-2.5 h-2.5 rounded-full bg-blue-500 inline-block" />
+                            <span className="text-blue-700">{detail.summary.frozen} FROZEN</span>
+                        </span>
+                        <span className="flex items-center gap-1">
+                            <span className="w-2.5 h-2.5 rounded-full bg-cyan-500 inline-block" />
+                            <span className="text-cyan-700">{detail.summary.cooler} COOLER</span>
+                        </span>
+                        <span className="text-gray-400">|</span>
+                        <span className="text-emerald-700">
+                            ${detail.summary.totalAmount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} total
+                        </span>
+                        <span className="text-green-600">
+                            ${detail.summary.paidAmount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} paid
+                        </span>
+                        <span className="text-red-500">
+                            ${detail.summary.unpaidAmount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} unpaid
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            {/* DRY / FROZEN / COOLER tables */}
+            <CargoTypeTable
+                title="DRY Cargo Shipments"
+                badge="DRY"
+                bookings={detail.bookings.dry}
+                statusFilter={dryFilter}
+                onStatusChange={setDry}
+            />
+            <CargoTypeTable
+                title="Frozen Cargo Shipments"
+                badge="FROZEN"
+                bookings={detail.bookings.frozen}
+                statusFilter={frozenFilter}
+                onStatusChange={setFrozen}
+            />
+            <CargoTypeTable
+                title="Cooler Cargo Shipments"
+                badge="COOLER"
+                bookings={detail.bookings.cooler}
+                statusFilter={coolerFilter}
+                onStatusChange={setCooler}
+            />
         </div>
-      </div>
-      <RecentShipment1 />
-      <div className="absolute h-0 left-[150px] top-[948.5px] w-[1137px]">
-        <div className="absolute inset-[-1px_0_0_0]">
-          <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 1137 1">
-            <line id="Line 19" stroke="var(--stroke-0, #5F8A71)" x2="1137" y1="0.5" y2="0.5" />
-          </svg>
+    );
+}
+
+// ── Main Page ─────────────────────────────────────────────────────────────────
+
+export default function Manifest() {
+    const { user, apiFetch, isLoading: authLoading } = useAuth();
+
+    const [voyages, setVoyages]                 = useState<VoyageSummary[]>([]);
+    const [loadingVoyages, setLoadingVoyages]   = useState(true);
+    const [page, setPage]                       = useState(1);
+    const [totalPages, setTotalPages]           = useState(1);
+
+    // The current (latest) voyage is always expanded on mount
+    const [currentExpanded, setCurrentExpanded] = useState(true);
+    // Track which past voyages are expanded
+    const [expandedIds, setExpandedIds]         = useState<Set<string>>(new Set());
+
+    // ── Fetch voyages list ────────────────────────────────────────────────────
+
+    const fetchVoyages = useCallback(
+        async (pageNum: number) => {
+            setLoadingVoyages(true);
+            try {
+                const res = await apiFetch(`/api/manifest/voyages?page=${pageNum}&limit=10`);
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const data = await res.json();
+
+                setVoyages((prev) =>
+                    pageNum === 1 ? data.voyages ?? [] : [...prev, ...(data.voyages ?? [])]
+                );
+                setTotalPages(data.pagination?.totalPages ?? 1);
+                setPage(pageNum);
+            } catch (err) {
+                console.error("Failed to fetch voyages:", err);
+            } finally {
+                setLoadingVoyages(false);
+            }
+        },
+        [apiFetch]
+    );
+
+    useEffect(() => {
+        // Wait for the auth context to finish hydrating from localStorage.
+        // Without this guard the first render fires with token=null → 401.
+        if (authLoading) return;
+        fetchVoyages(1);
+    }, [fetchVoyages, authLoading]);
+
+    const togglePastVoyage = (id: string) => {
+        setExpandedIds((prev) => {
+            const next = new Set(prev);
+            next.has(id) ? next.delete(id) : next.add(id);
+            return next;
+        });
+    };
+
+    // First voyage = current; the rest are past
+    const currentVoyage = voyages[0] ?? null;
+    const pastVoyages   = voyages.slice(1);
+
+    // ── Render ────────────────────────────────────────────────────────────────
+
+    return (
+        <div className="min-h-screen bg-gray-100">
+
+            {/* ── Header ────────────────────────────────────────────────── */}
+            <header className="relative h-[453px] rounded-b-[50px] overflow-hidden">
+                <div className="absolute inset-0">
+                    <Image
+                        src={imgRectangle2.src}
+                        alt="Container Yard"
+                        fill
+                        className="object-cover"
+                        priority
+                    />
+                </div>
+
+                <div className="relative z-10 h-full flex flex-col">
+                    <div className="flex items-center justify-between px-[108px] pt-[22px]">
+                        <div className="absolute left-1/2 -translate-x-1/2 top-[6px]">
+                            <Image
+                                src={imgRectangle228.src}
+                                alt="Dean's Shipping Ltd."
+                                width={483}
+                                height={132}
+                                className="object-contain"
+                                priority
+                            />
+                        </div>
+                    </div>
+
+                    <div className="flex-1 flex flex-col items-center justify-center">
+                        <h2 className="text-[40px] font-semibold text-white tracking-wide uppercase">
+                            {user?.role ?? "STAFF"}
+                        </h2>
+                        <p className="text-[30px] font-medium text-white mt-2">
+                            {user ? `${user.firstName} ${user.lastName}` : ""}
+                        </p>
+                    </div>
+                </div>
+            </header>
+
+            {/* ── Main ──────────────────────────────────────────────────── */}
+            <main className="max-w-6xl mx-auto px-4 -mt-8 pt-32 pb-12">
+
+                {/* Full-page loader */}
+                {loadingVoyages && voyages.length === 0 ? (
+                    <div className="flex flex-col items-center gap-4 py-24">
+                        <div className="w-12 h-12 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+                        <p className="text-emerald-600 text-lg font-semibold animate-pulse tracking-widest">
+                            SYNCING DATA…
+                        </p>
+                    </div>
+
+                ) : voyages.length === 0 ? (
+                    <div className="text-center py-24 text-gray-400 font-medium text-lg">
+                        No voyages found.
+                    </div>
+
+                ) : (
+                    <>
+                        {/* ── Current Voyage (latest) ──────────────────── */}
+                        {currentVoyage && (
+                            <div className="bg-emerald-600 rounded-xl shadow-lg overflow-hidden mb-8">
+                                {/* Toggle header */}
+                                <button
+                                    onClick={() => setCurrentExpanded((v) => !v)}
+                                    className="w-full flex items-center justify-between px-6 py-5 text-white hover:bg-emerald-700 transition-colors"
+                                >
+                                    <div className="flex items-center gap-5">
+                                        <h3 className="text-2xl font-black tracking-tight">
+                                            VOYAGE {currentVoyage.voyageNo}
+                                        </h3>
+                                        <span className="text-xl opacity-90">
+                                            {new Date(currentVoyage.date).toLocaleDateString("en-GB")}
+                                        </span>
+                                        <span className="text-xs px-3 py-1 bg-white/20 rounded-full font-semibold tracking-wider">
+                                            {currentVoyage.status}
+                                        </span>
+                                    </div>
+
+                                    <div className="flex items-center gap-5">
+                                        <div className="text-right text-sm opacity-80 hidden sm:block">
+                                            <div className="font-bold">
+                                                {currentVoyage.summary.totalBookings} shipments
+                                            </div>
+                                            <div>
+                                                ${currentVoyage.summary.totalAmount.toLocaleString("en-US", {
+                                                    minimumFractionDigits: 2,
+                                                    maximumFractionDigits: 2,
+                                                })}
+                                            </div>
+                                        </div>
+                                        {currentExpanded
+                                            ? <ChevronUp className="w-8 h-8 flex-shrink-0" />
+                                            : <ChevronDown className="w-8 h-8 flex-shrink-0" />
+                                        }
+                                    </div>
+                                </button>
+
+                                {/* Content */}
+                                {currentExpanded && (
+                                    <div className="bg-emerald-50 p-6">
+                                        <VoyageContent
+                                            voyageId={currentVoyage.id}
+                                            apiFetch={apiFetch}
+                                        />
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {/* ── Past Voyages ──────────────────────────────── */}
+                        {pastVoyages.length > 0 && (
+                            <div className="space-y-4">
+                                <h3 className="text-xl font-bold text-gray-800 px-2">
+                                    Past Voyages
+                                </h3>
+
+                                <div className="space-y-3">
+                                    {pastVoyages.map((voyage) => {
+                                        const isExpanded = expandedIds.has(voyage.id);
+                                        return (
+                                            <div
+                                                key={voyage.id}
+                                                className="border border-gray-200 rounded-lg overflow-hidden"
+                                            >
+                                                {/* Accordion toggle */}
+                                                <button
+                                                    onClick={() => togglePastVoyage(voyage.id)}
+                                                    className="w-full flex items-center justify-between px-6 py-4 bg-gradient-to-r from-emerald-50 to-teal-50 hover:from-emerald-100 hover:to-teal-100 transition-colors"
+                                                >
+                                                    <div className="flex flex-wrap items-center gap-4">
+                                                        <span className="text-xl font-black text-gray-800">
+                                                            VOYAGE {voyage.voyageNo}
+                                                        </span>
+                                                        <span className="text-base text-gray-600">
+                                                            {new Date(voyage.date).toLocaleDateString("en-GB")}
+                                                        </span>
+                                                        <span className="px-2 py-0.5 bg-emerald-100 text-emerald-700 text-sm rounded-full font-medium">
+                                                            {voyage.summary.totalBookings} shipments
+                                                        </span>
+                                                        <span className="flex items-center gap-2 text-sm text-gray-500 font-semibold">
+                                                            {voyage.from.code}
+                                                            <ArrowRight className="w-4 h-4" />
+                                                            {voyage.to.code}
+                                                        </span>
+                                                    </div>
+
+                                                    <div className="flex items-center gap-4">
+                                                        <div className="text-right text-sm text-gray-600 hidden sm:block">
+                                                            <div className="font-semibold">
+                                                                ${voyage.summary.totalAmount.toLocaleString("en-US", {
+                                                                    minimumFractionDigits: 2,
+                                                                    maximumFractionDigits: 2,
+                                                                })}
+                                                            </div>
+                                                            <div className="flex gap-2 justify-end text-xs">
+                                                                <span className="text-amber-600">{voyage.summary.dry}D</span>
+                                                                <span className="text-blue-600">{voyage.summary.frozen}F</span>
+                                                                <span className="text-cyan-600">{voyage.summary.cooler}C</span>
+                                                            </div>
+                                                        </div>
+                                                        {isExpanded
+                                                            ? <ChevronUp className="w-6 h-6 text-emerald-600 flex-shrink-0" />
+                                                            : <ChevronDown className="w-6 h-6 text-emerald-600 flex-shrink-0" />
+                                                        }
+                                                    </div>
+                                                </button>
+
+                                                {/* Voyage detail */}
+                                                {isExpanded && (
+                                                    <div className="p-6 bg-white border-t border-gray-200">
+                                                        <VoyageContent
+                                                            voyageId={voyage.id}
+                                                            apiFetch={apiFetch}
+                                                        />
+                                                    </div>
+                                                )}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+
+                                {/* Load More */}
+                                {page < totalPages && (
+                                    <button
+                                        onClick={() => fetchVoyages(page + 1)}
+                                        disabled={loadingVoyages}
+                                        className="w-full py-4 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors font-medium text-lg border-2 border-dashed border-emerald-300 hover:border-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        {loadingVoyages ? "Loading…" : "Load More Voyages…"}
+                                    </button>
+                                )}
+                            </div>
+                        )}
+                    </>
+                )}
+            </main>
         </div>
-      </div>
-      <RecentShipment2 />
-      <div className="absolute h-0 left-[150px] top-[998.5px] w-[1137px]">
-        <div className="absolute inset-[-1px_0_0_0]">
-          <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 1137 1">
-            <line id="Line 19" stroke="var(--stroke-0, #5F8A71)" x2="1137" y1="0.5" y2="0.5" />
-          </svg>
-        </div>
-      </div>
-      <div className="absolute h-0 left-[151px] top-[1100px] w-[1137px]">
-        <div className="absolute inset-[-1px_0_0_0]">
-          <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 1137 1">
-            <line id="Line 19" stroke="var(--stroke-0, #5F8A71)" x2="1137" y1="0.5" y2="0.5" />
-          </svg>
-        </div>
-      </div>
-      <RecentShipment3 />
-      <div className="absolute h-0 left-[150px] top-[1049.5px] w-[1137px]">
-        <div className="absolute inset-[-1px_0_0_0]">
-          <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 1137 1">
-            <line id="Line 19" stroke="var(--stroke-0, #5F8A71)" x2="1137" y1="0.5" y2="0.5" />
-          </svg>
-        </div>
-      </div>
-      <RecentShipment4 />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[166px] not-italic text-[#3b3b3b] text-[14px] top-[1132.5px] w-[279px]">
-        <p className="leading-[normal] whitespace-pre-wrap">Showing 5 of 10 Shipments</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[1104px] not-italic text-[#296341] text-[15px] top-[1134px] w-[153px]">
-        <p className="leading-[normal] whitespace-pre-wrap">{`View all              -->`}</p>
-      </div>
-      <div className="absolute border border-[#296341] border-solid h-[30px] left-[1063px] rounded-[10px] top-[1119px] w-[207px]" />
-      <IcBaselinePrint />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[863px] not-italic text-[15px] text-black top-[872px] whitespace-nowrap">
-        <p className="leading-[normal]">$234.00</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[863px] not-italic text-[15px] text-black top-[923px] whitespace-nowrap">
-        <p className="leading-[normal]">$1234.60</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[862px] not-italic text-[15px] text-black top-[974px] whitespace-nowrap">
-        <p className="leading-[normal]">$2300.00</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[863px] not-italic text-[15px] text-black top-[1023px] whitespace-nowrap">
-        <p className="leading-[normal]">$200.00</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[863px] not-italic text-[15px] text-black top-[1073px] whitespace-nowrap">
-        <p className="leading-[normal]">$3000.00</p>
-      </div>
-      <div className="absolute bg-white h-[28px] left-[964px] top-[813px] w-[118px]" />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Semi_Bold',sans-serif] font-semibold justify-center leading-[0] left-[974px] not-italic text-[16px] text-black top-[827.5px] whitespace-nowrap">
-        <p className="leading-[normal]">All</p>
-      </div>
-      <div className="absolute flex items-center justify-center left-[1057px] size-[20px] top-[818px]">
-        <div className="flex-none rotate-180">
-          <EpArrowUpBold />
-        </div>
-      </div>
-      <Frame />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Semi_Bold',sans-serif] font-semibold justify-center leading-[0] left-[697px] not-italic text-[16px] text-black top-[826.5px] whitespace-nowrap">
-        <p className="leading-[normal]">Payment Mode</p>
-      </div>
-      <div className="-translate-x-1/2 absolute bg-[#b5faff] border border-[#296341] border-solid h-[60px] left-[calc(50%+0.5px)] rounded-[10px] top-[1190px] w-[1147px]" />
-      <MdiLocation1 />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[240px] not-italic text-[26px] text-black top-[1220.5px] whitespace-nowrap">
-        <p className="leading-[normal]">{`NAS              -->              GTC`}</p>
-      </div>
-      <WeuiArrowOutlined2 />
-      <div className="-translate-x-1/2 absolute bg-[#e5f7f1] border border-[#296341] border-solid h-[60px] left-[calc(50%+0.5px)] rounded-[10px] top-[1265px] w-[1147px]" />
-      <MdiLocation2 />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[241px] not-italic text-[26px] text-black top-[1295.5px] whitespace-nowrap">
-        <p className="leading-[normal]">{`NAS              -->              GGC / BB`}</p>
-      </div>
-      <WeuiArrowOutlined3 />
-      <div className="-translate-x-1/2 absolute bg-[#b5faff] border border-[#296341] border-solid h-[60px] left-[calc(50%+0.5px)] rounded-[10px] top-[1338px] w-[1147px]" />
-      <MdiLocation3 />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[241px] not-italic text-[26px] text-black top-[1368.5px] whitespace-nowrap">
-        <p className="leading-[normal]">{`NAS              -->              MOW / HPT`}</p>
-      </div>
-      <WeuiArrowOutlined4 />
-      <div className="-translate-x-1/2 absolute bg-[#e5f7f1] border border-[#296341] border-solid h-[60px] left-[calc(50%+0.5px)] rounded-[10px] top-[1413px] w-[1147px]" />
-      <MdiLocation4 />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[241px] not-italic text-[26px] text-black top-[1443.5px] whitespace-nowrap">
-        <p className="leading-[normal]">{`NAS              -->              NA`}</p>
-      </div>
-      <WeuiArrowOutlined5 />
-      <div className="-translate-x-1/2 absolute bg-[#b5faff] border border-[#296341] border-solid h-[60px] left-[calc(50%+0.5px)] rounded-[10px] top-[1486px] w-[1147px]" />
-      <MdiLocation5 />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[240px] not-italic text-[26px] text-black top-[1516.5px] whitespace-nowrap">
-        <p className="leading-[normal]">{`GTC              -->              NAS`}</p>
-      </div>
-      <WeuiArrowOutlined6 />
-      <div className="-translate-x-1/2 absolute bg-[#e5f7f1] border border-[#296341] border-solid h-[60px] left-[calc(50%+0.5px)] rounded-[10px] top-[1561px] w-[1147px]" />
-      <MdiLocation6 />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[235px] not-italic text-[26px] text-black top-[1591.5px] whitespace-nowrap">
-        <p className="leading-[normal]">{`GTC              -->               MHA`}</p>
-      </div>
-      <WeuiArrowOutlined7 />
-      <div className="-translate-x-1/2 absolute bg-[#b5faff] border border-[#296341] border-solid h-[60px] left-[calc(50%+0.5px)] rounded-[10px] top-[1636px] w-[1147px]" />
-      <MdiLocation7 />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[237px] not-italic text-[26px] text-black top-[1666.5px] whitespace-nowrap">
-        <p className="leading-[normal]">{`GGC / BB      -->              NAS`}</p>
-      </div>
-      <WeuiArrowOutlined8 />
-      <div className="-translate-x-1/2 absolute bg-[#e5f7f1] border border-[#296341] border-solid h-[60px] left-[calc(50%+0.5px)] rounded-[10px] top-[1711px] w-[1147px]" />
-      <MdiLocation8 />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[240px] not-italic text-[26px] text-black top-[1741.5px] whitespace-nowrap">
-        <p className="leading-[normal]">{`GGC / BB      -->              MHA`}</p>
-      </div>
-      <WeuiArrowOutlined9 />
-      <div className="-translate-x-1/2 absolute bg-[#b5faff] border border-[#296341] border-solid h-[60px] left-[calc(50%+0.5px)] rounded-[10px] top-[1786px] w-[1147px]" />
-      <MdiLocation9 />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[240px] not-italic text-[26px] text-black top-[1816.5px] whitespace-nowrap">
-        <p className="leading-[normal]">{`MHA              -->              NAS`}</p>
-      </div>
-      <WeuiArrowOutlined10 />
-      <Group />
-      <div className="-translate-x-1/2 absolute bg-[#edb8c1] border border-black border-solid h-[70px] left-[calc(50%+10.5px)] top-[1933px] w-[1173px]" />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[175px] not-italic text-[0px] text-black top-[1965.5px] whitespace-nowrap">
-        <p className="text-[24px]">
-          <span className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[normal] not-italic text-black">{`VOYAGE  208  `}</span>
-          <span className="leading-[normal]">{`                                   31 / 12 / 2025`}</span>
-        </p>
-      </div>
-      <div className="absolute flex h-[38px] items-center justify-center left-[1220.5px] top-[1946.5px] w-[75px]" style={{ "--transform-inner-width": "1177.1875", "--transform-inner-height": "153.59375" } as React.CSSProperties}>
-        <div className="flex-none rotate-90">
-          <WeuiArrowOutlined11 />
-        </div>
-      </div>
-      <div className="-translate-x-1/2 absolute bg-[#aed1ff] border border-black border-solid h-[70px] left-[calc(50%+10.5px)] top-[2021px] w-[1173px]" />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[175px] not-italic text-[0px] text-black top-[2050.5px] whitespace-nowrap">
-        <p className="text-[24px]">
-          <span className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[normal] not-italic text-black">{`VOYAGE  207  `}</span>
-          <span className="leading-[normal]">{`                                   25 / 12 / 2025`}</span>
-        </p>
-      </div>
-      <div className="absolute flex h-[38px] items-center justify-center left-[1220.5px] top-[2033.5px] w-[75px]" style={{ "--transform-inner-width": "1177.1875", "--transform-inner-height": "153.59375" } as React.CSSProperties}>
-        <div className="flex-none rotate-90">
-          <WeuiArrowOutlined12 />
-        </div>
-      </div>
-      <div className="-translate-x-1/2 absolute bg-[#d8d2b2] border border-black border-solid h-[70px] left-[calc(50%+10.5px)] top-[2109px] w-[1173px]" />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[175px] not-italic text-[0px] text-black top-[2142.5px] whitespace-nowrap">
-        <p className="text-[24px]">
-          <span className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[normal] not-italic text-black">{`VOYAGE  206  `}</span>
-          <span className="leading-[normal]">{`                                   24 / 12 / 2025`}</span>
-        </p>
-      </div>
-      <div className="absolute flex h-[38px] items-center justify-center left-[1220.5px] top-[2121.5px] w-[75px]" style={{ "--transform-inner-width": "1177.1875", "--transform-inner-height": "153.59375" } as React.CSSProperties}>
-        <div className="flex-none rotate-90">
-          <WeuiArrowOutlined13 />
-        </div>
-      </div>
-      <div className="-translate-x-1/2 absolute bg-[#99d9e4] border border-black border-solid h-[70px] left-[calc(50%+10.5px)] top-[2198px] w-[1173px]" />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[175px] not-italic text-[0px] text-black top-[2232.5px] whitespace-nowrap">
-        <p className="text-[24px]">
-          <span className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[normal] not-italic text-black">{`VOYAGE  205  `}</span>
-          <span className="leading-[normal]">{`                                   21 / 12 / 2025`}</span>
-        </p>
-      </div>
-      <div className="absolute flex h-[38px] items-center justify-center left-[1220.5px] top-[2212.5px] w-[75px]" style={{ "--transform-inner-width": "1177.1875", "--transform-inner-height": "153.59375" } as React.CSSProperties}>
-        <div className="flex-none rotate-90">
-          <WeuiArrowOutlined14 />
-        </div>
-      </div>
-      <div className="-translate-x-1/2 absolute bg-[#ccc4c4] border border-black border-solid h-[70px] left-[calc(50%+13.5px)] top-[2286px] w-[1173px]" />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[178px] not-italic text-[0px] text-black top-[2319.5px] whitespace-nowrap">
-        <p className="text-[24px]">
-          <span className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[normal] not-italic text-black">{`VOYAGE  204  `}</span>
-          <span className="leading-[normal]">{`                                   `}</span>
-          <span className="leading-[normal]">18</span>
-          <span className="leading-[normal]">{` / 12 / 2025`}</span>
-        </p>
-      </div>
-      <div className="absolute flex h-[38px] items-center justify-center left-[1223.5px] top-[2298.5px] w-[75px]" style={{ "--transform-inner-width": "1177.1875", "--transform-inner-height": "153.59375" } as React.CSSProperties}>
-        <div className="flex-none rotate-90">
-          <WeuiArrowOutlined15 />
-        </div>
-      </div>
-      <div className="-translate-x-1/2 absolute bg-[rgba(25,177,134,0.5)] border border-black border-solid h-[70px] left-[calc(50%+13.5px)] top-[2375px] w-[1173px]" />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[178px] not-italic text-[0px] text-black top-[2409.5px] whitespace-nowrap">
-        <p className="text-[24px]">
-          <span className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[normal] not-italic text-black">{`VOYAGE  203  `}</span>
-          <span className="leading-[normal]">{`                                   `}</span>
-          <span className="leading-[normal]">1</span>
-          <span className="leading-[normal]">1 / 12 / 2025</span>
-        </p>
-      </div>
-      <div className="absolute flex h-[38px] items-center justify-center left-[1223.5px] top-[2389.5px] w-[75px]" style={{ "--transform-inner-width": "1177.1875", "--transform-inner-height": "153.59375" } as React.CSSProperties}>
-        <div className="flex-none rotate-90">
-          <WeuiArrowOutlined16 />
-        </div>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[175px] not-italic text-[24px] text-black top-[2483.5px] whitespace-nowrap">
-        <p className="leading-[normal]">Load More ......</p>
-      </div>
-    </div>
-  );
+    );
 }

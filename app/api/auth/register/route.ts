@@ -23,13 +23,15 @@ export async function POST(request: NextRequest) {
         }
 
         // Verify the Firebase ID token
+        // (bypass-mock-token- is accepted when NEXT_PUBLIC_BYPASS_OTP=true)
         const decodedToken = await verifyFirebaseToken(firebaseIdToken);
+        const isBypass = process.env.NEXT_PUBLIC_BYPASS_OTP === "true" && firebaseIdToken.startsWith("bypass-mock-token-");
         const firebaseUid = decodedToken.uid;
 
-        // Check if the phone number from Firebase matches
+        // Check phone number matches Firebase — skip during bypass (phone_number is null)
         const firebasePhone = decodedToken.phone_number;
         const fullMobile = `${countryCode || "+1"}${mobileNumber}`;
-        if (firebasePhone && firebasePhone !== fullMobile) {
+        if (!isBypass && firebasePhone && firebasePhone !== fullMobile) {
             return NextResponse.json(
                 { error: "Phone number mismatch with Firebase verification" },
                 { status: 400 }
