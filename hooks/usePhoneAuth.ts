@@ -68,27 +68,32 @@ export function usePhoneAuth(): UsePhoneAuthReturn {
         throw new Error("Phone number must include country code (e.g., +1)");
       }
 
-      // DEV BYPASS - remove in production
-      if (process.env.NEXT_PUBLIC_ENV === "development") {
-        console.log("DEV MODE: Skipping real OTP, use any 6-digit code");
+      // ── TEMPORARY BYPASS ─────────────────────────────────────────────────
+      // Set NEXT_PUBLIC_BYPASS_OTP=true in .env (local) or Vercel env vars
+      // (production) to skip real Firebase SMS while still developing.
+      // Remove or set to false before going live with real users.
+      // Accepts any 6-digit code while bypassed.
+      if (process.env.NEXT_PUBLIC_BYPASS_OTP === "true") {
+        console.warn("[OTP BYPASS ACTIVE] Any 6-digit code will be accepted.");
         setConfirmationResult({
           confirm: async (code: string) => {
-            if (code.length !== 6) {
-              throw new Error("Invalid OTP");
+            if (!/^\d{6}$/.test(code)) {
+              throw new Error("Invalid OTP — must be exactly 6 digits.");
             }
             return {
               user: {
-                uid: "dev-uid-" + Date.now(),
+                uid: "bypass-uid-" + Date.now(),
                 phoneNumber,
-                getIdToken: async () => "dev-mock-token-" + Date.now(),
+                getIdToken: async () => "bypass-mock-token-" + Date.now(),
               },
             };
           },
         } as any);
         return true;
       }
+      // ─────────────────────────────────────────────────────────────────────
 
-      // Real Firebase flow - only runs in production
+      // Real Firebase flow
       setupRecaptcha(buttonId);
       const appVerifier = (window as any).recaptchaVerifier;
 
