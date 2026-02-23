@@ -59,82 +59,84 @@ export function usePhoneAuth(): UsePhoneAuthReturn {
   /**
    * Send OTP to phone number
    */
-const sendOtp = useCallback(async (phoneNumber: string, buttonId: string): Promise<boolean> => {
-  try {
-    setLoading(true);
-    setError(null);
+  const sendOtp = useCallback(async (phoneNumber: string, buttonId: string): Promise<boolean> => {
+    try {
+      setLoading(true);
+      setError(null);
 
-    if (!phoneNumber.startsWith("+")) {
-      throw new Error("Phone number must include country code (e.g., +1)");
-    }
-
-    // DEV BYPASS - remove in production
-    if (process.env.NODE_ENV === "development") {
-      console.log("DEV MODE: Skipping real OTP, use any 6-digit code");
-      setConfirmationResult({
-        confirm: async (code: string) => {
-          if (code.length !== 6) {
-            throw new Error("Invalid OTP");
-          }
-          return {
-            user: {
-              uid: "dev-uid-" + Date.now(),
-              phoneNumber,
-              getIdToken: async () => "dev-mock-token-" + Date.now(),
-            },
-          };
-        },
-      } as any);
-      return true;
-    }
-
-    // Real Firebase flow - only runs in production
-    setupRecaptcha(buttonId);
-    const appVerifier = (window as any).recaptchaVerifier;
-
-    if (!appVerifier) {
-      throw new Error("reCAPTCHA not initialized");
-    }
-
-    const result = await signInWithPhoneNumber(auth, phoneNumber, appVerifier);
-    setConfirmationResult(result);
-    
-    console.log("OTP sent successfully to:", phoneNumber);
-    return true;
-  } catch (err: any) {
-    console.error("Send OTP error:", err);
-    
-    let errorMessage = "Failed to send OTP. Please try again.";
-    
-    if (err.code === "auth/invalid-phone-number") {
-      errorMessage = "Invalid phone number format.";
-    } else if (err.code === "auth/too-many-requests") {
-      errorMessage = "Too many attempts. Please try again later.";
-    } else if (err.code === "auth/quota-exceeded") {
-      errorMessage = "SMS quota exceeded. Please try again later.";
-    } else if (err.code === "auth/configuration-not-found") {
-      errorMessage = "Firebase configuration error. Please check your setup.";
-    } else if (err.message) {
-      errorMessage = err.message;
-    }
-
-    setError(errorMessage);
-
-    // Reset reCAPTCHA on error
-    if ((window as any).recaptchaVerifier) {
-      try {
-        (window as any).recaptchaVerifier.clear();
-      } catch (e) {
-        // Ignore
+      if (!phoneNumber.startsWith("+")) {
+        throw new Error("Phone number must include country code (e.g., +1)");
       }
-      (window as any).recaptchaVerifier = null;
-    }
 
-    return false;
-  } finally {
-    setLoading(false);
-  }
-}, [setupRecaptcha]);
+      // DEV BYPASS - remove in production
+      if (process.env.NEXT_PUBLIC_ENV === "development") {
+        console.log("DEV MODE: Skipping real OTP, use any 6-digit code");
+        setConfirmationResult({
+          confirm: async (code: string) => {
+            if (code.length !== 6) {
+              throw new Error("Invalid OTP");
+            }
+            return {
+              user: {
+                uid: "dev-uid-" + Date.now(),
+                phoneNumber,
+                getIdToken: async () => "dev-mock-token-" + Date.now(),
+              },
+            };
+          },
+        } as any);
+        return true;
+      }
+
+      // Real Firebase flow - only runs in production
+      setupRecaptcha(buttonId);
+      const appVerifier = (window as any).recaptchaVerifier;
+
+      if (!appVerifier) {
+        throw new Error("reCAPTCHA not initialized");
+      }
+
+      const result = await signInWithPhoneNumber(auth, phoneNumber, appVerifier);
+      setConfirmationResult(result);
+
+      console.log("OTP sent successfully to:", phoneNumber);
+      return true;
+    } catch (err: any) {
+      console.error("Send OTP error:", err);
+
+      let errorMessage = "Failed to send OTP. Please try again.";
+
+      if (err.code === "auth/invalid-phone-number") {
+        errorMessage = "Invalid phone number format.";
+      } else if (err.code === "auth/too-many-requests") {
+        errorMessage = "Too many attempts. Please try again later.";
+      } else if (err.code === "auth/quota-exceeded") {
+        errorMessage = "SMS quota exceeded. Please try again later.";
+      } else if (err.code === "auth/billing-not-enabled") {
+        errorMessage = "Phone authentication requires Firebase Blaze plan. Please upgrade your Firebase project at console.firebase.google.com";
+      } else if (err.code === "auth/configuration-not-found") {
+        errorMessage = "Firebase configuration error. Please check your setup.";
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+
+      setError(errorMessage);
+
+      // Reset reCAPTCHA on error
+      if ((window as any).recaptchaVerifier) {
+        try {
+          (window as any).recaptchaVerifier.clear();
+        } catch (e) {
+          // Ignore
+        }
+        (window as any).recaptchaVerifier = null;
+      }
+
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  }, [setupRecaptcha]);
 
 
 
@@ -165,7 +167,7 @@ const sendOtp = useCallback(async (phoneNumber: string, buttonId: string): Promi
       console.error("Verify OTP error:", err);
 
       let errorMessage = "Invalid OTP. Please try again.";
-      
+
       if (err.code === "auth/invalid-verification-code") {
         errorMessage = "Invalid OTP code.";
       } else if (err.code === "auth/code-expired") {
@@ -184,7 +186,7 @@ const sendOtp = useCallback(async (phoneNumber: string, buttonId: string): Promi
    */
   const resendOtp = useCallback(async (phoneNumber: string, buttonId: string): Promise<boolean> => {
     setConfirmationResult(null);
-    
+
     if ((window as any).recaptchaVerifier) {
       try {
         (window as any).recaptchaVerifier.clear();
