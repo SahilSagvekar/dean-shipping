@@ -32,6 +32,7 @@ export async function GET(
             countryCode: true,
             mobileNumber: true,
             role: true,
+            designation: true,
             agentCode: true,
             avatarUrl: true,
             isActive: true,
@@ -69,10 +70,10 @@ export async function PATCH(
     }
 
     const body = await request.json();
-    const allowedFields = ["firstName", "lastName", "email", "avatarUrl"];
+    const allowedFields = ["firstName", "lastName", "email", "avatarUrl", "designation"];
     // Admins can also update role and active status
     if (result.user.role === "ADMIN") {
-        allowedFields.push("role", "isActive", "agentCode");
+        allowedFields.push("role", "isActive", "agentCode", "mobileNumber", "countryCode");
     }
 
     const updateData: any = {};

@@ -40,6 +40,7 @@ export async function GET(request: NextRequest) {
                 countryCode: true,
                 mobileNumber: true,
                 role: true,
+                designation: true,
                 agentCode: true,
                 isActive: true,
                 createdAt: true,
@@ -68,11 +69,26 @@ export async function POST(request: NextRequest) {
 
     try {
         const body = await request.json();
-        const { firstName, lastName, email, countryCode, mobileNumber, role, agentCode, password } = body;
+        const { name, firstName, lastName, email, countryCode, mobileNumber, role, agentCode, password, designation } = body;
 
-        if (!firstName || !lastName || !email || !mobileNumber) {
+        console.log("Creating user with data:", { name, firstName, lastName, email, countryCode, mobileNumber, role, agentCode, designation });
+
+        // Support both single "name" field or split "firstName/lastName"
+        let fName = firstName;
+        let lName = lastName;
+        if (name && !fName && !lName) {
+            const parts = name.trim().split(/\s+/);
+            fName = parts[0];
+            lName = parts.slice(1).join(" ") || " ";
+        }
+
+        console.log("Parsed names:", { fName, lName, email, mobileNumber });
+
+        if (!fName
+            // || !lName 
+            || !email || !mobileNumber) {
             return NextResponse.json(
-                { error: "Missing required fields" },
+                { error: "Missing required fields: firstName/lastName (or name), email, mobileNumber" },
                 { status: 400 }
             );
         }
@@ -81,13 +97,14 @@ export async function POST(request: NextRequest) {
 
         const user = await prisma.user.create({
             data: {
-                firstName,
-                lastName,
+                firstName: fName,
+                lastName: lName,
                 email,
                 countryCode: countryCode || "+1",
                 mobileNumber,
                 role: role || "USER",
                 password: hashedPassword,
+                // designation,
                 agentCode: role === "AGENT" ? agentCode : undefined,
             },
         });
@@ -103,6 +120,7 @@ export async function POST(request: NextRequest) {
 
         return NextResponse.json({ user }, { status: 201 });
     } catch (error: any) {
+        console.error("User creation error:", error);
         if (error.code === "P2002") {
             return NextResponse.json(
                 { error: "Email or mobile number already exists" },
@@ -110,7 +128,7 @@ export async function POST(request: NextRequest) {
             );
         }
         return NextResponse.json(
-            { error: "Failed to create user" },
+            { error: "Failed to create user", details: error.message },
             { status: 500 }
         );
     }
