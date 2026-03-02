@@ -22,6 +22,30 @@ body {
   font-family: 'Outfit', 'Inter', sans-serif;
 }
 
+/* Print styles for invoice */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  
+  #invoice-content,
+  #invoice-content * {
+    visibility: visible;
+  }
+  
+  #invoice-content {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    padding: 20px;
+  }
+  
+  [data-print-hidden="true"] {
+    display: none !important;
+  }
+}
+
 
  /* @import "tailwindcss";
 

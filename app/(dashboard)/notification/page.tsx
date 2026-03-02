@@ -1,599 +1,468 @@
-import svgPaths from "../../imports/svg-l196g4inp6";
+"use client";
+
+import { useState, useEffect } from "react";
+import { useAuth } from "@/lib/auth-context";
+import { toast } from "sonner";
+import {
+  Bell,
+  Loader2,
+  Mail,
+  ChevronRight,
+  CheckCircle,
+  AlertCircle,
+  Clock,
+  DollarSign,
+  MapPin,
+  Package,
+  User,
+  Phone,
+  Calendar,
+  FileText,
+  Send,
+  Settings
+} from "lucide-react";
 import imgUntitled71 from "@/app/assets/3956b95e786ae07d9128fd4f6de57a9d0b031af5.png";
 
-function CarbonCircleFilled() {
-  return (
-    <div className="absolute left-[158px] size-[30px] top-[662px]" data-name="carbon:circle-filled">
-      <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 30 30">
-        <g id="carbon:circle-filled">
-          <path d={svgPaths.p3367d000} fill="var(--fill-0, black)" id="Vector" />
-          <path d={svgPaths.p2c7d0200} fill="var(--fill-0, black)" id="Vector_2" />
-        </g>
-      </svg>
-    </div>
-  );
+// Types
+interface Invoice {
+  id: string;
+  invoiceNo: string;
+  paymentStatus: 'PAID' | 'UNPAID';
+  subtotal: number;
+  vat: number;
+  grandTotal: number;
+  createdAt: string;
+  user?: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    mobileNumber?: string;
+  };
+  cargoBooking?: {
+    service: string;
+    fromLocation: { code: string; name: string };
+    toLocation: { code: string; name: string };
+    items: { type: string; quantity: number }[];
+  };
+  passengerBooking?: {
+    fromLocation: { code: string; name: string };
+    toLocation: { code: string; name: string };
+  };
 }
 
-function AkarIconsCircle() {
-  return (
-    <div className="absolute left-[425px] size-[30px] top-[662px]" data-name="akar-icons:circle">
-      <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 30 30">
-        <g clipPath="url(#clip0_1_248)" id="akar-icons:circle">
-          <path d={svgPaths.p10ada780} id="Vector" stroke="var(--stroke-0, black)" strokeWidth="3.33333" />
-        </g>
-        <defs>
-          <clipPath id="clip0_1_248">
-            <rect fill="white" height="30" width="30" />
-          </clipPath>
-        </defs>
-      </svg>
-    </div>
-  );
+interface Notification {
+  id: string;
+  title: string;
+  message: string;
+  type: string;
+  isRead: boolean;
+  createdAt: string;
 }
 
-function AkarIconsCircle1() {
-  return (
-    <div className="absolute left-[734px] size-[30px] top-[662px]" data-name="akar-icons:circle">
-      <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 30 30">
-        <g clipPath="url(#clip0_1_248)" id="akar-icons:circle">
-          <path d={svgPaths.p10ada780} id="Vector" stroke="var(--stroke-0, black)" strokeWidth="3.33333" />
-        </g>
-        <defs>
-          <clipPath id="clip0_1_248">
-            <rect fill="white" height="30" width="30" />
-          </clipPath>
-        </defs>
-      </svg>
-    </div>
-  );
+interface ReminderSettings {
+  frequency: 'DAILY' | 'EVERY_2_DAYS' | 'EVERY_5_DAYS' | 'EVERY_7_DAYS';
+  lastSent?: string;
 }
 
-function AkarIconsCircle2() {
+// Reminder frequency options
+const REMINDER_FREQUENCIES = [
+  { value: 'DAILY', label: 'Every Day' },
+  { value: 'EVERY_2_DAYS', label: 'Every 2 Days' },
+  { value: 'EVERY_5_DAYS', label: 'Every 5 Days' },
+  { value: 'EVERY_7_DAYS', label: 'Every 7 Days' },
+];
+
+// Radio Button Component
+function RadioButton({ 
+  selected, 
+  onClick, 
+  label 
+}: { 
+  selected: boolean; 
+  onClick: () => void; 
+  label: string;
+}) {
   return (
-    <div className="absolute left-[1043px] size-[30px] top-[661px]" data-name="akar-icons:circle">
-      <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 30 30">
-        <g clipPath="url(#clip0_1_248)" id="akar-icons:circle">
-          <path d={svgPaths.p10ada780} id="Vector" stroke="var(--stroke-0, black)" strokeWidth="3.33333" />
-        </g>
-        <defs>
-          <clipPath id="clip0_1_248">
-            <rect fill="white" height="30" width="30" />
-          </clipPath>
-        </defs>
-      </svg>
-    </div>
-  );
-}
-
-
-
-export default function AgentNotificationReminder() {
-  return (
-    <div className="bg-white relative size-full" data-name="Agent - Notification / reminder">
-      <div className="absolute bg-[#132540] h-[58px] left-[158px] rounded-[10px] top-[723px] w-[343px]" />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[156px] not-italic text-[40px] text-black top-[558px] whitespace-nowrap">
-        <p className="leading-[normal]">NOTIFICATION</p>
+    <button
+      onClick={onClick}
+      className="flex items-center gap-3 cursor-pointer group"
+    >
+      <div className={`w-[30px] h-[30px] rounded-full border-[3px] flex items-center justify-center transition-colors ${
+        selected ? 'border-black bg-black' : 'border-black bg-white group-hover:bg-gray-100'
+      }`}>
+        {selected && <div className="w-3 h-3 rounded-full bg-white" />}
       </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[158px] not-italic text-[36px] text-black top-[1016px] whitespace-nowrap">
-        <p className="leading-[normal]">Pending Payments</p>
+      <span className="text-xl md:text-2xl font-medium text-black">{label}</span>
+    </button>
+  );
+}
+
+// Payment Status Toggle Component
+function PaymentStatusToggle({
+  isPaid,
+  onChange,
+  disabled,
+}: {
+  isPaid: boolean;
+  onChange: (paid: boolean) => void;
+  disabled?: boolean;
+}) {
+  return (
+    <div className="relative bg-white border border-[#296341] rounded-full h-[27px] w-[210px] flex items-center">
+      {/* Sliding background */}
+      <div
+        className={`absolute h-[27px] w-[114px] rounded-full transition-all duration-200 ${
+          isPaid ? 'left-0 bg-green-500' : 'left-[96px] bg-[#ff4747]'
+        } border border-black`}
+      />
+      {/* Labels */}
+      <button
+        onClick={() => !disabled && onChange(true)}
+        disabled={disabled}
+        className={`relative z-10 flex-1 text-center text-sm font-semibold transition-colors ${
+          isPaid ? 'text-white' : 'text-gray-500'
+        }`}
+      >
+        PAID
+      </button>
+      <button
+        onClick={() => !disabled && onChange(false)}
+        disabled={disabled}
+        className={`relative z-10 flex-1 text-center text-sm font-semibold transition-colors ${
+          !isPaid ? 'text-white' : 'text-gray-500'
+        }`}
+      >
+        UNPAID
+      </button>
+    </div>
+  );
+}
+
+// Field Display Component
+function FieldDisplay({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-center gap-2">
+      <span className="text-sm font-medium text-black">{label}</span>
+      <div className="bg-white border border-[#296341] rounded-[5px] px-3 py-1.5 min-w-[100px]">
+        <span className="text-sm text-black">{value}</span>
       </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[189px] not-italic text-[36px] text-white top-[752px] whitespace-nowrap">
-        <p className="leading-[normal]">Reminder Send</p>
+    </div>
+  );
+}
+
+// Inline Field Component
+function InlineField({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-center gap-2">
+      <span className="text-sm font-medium text-black">{label}:</span>
+      <span className="text-sm text-black">{value}</span>
+    </div>
+  );
+}
+
+// Pending Payment Card Component
+function PendingPaymentCard({
+  invoice,
+  onStatusChange,
+  isUpdating,
+}: {
+  invoice: Invoice;
+  onStatusChange: (id: string, paid: boolean) => void;
+  isUpdating: boolean;
+}) {
+  const user = invoice.user;
+  const cargo = invoice.cargoBooking;
+  const passenger = invoice.passengerBooking;
+  
+  const fromCode = cargo?.fromLocation?.code || passenger?.fromLocation?.code || 'N/A';
+  const toCode = cargo?.toLocation?.code || passenger?.toLocation?.code || 'N/A';
+  const product = cargo?.items?.[0]?.type || (passenger ? 'Passenger' : 'N/A');
+  const quantity = cargo?.items?.reduce((sum, item) => sum + item.quantity, 0) || 1;
+
+  return (
+    <div className="bg-[#effaf6] border border-[#296341] rounded-[10px] p-4 space-y-3">
+      {/* Row 1: Name, Invoice, Date, Location */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <FieldDisplay 
+          label="Name" 
+          value={user ? `${user.firstName} ${user.lastName}` : 'Unknown'} 
+        />
+        <FieldDisplay 
+          label="Invoice no." 
+          value={`#${invoice.invoiceNo}`} 
+        />
+        <FieldDisplay 
+          label="Date" 
+          value={new Date(invoice.createdAt).toLocaleDateString('en-GB', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+          }).replace(/\//g, ' / ')} 
+        />
+        <FieldDisplay 
+          label="Location" 
+          value={`${fromCode} → ${toCode}`} 
+        />
       </div>
-      <div className="absolute h-0 left-[156px] top-[591px] w-[202px]">
-        <div className="absolute inset-[-5px_0_0_0]">
-          <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 202 5">
-            <line id="Line 29" stroke="var(--stroke-0, black)" strokeLinecap="round" strokeWidth="5" x1="2.5" x2="199.5" y1="2.5" y2="2.5" />
-          </svg>
+
+      {/* Row 2: Product, Quantity, Amount, Status */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 items-center">
+        <InlineField label="Product" value={product} />
+        <InlineField label="Quantity" value={String(quantity)} />
+        <InlineField label="Amount" value={`$${invoice.grandTotal.toFixed(2)}`} />
+        <div className="flex justify-end">
+          <PaymentStatusToggle
+            isPaid={invoice.paymentStatus === 'PAID'}
+            onChange={(paid) => onStatusChange(invoice.id, paid)}
+            disabled={isUpdating}
+          />
         </div>
       </div>
-      <div className="absolute bg-[#effaf6] border border-[#296341] border-solid h-[162px] left-[159px] rounded-[10px] top-[1056px] w-[1123px]" />
-      <div className="absolute bg-white border border-[#296341] border-solid h-[26px] left-[256px] rounded-[5px] top-[1076px] w-[130px]" />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[181px] not-italic text-[18px] text-black top-[1086px] whitespace-nowrap">
-        <p className="leading-[normal]">Name</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Regular',sans-serif] font-normal justify-center leading-[0] left-[265px] not-italic text-[15px] text-black top-[1089px] whitespace-nowrap">
-        <p className="leading-[normal]">Jhon Doe</p>
-      </div>
-      <div className="absolute bg-white border border-[#296341] border-solid h-[26px] left-[568px] rounded-[5px] top-[1076px] w-[130px]" />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[471px] not-italic text-[18px] text-black top-[1087px] whitespace-nowrap">
-        <p className="leading-[normal]">Invoice no.</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Regular',sans-serif] font-normal justify-center leading-[0] left-[577px] not-italic text-[15px] text-black top-[1089px] whitespace-nowrap">
-        <p className="leading-[normal]">#54367</p>
-      </div>
-      <div className="absolute bg-white border border-[#296341] border-solid h-[26px] left-[829px] rounded-[5px] top-[1076px] w-[130px]" />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[773px] not-italic text-[18px] text-black top-[1087px] whitespace-nowrap">
-        <p className="leading-[normal]">Date</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Regular',sans-serif] font-normal justify-center leading-[0] left-[842px] not-italic text-[15px] text-black top-[1089px] whitespace-nowrap">
-        <p className="leading-[normal]">12 / 12 / 2025</p>
-      </div>
-      <div className="absolute bg-white border border-[#296341] border-solid h-[26px] left-[1131px] rounded-[5px] top-[1077px] w-[130px]" />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium h-[22px] justify-center leading-[0] left-[1051px] not-italic text-[18px] text-black top-[1088px] w-[76px]">
-        <p className="leading-[normal] whitespace-pre-wrap">Location</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Regular',sans-serif] font-normal h-[18px] justify-center leading-[0] left-[1147px] not-italic text-[15px] text-black top-[1090px] w-[107px]">
-        <p className="leading-[normal] whitespace-pre-wrap">{`NAS  →  MAH`}</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[180px] not-italic text-[18px] text-black top-[1133px] whitespace-nowrap">
-        <p className="leading-[normal]">{`Product  :`}</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Regular',sans-serif] font-normal justify-center leading-[0] left-[269px] not-italic text-[15px] text-black top-[1135px] whitespace-nowrap">
-        <p className="leading-[normal]">Dry Box (M)</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[182px] not-italic text-[18px] text-black top-[1175px] whitespace-nowrap">
-        <p className="leading-[normal]">{`Email      : `}</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Regular',sans-serif] font-normal justify-center leading-[0] left-[269px] not-italic text-[15px] text-black top-[1177px] whitespace-nowrap">
-        <p className="leading-[normal]">jhondoe@demo.com</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[471px] not-italic text-[18px] text-black top-[1133px] whitespace-nowrap">
-        <p className="leading-[normal]">{`Quantity  :`}</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Regular',sans-serif] font-normal justify-center leading-[0] left-[569px] not-italic text-[15px] text-black top-[1135px] whitespace-nowrap">
-        <p className="leading-[normal]">6</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[775px] not-italic text-[18px] text-black top-[1133px] whitespace-nowrap">
-        <p className="leading-[normal]">Amount :</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[871px] not-italic text-[15px] text-black top-[1134px] whitespace-nowrap">
-        <p className="leading-[normal]">$712.00</p>
-      </div>
-      <div className="absolute bg-white border border-[#296341] border-solid h-[27px] left-[1051px] rounded-[500px] top-[1122px] w-[210px]" />
-      <div className="absolute bg-[#ff4747] border border-black border-solid h-[27px] left-[1147px] rounded-[500px] top-[1122px] w-[114px]" />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Semi_Bold',sans-serif] font-semibold justify-center leading-[0] left-[1178px] not-italic text-[15px] text-white top-[1136px] whitespace-nowrap">
-        <p className="leading-[normal]">UNPAID</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Regular',sans-serif] font-normal justify-center leading-[0] left-[1080px] not-italic text-[#666] text-[15px] top-[1136px] whitespace-nowrap">
-        <p className="leading-[normal]">PAID</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[471px] not-italic text-[18px] text-black top-[1175px] whitespace-nowrap">
-        <p className="leading-[normal]">{`Contact   :`}</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Regular',sans-serif] font-normal justify-center leading-[0] left-[567px] not-italic text-[15px] text-black top-[1177px] whitespace-nowrap">
-        <p className="leading-[normal]">{`+1  1234 1234`}</p>
-      </div>
-      <div className="absolute bg-[#effaf6] border border-[#296341] border-solid h-[151px] left-[159px] rounded-[10px] top-[1246px] w-[1123px]" />
-      <div className="absolute bg-white border border-[#296341] border-solid h-[26px] left-[256px] rounded-[5px] top-[1266px] w-[130px]" />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[181px] not-italic text-[18px] text-black top-[1276px] whitespace-nowrap">
-        <p className="leading-[normal]">Name</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Regular',sans-serif] font-normal justify-center leading-[0] left-[265px] not-italic text-[15px] text-black top-[1279px] whitespace-nowrap">
-        <p className="leading-[normal]">Joseph Doe</p>
-      </div>
-      <div className="absolute bg-white border border-[#296341] border-solid h-[26px] left-[568px] rounded-[5px] top-[1266px] w-[130px]" />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[471px] not-italic text-[18px] text-black top-[1277px] whitespace-nowrap">
-        <p className="leading-[normal]">Invoice no.</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Regular',sans-serif] font-normal justify-center leading-[0] left-[577px] not-italic text-[15px] text-black top-[1279px] whitespace-nowrap">
-        <p className="leading-[normal]">#54900</p>
-      </div>
-      <div className="absolute bg-white border border-[#296341] border-solid h-[26px] left-[829px] rounded-[5px] top-[1266px] w-[130px]" />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[773px] not-italic text-[18px] text-black top-[1277px] whitespace-nowrap">
-        <p className="leading-[normal]">Date</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Regular',sans-serif] font-normal justify-center leading-[0] left-[842px] not-italic text-[15px] text-black top-[1279px] whitespace-nowrap">
-        <p className="leading-[normal]">08 / 12 / 2025</p>
-      </div>
-      <div className="absolute bg-white border border-[#296341] border-solid h-[26px] left-[1131px] rounded-[5px] top-[1267px] w-[130px]" />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium h-[22px] justify-center leading-[0] left-[1051px] not-italic text-[18px] text-black top-[1278px] w-[76px]">
-        <p className="leading-[normal] whitespace-pre-wrap">Location</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Regular',sans-serif] font-normal h-[18px] justify-center leading-[0] left-[1147px] not-italic text-[15px] text-black top-[1280px] w-[107px]">
-        <p className="leading-[normal] whitespace-pre-wrap">{`NAS  →  MAH`}</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[180px] not-italic text-[18px] text-black top-[1323px] whitespace-nowrap">
-        <p className="leading-[normal]">{`Product  :`}</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Regular',sans-serif] font-normal justify-center leading-[0] left-[269px] not-italic text-[15px] text-black top-[1325px] whitespace-nowrap">
-        <p className="leading-[normal]">Dry Box (L)</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[182px] not-italic text-[18px] text-black top-[1365px] whitespace-nowrap">
-        <p className="leading-[normal]">{`Email      : `}</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Regular',sans-serif] font-normal justify-center leading-[0] left-[271px] not-italic text-[15px] text-black top-[1367px] whitespace-nowrap">
-        <p className="leading-[normal]">joseph@demo.com</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[471px] not-italic text-[18px] text-black top-[1323px] whitespace-nowrap">
-        <p className="leading-[normal]">{`Quantity  :`}</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Regular',sans-serif] font-normal justify-center leading-[0] left-[569px] not-italic text-[15px] text-black top-[1325px] whitespace-nowrap">
-        <p className="leading-[normal]">7</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[775px] not-italic text-[18px] text-black top-[1323px] whitespace-nowrap">
-        <p className="leading-[normal]">Amount :</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[871px] not-italic text-[15px] text-black top-[1324px] whitespace-nowrap">
-        <p className="leading-[normal]">$1212.00</p>
-      </div>
-      <div className="absolute bg-white border border-[#296341] border-solid h-[27px] left-[1051px] rounded-[500px] top-[1312px] w-[210px]" />
-      <div className="absolute bg-[#ff4747] border border-black border-solid h-[27px] left-[1147px] rounded-[500px] top-[1312px] w-[114px]" />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Semi_Bold',sans-serif] font-semibold justify-center leading-[0] left-[1178px] not-italic text-[15px] text-white top-[1326px] whitespace-nowrap">
-        <p className="leading-[normal]">UNPAID</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Regular',sans-serif] font-normal justify-center leading-[0] left-[1080px] not-italic text-[#666] text-[15px] top-[1326px] whitespace-nowrap">
-        <p className="leading-[normal]">PAID</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[471px] not-italic text-[18px] text-black top-[1365px] whitespace-nowrap">
-        <p className="leading-[normal]">{`Contact   :`}</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Regular',sans-serif] font-normal justify-center leading-[0] left-[569px] not-italic text-[15px] text-black top-[1367px] whitespace-nowrap">
-        <p className="leading-[normal]">{`+1  1234 1234`}</p>
-      </div>
-      <div className="absolute bg-[#effaf6] border border-[#296341] border-solid h-[151px] left-[160px] rounded-[10px] top-[1425px] w-[1123px]" />
-      <div className="absolute bg-white border border-[#296341] border-solid h-[26px] left-[257px] rounded-[5px] top-[1445px] w-[130px]" />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[182px] not-italic text-[18px] text-black top-[1455px] whitespace-nowrap">
-        <p className="leading-[normal]">Name</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Regular',sans-serif] font-normal justify-center leading-[0] left-[266px] not-italic text-[15px] text-black top-[1458px] whitespace-nowrap">
-        <p className="leading-[normal]">Joseph Doe</p>
-      </div>
-      <div className="absolute bg-white border border-[#296341] border-solid h-[26px] left-[569px] rounded-[5px] top-[1445px] w-[130px]" />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[472px] not-italic text-[18px] text-black top-[1456px] whitespace-nowrap">
-        <p className="leading-[normal]">Invoice no.</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Regular',sans-serif] font-normal justify-center leading-[0] left-[578px] not-italic text-[15px] text-black top-[1458px] whitespace-nowrap">
-        <p className="leading-[normal]">#54960</p>
-      </div>
-      <div className="absolute bg-white border border-[#296341] border-solid h-[26px] left-[830px] rounded-[5px] top-[1445px] w-[130px]" />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[774px] not-italic text-[18px] text-black top-[1456px] whitespace-nowrap">
-        <p className="leading-[normal]">Date</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Regular',sans-serif] font-normal justify-center leading-[0] left-[843px] not-italic text-[15px] text-black top-[1458px] whitespace-nowrap">
-        <p className="leading-[normal]">04 / 12 / 2025</p>
-      </div>
-      <div className="absolute bg-white border border-[#296341] border-solid h-[26px] left-[1132px] rounded-[5px] top-[1446px] w-[130px]" />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium h-[22px] justify-center leading-[0] left-[1052px] not-italic text-[18px] text-black top-[1457px] w-[76px]">
-        <p className="leading-[normal] whitespace-pre-wrap">Location</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Regular',sans-serif] font-normal h-[18px] justify-center leading-[0] left-[1148px] not-italic text-[15px] text-black top-[1459px] w-[107px]">
-        <p className="leading-[normal] whitespace-pre-wrap">{`NAS  →  MAH`}</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[181px] not-italic text-[18px] text-black top-[1502px] whitespace-nowrap">
-        <p className="leading-[normal]">{`Product  :`}</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Regular',sans-serif] font-normal justify-center leading-[0] left-[270px] not-italic text-[15px] text-black top-[1504px] whitespace-nowrap">
-        <p className="leading-[normal]">Frozen (L)</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[183px] not-italic text-[18px] text-black top-[1544px] whitespace-nowrap">
-        <p className="leading-[normal]">{`Email      : `}</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Regular',sans-serif] font-normal justify-center leading-[0] left-[272px] not-italic text-[15px] text-black top-[1546px] whitespace-nowrap">
-        <p className="leading-[normal]">jhondoe@demo.com</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[472px] not-italic text-[18px] text-black top-[1502px] whitespace-nowrap">
-        <p className="leading-[normal]">{`Quantity  :`}</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Regular',sans-serif] font-normal justify-center leading-[0] left-[570px] not-italic text-[15px] text-black top-[1504px] whitespace-nowrap">
-        <p className="leading-[normal]">4</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[776px] not-italic text-[18px] text-black top-[1502px] whitespace-nowrap">
-        <p className="leading-[normal]">Amount :</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[872px] not-italic text-[15px] text-black top-[1503px] whitespace-nowrap">
-        <p className="leading-[normal]">$1212.00</p>
-      </div>
-      <div className="absolute bg-white border border-[#296341] border-solid h-[27px] left-[1052px] rounded-[500px] top-[1491px] w-[210px]" />
-      <div className="absolute bg-[#ff4747] border border-black border-solid h-[27px] left-[1148px] rounded-[500px] top-[1491px] w-[114px]" />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Semi_Bold',sans-serif] font-semibold justify-center leading-[0] left-[1179px] not-italic text-[15px] text-white top-[1505px] whitespace-nowrap">
-        <p className="leading-[normal]">UNPAID</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Regular',sans-serif] font-normal justify-center leading-[0] left-[1081px] not-italic text-[#666] text-[15px] top-[1505px] whitespace-nowrap">
-        <p className="leading-[normal]">PAID</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[472px] not-italic text-[18px] text-black top-[1544px] whitespace-nowrap">
-        <p className="leading-[normal]">{`Contact   :`}</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Regular',sans-serif] font-normal justify-center leading-[0] left-[570px] not-italic text-[15px] text-black top-[1546px] whitespace-nowrap">
-        <p className="leading-[normal]">{`+1  1234 1234`}</p>
-      </div>
-      <div className="absolute bg-[#effaf6] border border-[#296341] border-solid h-[151px] left-[160px] rounded-[10px] top-[1604px] w-[1123px]" />
-      <div className="absolute bg-white border border-[#296341] border-solid h-[26px] left-[257px] rounded-[5px] top-[1624px] w-[130px]" />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[182px] not-italic text-[18px] text-black top-[1634px] whitespace-nowrap">
-        <p className="leading-[normal]">Name</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Regular',sans-serif] font-normal justify-center leading-[0] left-[266px] not-italic text-[15px] text-black top-[1637px] whitespace-nowrap">
-        <p className="leading-[normal]">Joseph Doe</p>
-      </div>
-      <div className="absolute bg-white border border-[#296341] border-solid h-[26px] left-[569px] rounded-[5px] top-[1624px] w-[130px]" />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[472px] not-italic text-[18px] text-black top-[1635px] whitespace-nowrap">
-        <p className="leading-[normal]">Invoice no.</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Regular',sans-serif] font-normal justify-center leading-[0] left-[578px] not-italic text-[15px] text-black top-[1637px] whitespace-nowrap">
-        <p className="leading-[normal]">#54900</p>
-      </div>
-      <div className="absolute bg-white border border-[#296341] border-solid h-[26px] left-[830px] rounded-[5px] top-[1624px] w-[130px]" />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[774px] not-italic text-[18px] text-black top-[1635px] whitespace-nowrap">
-        <p className="leading-[normal]">Date</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Regular',sans-serif] font-normal justify-center leading-[0] left-[843px] not-italic text-[15px] text-black top-[1637px] whitespace-nowrap">
-        <p className="leading-[normal]">08 / 12 / 2025</p>
-      </div>
-      <div className="absolute bg-white border border-[#296341] border-solid h-[26px] left-[1132px] rounded-[5px] top-[1625px] w-[130px]" />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium h-[22px] justify-center leading-[0] left-[1052px] not-italic text-[18px] text-black top-[1636px] w-[76px]">
-        <p className="leading-[normal] whitespace-pre-wrap">Location</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Regular',sans-serif] font-normal h-[18px] justify-center leading-[0] left-[1148px] not-italic text-[15px] text-black top-[1638px] w-[107px]">
-        <p className="leading-[normal] whitespace-pre-wrap">{`NAS  →  MAH`}</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[181px] not-italic text-[18px] text-black top-[1681px] whitespace-nowrap">
-        <p className="leading-[normal]">{`Product  :`}</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Regular',sans-serif] font-normal justify-center leading-[0] left-[270px] not-italic text-[15px] text-black top-[1683px] whitespace-nowrap">
-        <p className="leading-[normal]">Dry Box (L)</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[183px] not-italic text-[18px] text-black top-[1723px] whitespace-nowrap">
-        <p className="leading-[normal]">{`Email      : `}</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Regular',sans-serif] font-normal justify-center leading-[0] left-[272px] not-italic text-[15px] text-black top-[1725px] whitespace-nowrap">
-        <p className="leading-[normal]">jhondoe@demo.com</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[472px] not-italic text-[18px] text-black top-[1681px] whitespace-nowrap">
-        <p className="leading-[normal]">{`Quantity  :`}</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Regular',sans-serif] font-normal justify-center leading-[0] left-[570px] not-italic text-[15px] text-black top-[1683px] whitespace-nowrap">
-        <p className="leading-[normal]">1</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[776px] not-italic text-[18px] text-black top-[1681px] whitespace-nowrap">
-        <p className="leading-[normal]">Amount :</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[872px] not-italic text-[15px] text-black top-[1682px] whitespace-nowrap">
-        <p className="leading-[normal]">$1212.00</p>
-      </div>
-      <div className="absolute bg-white border border-[#296341] border-solid h-[27px] left-[1052px] rounded-[500px] top-[1670px] w-[210px]" />
-      <div className="absolute bg-[#ff4747] border border-black border-solid h-[27px] left-[1148px] rounded-[500px] top-[1670px] w-[114px]" />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Semi_Bold',sans-serif] font-semibold justify-center leading-[0] left-[1179px] not-italic text-[15px] text-white top-[1684px] whitespace-nowrap">
-        <p className="leading-[normal]">UNPAID</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Regular',sans-serif] font-normal justify-center leading-[0] left-[1081px] not-italic text-[#666] text-[15px] top-[1684px] whitespace-nowrap">
-        <p className="leading-[normal]">PAID</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[472px] not-italic text-[18px] text-black top-[1723px] whitespace-nowrap">
-        <p className="leading-[normal]">{`Contact   :`}</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Regular',sans-serif] font-normal justify-center leading-[0] left-[570px] not-italic text-[15px] text-black top-[1725px] whitespace-nowrap">
-        <p className="leading-[normal]">{`+1  1234 1234`}</p>
-      </div>
-      <div className="absolute bg-[#effaf6] border border-[#296341] border-solid h-[151px] left-[160px] rounded-[10px] top-[1783px] w-[1123px]" />
-      <div className="absolute bg-white border border-[#296341] border-solid h-[26px] left-[257px] rounded-[5px] top-[1803px] w-[130px]" />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[182px] not-italic text-[18px] text-black top-[1813px] whitespace-nowrap">
-        <p className="leading-[normal]">Name</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Regular',sans-serif] font-normal justify-center leading-[0] left-[266px] not-italic text-[15px] text-black top-[1816px] whitespace-nowrap">
-        <p className="leading-[normal]">Joseph Doe</p>
-      </div>
-      <div className="absolute bg-white border border-[#296341] border-solid h-[26px] left-[569px] rounded-[5px] top-[1803px] w-[130px]" />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[472px] not-italic text-[18px] text-black top-[1814px] whitespace-nowrap">
-        <p className="leading-[normal]">Invoice no.</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Regular',sans-serif] font-normal justify-center leading-[0] left-[578px] not-italic text-[15px] text-black top-[1816px] whitespace-nowrap">
-        <p className="leading-[normal]">#54900</p>
-      </div>
-      <div className="absolute bg-white border border-[#296341] border-solid h-[26px] left-[830px] rounded-[5px] top-[1803px] w-[130px]" />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[774px] not-italic text-[18px] text-black top-[1814px] whitespace-nowrap">
-        <p className="leading-[normal]">Date</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Regular',sans-serif] font-normal justify-center leading-[0] left-[843px] not-italic text-[15px] text-black top-[1816px] whitespace-nowrap">
-        <p className="leading-[normal]">08 / 12 / 2025</p>
-      </div>
-      <div className="absolute bg-white border border-[#296341] border-solid h-[26px] left-[1132px] rounded-[5px] top-[1804px] w-[130px]" />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium h-[22px] justify-center leading-[0] left-[1052px] not-italic text-[18px] text-black top-[1815px] w-[76px]">
-        <p className="leading-[normal] whitespace-pre-wrap">Location</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Regular',sans-serif] font-normal h-[18px] justify-center leading-[0] left-[1148px] not-italic text-[15px] text-black top-[1817px] w-[107px]">
-        <p className="leading-[normal] whitespace-pre-wrap">{`NAS  →  MAH`}</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[181px] not-italic text-[18px] text-black top-[1860px] whitespace-nowrap">
-        <p className="leading-[normal]">{`Product  :`}</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Regular',sans-serif] font-normal justify-center leading-[0] left-[270px] not-italic text-[15px] text-black top-[1862px] whitespace-nowrap">
-        <p className="leading-[normal]">Dry Box (L)</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[183px] not-italic text-[18px] text-black top-[1902px] whitespace-nowrap">
-        <p className="leading-[normal]">{`Email      : `}</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Regular',sans-serif] font-normal justify-center leading-[0] left-[272px] not-italic text-[15px] text-black top-[1904px] whitespace-nowrap">
-        <p className="leading-[normal]">jhondoe@demo.com</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[472px] not-italic text-[18px] text-black top-[1860px] whitespace-nowrap">
-        <p className="leading-[normal]">{`Quantity  :`}</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Regular',sans-serif] font-normal justify-center leading-[0] left-[570px] not-italic text-[15px] text-black top-[1862px] whitespace-nowrap">
-        <p className="leading-[normal]">5</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[776px] not-italic text-[18px] text-black top-[1860px] whitespace-nowrap">
-        <p className="leading-[normal]">Amount :</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[872px] not-italic text-[15px] text-black top-[1861px] whitespace-nowrap">
-        <p className="leading-[normal]">$1212.00</p>
-      </div>
-      <div className="absolute bg-white border border-[#296341] border-solid h-[27px] left-[1052px] rounded-[500px] top-[1849px] w-[210px]" />
-      <div className="absolute bg-[#ff4747] border border-black border-solid h-[27px] left-[1148px] rounded-[500px] top-[1849px] w-[114px]" />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Semi_Bold',sans-serif] font-semibold justify-center leading-[0] left-[1179px] not-italic text-[15px] text-white top-[1863px] whitespace-nowrap">
-        <p className="leading-[normal]">UNPAID</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Regular',sans-serif] font-normal justify-center leading-[0] left-[1081px] not-italic text-[#666] text-[15px] top-[1863px] whitespace-nowrap">
-        <p className="leading-[normal]">PAID</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[472px] not-italic text-[18px] text-black top-[1902px] whitespace-nowrap">
-        <p className="leading-[normal]">{`Contact   :`}</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Regular',sans-serif] font-normal justify-center leading-[0] left-[570px] not-italic text-[15px] text-black top-[1904px] whitespace-nowrap">
-        <p className="leading-[normal]">{`+1  1234 1234`}</p>
-      </div>
-      <div className="absolute bg-[#effaf6] border border-[#296341] border-solid h-[151px] left-[160px] rounded-[10px] top-[1962px] w-[1123px]" />
-      <div className="absolute bg-white border border-[#296341] border-solid h-[26px] left-[257px] rounded-[5px] top-[1982px] w-[130px]" />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[182px] not-italic text-[18px] text-black top-[1992px] whitespace-nowrap">
-        <p className="leading-[normal]">Name</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Regular',sans-serif] font-normal justify-center leading-[0] left-[266px] not-italic text-[15px] text-black top-[1995px] whitespace-nowrap">
-        <p className="leading-[normal]">Joseph Doe</p>
-      </div>
-      <div className="absolute bg-white border border-[#296341] border-solid h-[26px] left-[569px] rounded-[5px] top-[1982px] w-[130px]" />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[472px] not-italic text-[18px] text-black top-[1993px] whitespace-nowrap">
-        <p className="leading-[normal]">Invoice no.</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Regular',sans-serif] font-normal justify-center leading-[0] left-[578px] not-italic text-[15px] text-black top-[1995px] whitespace-nowrap">
-        <p className="leading-[normal]">#54900</p>
-      </div>
-      <div className="absolute bg-white border border-[#296341] border-solid h-[26px] left-[830px] rounded-[5px] top-[1982px] w-[130px]" />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[774px] not-italic text-[18px] text-black top-[1993px] whitespace-nowrap">
-        <p className="leading-[normal]">Date</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Regular',sans-serif] font-normal justify-center leading-[0] left-[843px] not-italic text-[15px] text-black top-[1995px] whitespace-nowrap">
-        <p className="leading-[normal]">08 / 12 / 2025</p>
-      </div>
-      <div className="absolute bg-white border border-[#296341] border-solid h-[26px] left-[1132px] rounded-[5px] top-[1983px] w-[130px]" />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium h-[22px] justify-center leading-[0] left-[1052px] not-italic text-[18px] text-black top-[1994px] w-[76px]">
-        <p className="leading-[normal] whitespace-pre-wrap">Location</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Regular',sans-serif] font-normal h-[18px] justify-center leading-[0] left-[1148px] not-italic text-[15px] text-black top-[1996px] w-[107px]">
-        <p className="leading-[normal] whitespace-pre-wrap">{`NAS  →  MAH`}</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[181px] not-italic text-[18px] text-black top-[2039px] whitespace-nowrap">
-        <p className="leading-[normal]">{`Product  :`}</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Regular',sans-serif] font-normal justify-center leading-[0] left-[270px] not-italic text-[15px] text-black top-[2041px] whitespace-nowrap">
-        <p className="leading-[normal]">Dry Box (L)</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[183px] not-italic text-[18px] text-black top-[2081px] whitespace-nowrap">
-        <p className="leading-[normal]">{`Email      : `}</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Regular',sans-serif] font-normal justify-center leading-[0] left-[272px] not-italic text-[15px] text-black top-[2083px] whitespace-nowrap">
-        <p className="leading-[normal]">jhondoe@demo.com</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[472px] not-italic text-[18px] text-black top-[2039px] whitespace-nowrap">
-        <p className="leading-[normal]">{`Quantity  :`}</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Regular',sans-serif] font-normal justify-center leading-[0] left-[570px] not-italic text-[15px] text-black top-[2041px] whitespace-nowrap">
-        <p className="leading-[normal]">4</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[776px] not-italic text-[18px] text-black top-[2039px] whitespace-nowrap">
-        <p className="leading-[normal]">Amount :</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[872px] not-italic text-[15px] text-black top-[2040px] whitespace-nowrap">
-        <p className="leading-[normal]">$1212.00</p>
-      </div>
-      <div className="absolute bg-white border border-[#296341] border-solid h-[27px] left-[1052px] rounded-[500px] top-[2028px] w-[210px]" />
-      <div className="absolute bg-[#ff4747] border border-black border-solid h-[27px] left-[1148px] rounded-[500px] top-[2028px] w-[114px]" />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Semi_Bold',sans-serif] font-semibold justify-center leading-[0] left-[1179px] not-italic text-[15px] text-white top-[2042px] whitespace-nowrap">
-        <p className="leading-[normal]">UNPAID</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Regular',sans-serif] font-normal justify-center leading-[0] left-[1081px] not-italic text-[#666] text-[15px] top-[2042px] whitespace-nowrap">
-        <p className="leading-[normal]">PAID</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[472px] not-italic text-[18px] text-black top-[2081px] whitespace-nowrap">
-        <p className="leading-[normal]">{`Contact   :`}</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Regular',sans-serif] font-normal justify-center leading-[0] left-[570px] not-italic text-[15px] text-black top-[2083px] whitespace-nowrap">
-        <p className="leading-[normal]">{`+1  1234 1234`}</p>
-      </div>
-      <div className="absolute bg-[#effaf6] border border-[#296341] border-solid h-[151px] left-[160px] rounded-[10px] top-[2141px] w-[1123px]" />
-      <div className="absolute bg-white border border-[#296341] border-solid h-[26px] left-[257px] rounded-[5px] top-[2161px] w-[130px]" />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[182px] not-italic text-[18px] text-black top-[2171px] whitespace-nowrap">
-        <p className="leading-[normal]">Name</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Regular',sans-serif] font-normal justify-center leading-[0] left-[266px] not-italic text-[15px] text-black top-[2174px] whitespace-nowrap">
-        <p className="leading-[normal]">Joseph Doe</p>
-      </div>
-      <div className="absolute bg-white border border-[#296341] border-solid h-[26px] left-[569px] rounded-[5px] top-[2161px] w-[130px]" />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[472px] not-italic text-[18px] text-black top-[2172px] whitespace-nowrap">
-        <p className="leading-[normal]">Invoice no.</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Regular',sans-serif] font-normal justify-center leading-[0] left-[578px] not-italic text-[15px] text-black top-[2174px] whitespace-nowrap">
-        <p className="leading-[normal]">#54900</p>
-      </div>
-      <div className="absolute bg-white border border-[#296341] border-solid h-[26px] left-[830px] rounded-[5px] top-[2161px] w-[130px]" />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[774px] not-italic text-[18px] text-black top-[2172px] whitespace-nowrap">
-        <p className="leading-[normal]">Date</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Regular',sans-serif] font-normal justify-center leading-[0] left-[843px] not-italic text-[15px] text-black top-[2174px] whitespace-nowrap">
-        <p className="leading-[normal]">08 / 12 / 2025</p>
-      </div>
-      <div className="absolute bg-white border border-[#296341] border-solid h-[26px] left-[1132px] rounded-[5px] top-[2162px] w-[130px]" />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium h-[22px] justify-center leading-[0] left-[1052px] not-italic text-[18px] text-black top-[2173px] w-[76px]">
-        <p className="leading-[normal] whitespace-pre-wrap">Location</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Regular',sans-serif] font-normal h-[18px] justify-center leading-[0] left-[1148px] not-italic text-[15px] text-black top-[2175px] w-[107px]">
-        <p className="leading-[normal] whitespace-pre-wrap">{`NAS  →  MAH`}</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[181px] not-italic text-[18px] text-black top-[2218px] whitespace-nowrap">
-        <p className="leading-[normal]">{`Product  :`}</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Regular',sans-serif] font-normal justify-center leading-[0] left-[270px] not-italic text-[15px] text-black top-[2220px] whitespace-nowrap">
-        <p className="leading-[normal]">Dry Box (L)</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[183px] not-italic text-[18px] text-black top-[2260px] whitespace-nowrap">
-        <p className="leading-[normal]">{`Email      : `}</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Regular',sans-serif] font-normal justify-center leading-[0] left-[272px] not-italic text-[15px] text-black top-[2262px] whitespace-nowrap">
-        <p className="leading-[normal]">jhondoe@demo.com</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[472px] not-italic text-[18px] text-black top-[2218px] whitespace-nowrap">
-        <p className="leading-[normal]">{`Quantity  :`}</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Regular',sans-serif] font-normal justify-center leading-[0] left-[570px] not-italic text-[15px] text-black top-[2220px] whitespace-nowrap">
-        <p className="leading-[normal]">4</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[776px] not-italic text-[18px] text-black top-[2218px] whitespace-nowrap">
-        <p className="leading-[normal]">Amount :</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[872px] not-italic text-[15px] text-black top-[2219px] whitespace-nowrap">
-        <p className="leading-[normal]">$1212.00</p>
-      </div>
-      <div className="absolute bg-white border border-[#296341] border-solid h-[27px] left-[1052px] rounded-[500px] top-[2207px] w-[210px]" />
-      <div className="absolute bg-[#ff4747] border border-black border-solid h-[27px] left-[1148px] rounded-[500px] top-[2207px] w-[114px]" />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Semi_Bold',sans-serif] font-semibold justify-center leading-[0] left-[1179px] not-italic text-[15px] text-white top-[2221px] whitespace-nowrap">
-        <p className="leading-[normal]">UNPAID</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Regular',sans-serif] font-normal justify-center leading-[0] left-[1081px] not-italic text-[#666] text-[15px] top-[2221px] whitespace-nowrap">
-        <p className="leading-[normal]">PAID</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[472px] not-italic text-[18px] text-black top-[2260px] whitespace-nowrap">
-        <p className="leading-[normal]">{`Contact   :`}</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Regular',sans-serif] font-normal justify-center leading-[0] left-[570px] not-italic text-[15px] text-black top-[2262px] whitespace-nowrap">
-        <p className="leading-[normal]">{`+1  1234 1234`}</p>
-      </div>
-      <CarbonCircleFilled />
-      <AkarIconsCircle />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[200px] not-italic text-[30px] text-black top-[676px] whitespace-nowrap">
-        <p className="leading-[normal]">Every Day</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Regular',sans-serif] font-normal justify-center leading-[normal] left-[192px] not-italic text-[#666] text-[26px] top-[824px] whitespace-nowrap">
-        <p className="mb-0">{`Last reminder send - `}</p>
-        <p>{`11 / 12 / 2025   15:30`}</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[467px] not-italic text-[30px] text-black top-[677px] whitespace-nowrap">
-        <p className="leading-[normal]">Every 2 Days</p>
-      </div>
-      <AkarIconsCircle1 />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[776px] not-italic text-[30px] text-black top-[677px] whitespace-nowrap">
-        <p className="leading-[normal]">Every 5 Days</p>
-      </div>
-      <AkarIconsCircle2 />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[1085px] not-italic text-[30px] text-black top-[677px] whitespace-nowrap">
-        <p className="leading-[normal]">Every 7 Days</p>
-      </div>
-      <div className="absolute h-0 left-[158px] top-[908.73px] w-[1124.005px]">
-        <div className="absolute inset-[-1px_0_0_0]">
-          <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 1124.01 1">
-            <line id="Line 61" stroke="var(--stroke-0, black)" x2="1124.01" y1="0.5" y2="0.5" />
-          </svg>
-        </div>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[160px] not-italic text-[#3b3b3b] text-[18px] top-[2350px] w-[309px]">
-        <p className="leading-[normal] whitespace-pre-wrap">Showing 7 of 40 Pending Payment</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[1052px] not-italic text-[#296341] text-[18px] top-[2346px] w-[230px]">
-        <p className="leading-[normal] whitespace-pre-wrap">{`View all Shipments      -->`}</p>
-      </div>
-      <div className="absolute border border-[#296341] border-solid h-[39px] left-[1035px] rounded-[10px] top-[2326px] w-[247px]" />
-      <div className="absolute left-[440px] size-[572px] top-[-61px]" data-name="Untitled (7) 1">
-        <img alt="" className="absolute inset-0 max-w-none object-cover pointer-events-none size-full" src={imgUntitled71.src} />
-      </div>
 
+      {/* Row 3: Email, Contact */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <InlineField label="Email" value={user?.email || 'N/A'} />
+        <InlineField label="Contact" value={user?.mobileNumber || 'N/A'} />
+      </div>
+    </div>
+  );
+}
+
+// Main Component
+export default function NotificationsPage() {
+  const { apiFetch } = useAuth();
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSending, setIsSending] = useState(false);
+  const [updatingInvoiceId, setUpdatingInvoiceId] = useState<string | null>(null);
+  
+  // Reminder settings
+  const [reminderFrequency, setReminderFrequency] = useState<string>('DAILY');
+  const [lastReminderSent, setLastReminderSent] = useState<string | null>(null);
+  
+  // Pending payments
+  const [pendingInvoices, setPendingInvoices] = useState<Invoice[]>([]);
+  const [totalPending, setTotalPending] = useState(0);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  
+  // Notifications
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  // Fetch pending invoices
+  const fetchPendingInvoices = async (pageNum = 1) => {
+    setIsLoading(true);
+    try {
+      const res = await apiFetch(`/api/invoices?status=UNPAID&page=${pageNum}&limit=7`);
+      if (res.ok) {
+        const data = await res.json();
+        setPendingInvoices(data.invoices || []);
+        setTotalPending(data.pagination?.total || 0);
+        setTotalPages(data.pagination?.totalPages || 1);
+        setPage(pageNum);
+      } else {
+        toast.error('Failed to load pending payments');
+      }
+    } catch (error) {
+      console.error('Error fetching invoices:', error);
+      toast.error('Failed to load pending payments');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Fetch notifications
+  const fetchNotifications = async () => {
+    try {
+      const res = await apiFetch('/api/notification?limit=10');
+      if (res.ok) {
+        const data = await res.json();
+        setNotifications(data.notifications || []);
+        setUnreadCount(data.unreadCount || 0);
+      }
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchPendingInvoices();
+    fetchNotifications();
+  }, []);
+
+  // Send payment reminders
+  const handleSendReminders = async () => {
+    setIsSending(true);
+    try {
+      const res = await apiFetch('/api/notification/send-reminders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ frequency: reminderFrequency }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        toast.success(`Payment reminders sent to ${data.sentCount || 0} customers`);
+        setLastReminderSent(new Date().toISOString());
+      } else {
+        const data = await res.json();
+        toast.error(data.error || 'Failed to send reminders');
+      }
+    } catch (error) {
+      console.error('Error sending reminders:', error);
+      toast.error('Failed to send reminders');
+    } finally {
+      setIsSending(false);
+    }
+  };
+
+  // Update payment status
+  const handleStatusChange = async (invoiceId: string, paid: boolean) => {
+    setUpdatingInvoiceId(invoiceId);
+    try {
+      const res = await apiFetch(`/api/invoices/${invoiceId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ paymentStatus: paid ? 'PAID' : 'UNPAID' }),
+      });
+
+      if (res.ok) {
+        toast.success(paid ? 'Marked as paid' : 'Marked as unpaid');
+        // Refresh the list
+        fetchPendingInvoices(page);
+      } else {
+        const data = await res.json();
+        toast.error(data.error || 'Failed to update payment status');
+      }
+    } catch (error) {
+      console.error('Error updating status:', error);
+      toast.error('Failed to update payment status');
+    } finally {
+      setUpdatingInvoiceId(null);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-white">
+      {/* Header Image */}
+      <header className="relative">
+        <div className="flex justify-center">
+          <img
+            src={imgUntitled71.src}
+            alt="Notification"
+            className="h-64 md:h-80 object-contain"
+          />
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <div className="px-4 md:px-8 lg:px-12 max-w-[1400px] mx-auto">
+        {/* Section Title */}
+        <div className="mb-6">
+          <h1 className="text-3xl md:text-4xl font-medium text-black">NOTIFICATION</h1>
+          <div className="w-52 h-1.5 bg-black rounded-full mt-2" />
+        </div>
+
+        {/* Reminder Frequency Selection */}
+        <section className="mb-8">
+          <div className="flex flex-wrap items-center gap-8 md:gap-16 mb-6">
+            {REMINDER_FREQUENCIES.map((freq) => (
+              <RadioButton
+                key={freq.value}
+                selected={reminderFrequency === freq.value}
+                onClick={() => setReminderFrequency(freq.value)}
+                label={freq.label}
+              />
+            ))}
+          </div>
+
+          {/* Send Reminder Button */}
+          <button
+            onClick={handleSendReminders}
+            disabled={isSending}
+            className="bg-[#132540] text-white font-semibold px-8 py-3 rounded-[10px] text-lg hover:bg-[#1a3254] transition-colors disabled:opacity-50 flex items-center gap-2"
+          >
+            {isSending ? (
+              <Loader2 className="w-5 h-5 animate-spin" />
+            ) : (
+              <Send className="w-5 h-5" />
+            )}
+            Reminder Send
+          </button>
+
+          {/* Last reminder info */}
+          {lastReminderSent && (
+            <p className="mt-4 text-gray-500 text-lg">
+              Last reminder sent - {new Date(lastReminderSent).toLocaleDateString('en-GB', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric'
+              })} {new Date(lastReminderSent).toLocaleTimeString('en-GB', {
+                hour: '2-digit',
+                minute: '2-digit'
+              })}
+            </p>
+          )}
+        </section>
+
+        {/* Divider */}
+        <div className="h-px bg-black mb-8" />
+
+        {/* Pending Payments Section */}
+        <section>
+          <h2 className="text-2xl md:text-3xl font-medium text-black mb-6">
+            Pending Payments
+          </h2>
+
+          {/* Loading State */}
+          {isLoading ? (
+            <div className="flex items-center justify-center py-20">
+              <Loader2 className="w-10 h-10 animate-spin text-[#296341]" />
+            </div>
+          ) : pendingInvoices.length === 0 ? (
+            <div className="text-center py-20 bg-[#effaf6] rounded-[10px] border border-[#296341]">
+              <CheckCircle className="w-16 h-16 mx-auto mb-4 text-green-500" />
+              <p className="text-xl text-gray-600">No pending payments</p>
+              <p className="text-gray-400 mt-2">All invoices have been paid</p>
+            </div>
+          ) : (
+            <>
+              {/* Pending Payment Cards */}
+              <div className="space-y-4">
+                {pendingInvoices.map((invoice) => (
+                  <PendingPaymentCard
+                    key={invoice.id}
+                    invoice={invoice}
+                    onStatusChange={handleStatusChange}
+                    isUpdating={updatingInvoiceId === invoice.id}
+                  />
+                ))}
+              </div>
+
+              {/* Footer with count and view all */}
+              <div className="flex items-center justify-between mt-6">
+                <p className="text-gray-600 text-lg">
+                  Showing {pendingInvoices.length} of {totalPending} Pending Payment
+                </p>
+                
+                <button
+                  onClick={() => {
+                    // Navigate to full invoices page or load more
+                    window.location.href = '/cashier?status=UNPAID';
+                  }}
+                  className="border border-[#296341] text-[#296341] rounded-[10px] px-6 py-2 font-medium hover:bg-[#effaf6] transition-colors flex items-center gap-2"
+                >
+                  View all Shipments
+                  <ChevronRight className="w-5 h-5" />
+                </button>
+              </div>
+            </>
+          )}
+        </section>
+
+        {/* Bottom spacing */}
+        <div className="h-12" />
+      </div>
     </div>
   );
 }

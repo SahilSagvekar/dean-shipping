@@ -19,6 +19,8 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "20");
     const status = searchParams.get("status") || undefined;
+    const from = searchParams.get("from") || undefined;
+    const to = searchParams.get("to") || undefined;
     const skip = (page - 1) * limit;
 
     const where: any = {};
@@ -26,6 +28,8 @@ export async function GET(request: NextRequest) {
         where.userId = result.user.id;
     }
     if (status) where.paymentStatus = status;
+    if (from) where.fromLocation = from;
+    if (to) where.toLocation = to;
 
     const [bookings, total] = await Promise.all([
         prisma.passengerBooking.findMany({
@@ -34,7 +38,10 @@ export async function GET(request: NextRequest) {
                 user: {
                     select: { firstName: true, lastName: true, email: true },
                 },
-                _count: { select: { images: true } },
+                images: true,
+                luggage: true,
+                invoice: true,
+                _count: { select: { images: true, luggage: true } },
             },
             orderBy: { createdAt: "desc" },
             skip,
@@ -58,15 +65,45 @@ export async function POST(request: NextRequest) {
         const invoiceNo = generateInvoiceNo();
 
         const {
-            infantCount, childCount, adultCount,
-            name, email, contact,
-            bookingDate, fromLocation, toLocation, idType,
-            paymentStatus, remark, totalAmount,
+            infantCount,
+            childCount,
+            adultCount,
+            name,
+            email,
+            contact,
+            bookingDate,
+            fromLocation,
+            toLocation,
+            idType,
+            paymentStatus,
+            remark,
+            totalAmount,
+            luggage,
         } = body;
 
-        if (!name || !bookingDate || !fromLocation || !toLocation) {
+        // Validation
+        const errors: string[] = [];
+
+        if (!name || !name.trim()) errors.push("Name is required");
+        if (!bookingDate) errors.push("Booking date is required");
+        if (!fromLocation) errors.push("Departure location is required");
+        if (!toLocation) errors.push("Destination is required");
+        if (fromLocation && toLocation && fromLocation === toLocation) {
+            errors.push("Departure and destination cannot be the same");
+        }
+
+        const infants = parseInt(infantCount) || 0;
+        const children = parseInt(childCount) || 0;
+        const adults = parseInt(adultCount) || 0;
+        const totalPassengers = infants + children + adults;
+
+        if (totalPassengers === 0) {
+            errors.push("At least one passenger is required");
+        }
+
+        if (errors.length > 0) {
             return NextResponse.json(
-                { error: "Missing required fields" },
+                { error: errors.join(", "), errors },
                 { status: 400 }
             );
         }
@@ -75,37 +112,58 @@ export async function POST(request: NextRequest) {
         const vatAmount = amount * 0.12;
         const grandTotal = amount + vatAmount;
 
-        const booking = await prisma.passengerBooking.create({
-            data: {
-                invoiceNo,
-                userId: result.user.id,
-                infantCount: parseInt(infantCount) || 0,
-                childCount: parseInt(childCount) || 0,
-                adultCount: parseInt(adultCount) || 0,
-                name,
-                email: email || result.user.email,
-                contact: contact || "",
-                bookingDate: new Date(bookingDate),
-                fromLocation,
-                toLocation,
-                idType: idType || "Passport",
-                paymentStatus: paymentStatus || "UNPAID",
-                totalAmount: grandTotal,
-                remark,
-            },
-        });
+        // Create booking with transaction
+        const booking = await prisma.$transaction(async (tx) => {
+            const newBooking = await tx.passengerBooking.create({
+                data: {
+                    invoiceNo,
+                    userId: result.user.id,
+                    infantCount: infants,
+                    childCount: children,
+                    adultCount: adults,
+                    name: name.trim(),
+                    email: email || result.user.email,
+                    contact: contact || "",
+                    bookingDate: new Date(bookingDate),
+                    fromLocation,
+                    toLocation,
+                    idType: idType || "Passport",
+                    paymentStatus: paymentStatus || "UNPAID",
+                    totalAmount: grandTotal,
+                    remark: remark || null,
+                    // Create luggage items if provided
+                    ...(luggage && luggage.length > 0
+                        ? {
+                              luggage: {
+                                  create: luggage.map((item: any) => ({
+                                      type: item.type,
+                                      weight: parseFloat(item.weight) || 0,
+                                      quantity: parseInt(item.quantity) || 1,
+                                      price: parseFloat(item.price) || 0,
+                                  })),
+                              },
+                          }
+                        : {}),
+                },
+                include: {
+                    luggage: true,
+                },
+            });
 
-        // Create invoice
-        await prisma.invoice.create({
-            data: {
-                invoiceNo,
-                userId: result.user.id,
-                passengerBookingId: booking.id,
-                subtotal: amount,
-                vatAmount,
-                totalAmount: grandTotal,
-                paymentStatus: paymentStatus || "UNPAID",
-            },
+            // Create invoice
+            await tx.invoice.create({
+                data: {
+                    invoiceNo,
+                    userId: result.user.id,
+                    passengerBookingId: newBooking.id,
+                    subtotal: amount,
+                    vatAmount,
+                    totalAmount: grandTotal,
+                    paymentStatus: paymentStatus || "UNPAID",
+                },
+            });
+
+            return newBooking;
         });
 
         await createAuditLog({
@@ -115,18 +173,26 @@ export async function POST(request: NextRequest) {
             entityId: booking.id,
             metadata: {
                 invoiceNo,
-                passengers: (parseInt(infantCount) || 0) + (parseInt(childCount) || 0) + (parseInt(adultCount) || 0),
+                passengers: totalPassengers,
                 fromLocation,
                 toLocation,
+                totalAmount: grandTotal,
             },
             ipAddress: getClientIp(request),
         });
 
-        return NextResponse.json({ booking, invoiceNo }, { status: 201 });
+        return NextResponse.json(
+            {
+                booking,
+                invoiceNo,
+                message: "Booking created successfully",
+            },
+            { status: 201 }
+        );
     } catch (error: any) {
         console.error("Create passenger booking error:", error);
         return NextResponse.json(
-            { error: "Failed to create booking" },
+            { error: error.message || "Failed to create booking" },
             { status: 500 }
         );
     }

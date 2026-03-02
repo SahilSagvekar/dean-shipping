@@ -12,6 +12,7 @@ export default function Login() {
   const [loginType, setLoginType] = useState<"user" | "agent" | "admin">("user");
   const [countryCode, setCountryCode] = useState("+1");
   const [mobileNumber, setMobileNumber] = useState("");
+  const [password, setPassword] = useState("");
   const [agreedToTerms, setAgreedToTerms] = useState(false);
 
   // OTP state
@@ -19,7 +20,7 @@ export default function Login() {
   const [otp, setOtp] = useState("");
   const [apiError, setApiError] = useState<string | null>(null);
 
-  const handleGenerateOTP = async (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setApiError(null);
 
@@ -33,11 +34,58 @@ export default function Login() {
       return;
     }
 
-    const fullPhoneNumber = `${countryCode}${mobileNumber}`;
-    const success = await sendOtp(fullPhoneNumber, "generate-otp-button");
+    if (loginType === "user") {
+      const fullPhoneNumber = `${countryCode}${mobileNumber}`;
+      const success = await sendOtp(fullPhoneNumber, "generate-otp-button");
 
-    if (success) {
-      setShowOtpInput(true);
+      if (success) {
+        setShowOtpInput(true);
+      }
+    } else {
+      // Agent or Admin password login
+      if (!password) {
+        setApiError("Please enter your password");
+        return;
+      }
+
+      try {
+        const response = await fetch("/api/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            loginType,
+            mobileNumber,
+            password,
+          }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          setApiError(data.error || "Login failed");
+          return;
+        }
+
+        performLoginSuccess(data);
+      } catch (err: any) {
+        setApiError(err.message || "Login failed. Please try again.");
+      }
+    }
+  };
+
+  const performLoginSuccess = (data: any) => {
+    localStorage.setItem("token", data.token);
+    localStorage.setItem("user", JSON.stringify(data.user));
+
+    switch (data.user.role) {
+      case "ADMIN":
+        router.push("/admin/dashboard");
+        break;
+      case "AGENT":
+        router.push("/agent/dashboard");
+        break;
+      default:
+        router.push("/admin/dashboard");
     }
   };
 
@@ -75,19 +123,7 @@ export default function Login() {
         return;
       }
 
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("user", JSON.stringify(data.user));
-
-      switch (data.user.role) {
-        case "ADMIN":
-          router.push("/admin/dashboard");
-          break;
-        case "AGENT":
-          router.push("/agent/dashboard");
-          break;
-        default:
-          router.push("/admin/dashboard");
-      }
+      performLoginSuccess(data);
     } catch (err: any) {
       setApiError(err.message || "Login failed. Please try again.");
     }
@@ -158,7 +194,7 @@ export default function Login() {
                   {renderRadioButton("admin", "Admin Login")}
                 </div>
 
-                <form onSubmit={handleGenerateOTP} className="space-y-6 md:space-y-8">
+                <form onSubmit={handleLogin} className="space-y-6 md:space-y-8">
                   <div>
                     <label className="block font-['Inter'] font-medium text-xl md:text-[30px] text-black mb-4">
                       Mobile Number<span className="text-red-600">*</span>
@@ -189,6 +225,21 @@ export default function Login() {
                       />
                     </div>
                   </div>
+
+                  {loginType !== "user" && (
+                    <div>
+                      <label className="block font-['Inter'] font-medium text-xl md:text-[30px] text-black mb-4">
+                        Password<span className="text-red-600">*</span>
+                      </label>
+                      <input
+                        type="password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="Enter Password"
+                        className="w-full h-[47px] px-4 border border-black rounded-[5px] font-['Inter'] font-light text-xl md:text-[25px] text-[#585858] placeholder:text-[#585858]/50 focus:outline-none focus:ring-2 focus:ring-[#296341]"
+                      />
+                    </div>
+                  )}
 
                   <div className="flex items-center gap-4">
                     <label className="flex items-start gap-3 cursor-pointer">
@@ -227,7 +278,7 @@ export default function Login() {
                       disabled={loading}
                       className="w-full max-w-[320px] h-[47px] bg-[#296341] hover:bg-[#1e4d30] disabled:bg-gray-400 transition-colors text-white font-['Inter'] font-medium text-xl md:text-[25px] rounded-[5px] border border-black active:scale-95"
                     >
-                      {loading ? "Sending..." : "Generate OTP"}
+                      {loading ? "Processing..." : loginType === "user" ? "Generate OTP" : "Log In"}
                     </button>
                   </div>
 

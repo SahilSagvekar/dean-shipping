@@ -6,7 +6,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { generateToken, createAuditLog, getClientIp } from "@/lib/auth";
+import { generateToken, createAuditLog, getClientIp, comparePassword } from "@/lib/auth";
 import { verifyFirebaseToken } from "@/lib/firebase-admin";
 
 // Define Role type locally to avoid build issues
@@ -15,14 +15,7 @@ type Role = "USER" | "AGENT" | "ADMIN";
 export async function POST(request: NextRequest) {
     try {
         const body = await request.json();
-        const { firebaseIdToken, loginType, mobileNumber } = body;
-
-        if (!firebaseIdToken) {
-            return NextResponse.json(
-                { error: "Firebase ID token is required" },
-                { status: 400 }
-            );
-        }
+        const { firebaseIdToken, loginType, mobileNumber, password } = body;
 
         // Validate loginType
         const validRoles: Role[] = ["USER", "AGENT", "ADMIN"];
@@ -34,35 +27,82 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // Verify the Firebase ID token
-        // (bypass-mock-token- is accepted when NEXT_PUBLIC_BYPASS_OTP=true)
-        const decodedToken = await verifyFirebaseToken(firebaseIdToken);
+        let user;
+        let decodedToken: any = null;
+        let isDevMode = false;
 
-        // When bypassed, phone_number is null — fall back to mobileNumber from body
-        const isBypass = process.env.NEXT_PUBLIC_BYPASS_OTP === "true" && firebaseIdToken.startsWith("bypass-mock-token-");
-        const phoneNumber = decodedToken.phone_number || mobileNumber;
+        if (role === "USER") {
+            if (!firebaseIdToken) {
+                return NextResponse.json(
+                    { error: "Firebase ID token is required for user login" },
+                    { status: 400 }
+                );
+            }
 
-        if (!phoneNumber && !isBypass) {
-            return NextResponse.json(
-                { error: "Phone number not found in Firebase token" },
-                { status: 400 }
-            );
+            // Verify the Firebase ID token
+            decodedToken = await verifyFirebaseToken(firebaseIdToken);
+            const phoneNumber = decodedToken.phone_number || mobileNumber;
+            isDevMode = process.env.NODE_ENV === "development" && firebaseIdToken.startsWith("dev-mock-token-");
+
+            if (!phoneNumber && !isDevMode) {
+                return NextResponse.json(
+                    { error: "Phone number not found in Firebase token" },
+                    { status: 400 }
+                );
+            }
+
+            const strippedPhone = phoneNumber?.replace(/^\+\d{1,3}/, "") || "";
+
+            user = await prisma.user.findFirst({
+                where: {
+                    OR: [
+                        { firebaseUid: decodedToken.uid },
+                        { mobileNumber: strippedPhone },
+                        ...(isDevMode && mobileNumber ? [{ mobileNumber }] : []),
+                    ],
+                },
+            });
+        } else {
+            // Agent or Admin login
+            if (!mobileNumber || !password) {
+                return NextResponse.json(
+                    { error: "Mobile number and password are required" },
+                    { status: 400 }
+                );
+            }
+
+            // Find user by mobile number
+            // Strip the country code to match stored mobileNumber if needed, 
+            // but usually agent/admin mobile numbers are stored as-is or with country code in a separate field.
+            // Based on schema, mobileNumber is @unique.
+            const strippedPhone = mobileNumber.replace(/^\+\d{1,3}/, "");
+
+            user = await prisma.user.findFirst({
+                where: {
+                    OR: [
+                        { mobileNumber: strippedPhone },
+                        { mobileNumber: mobileNumber }
+                    ]
+                },
+            });
+
+            if (user) {
+                if (!user.password) {
+                    return NextResponse.json(
+                        { error: "No password set for this account. Please contact admin." },
+                        { status: 400 }
+                    );
+                }
+
+                const isPasswordValid = await comparePassword(password, user.password);
+                if (!isPasswordValid) {
+                    return NextResponse.json(
+                        { error: "Invalid password" },
+                        { status: 401 }
+                    );
+                }
+            }
         }
-
-        // Find the user by phone number
-        // Strip country code to match stored mobileNumber (e.g. "+14161234567" → "4161234567")
-        const strippedPhone = phoneNumber?.replace(/^\+\d{1,3}/, "") || "";
-
-        const user = await prisma.user.findFirst({
-            where: {
-                OR: [
-                    { firebaseUid: decodedToken.uid },
-                    { mobileNumber: strippedPhone },
-                    // Bypass: also try exact match with the raw mobileNumber from body
-                    ...(isBypass && mobileNumber ? [{ mobileNumber }] : []),
-                ],
-            },
-        });
 
         if (!user) {
             return NextResponse.json(
@@ -87,8 +127,8 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // Update Firebase UID if not set (migration scenario) — skip during bypass
-        if (!user.firebaseUid && !isBypass) {
+        // Update Firebase UID if not set (migration scenario) - skip in dev mode
+        if (role === "USER" && !user.firebaseUid && !isDevMode && decodedToken) {
             await prisma.user.update({
                 where: { id: user.id },
                 data: { firebaseUid: decodedToken.uid },

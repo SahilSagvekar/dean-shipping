@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "20");
     const status = searchParams.get("status") || undefined;
-    const type = searchParams.get("type") || undefined; // DRY, FROZEN
+    const type = searchParams.get("type") || undefined;
     const from = searchParams.get("from") || undefined;
     const to = searchParams.get("to") || undefined;
     const skip = (page - 1) * limit;
@@ -45,6 +45,7 @@ export async function GET(request: NextRequest) {
                     select: { firstName: true, lastName: true, email: true },
                 },
                 items: true,
+                images: true,
                 _count: { select: { images: true } },
             },
             orderBy: { createdAt: "desc" },
@@ -76,11 +77,25 @@ export async function POST(request: NextRequest) {
             contactName, contactEmail, contactPhone, address, idType,
             damageFound, damageLocation, deficiencyComment,
             paymentStatus, remark, items,
+            containerImages, userDocuments,
         } = body;
 
-        if (!service || !bookingDate || !fromLocation || !toLocation || !contactName) {
+        // Detailed validation with specific error messages
+        const errors: string[] = [];
+        
+        if (!service) errors.push("Service is required");
+        if (!bookingDate) errors.push("Booking date is required");
+        if (!fromLocation) errors.push("From location is required");
+        if (!toLocation) errors.push("To location is required");
+        if (!contactName || !contactName.trim()) errors.push("Contact name is required");
+        if (fromLocation && toLocation && fromLocation === toLocation) {
+            errors.push("From and To locations cannot be the same");
+        }
+        if (!items || items.length === 0) errors.push("At least one item is required");
+
+        if (errors.length > 0) {
             return NextResponse.json(
-                { error: "Missing required fields" },
+                { error: errors.join(", "), errors },
                 { status: 400 }
             );
         }
@@ -88,68 +103,111 @@ export async function POST(request: NextRequest) {
         // Calculate total from items
         let totalAmount = 0;
         if (items && items.length > 0) {
-            totalAmount = items.reduce((sum: number, item: any) => sum + (item.total || 0), 0);
+            totalAmount = items.reduce((sum: number, item: any) => {
+                const itemTotal = parseFloat(item.total) || (parseFloat(item.unitPrice) * parseInt(item.quantity)) || 0;
+                return sum + itemTotal;
+            }, 0);
         }
         const vatAmount = totalAmount * 0.12;
         const grandTotal = totalAmount + vatAmount;
 
-        const booking = await prisma.cargoBooking.create({
-            data: {
-                invoiceNo,
-                userId: result.user.id,
-                service,
-                cargoSize: cargoSize || "MEDIUM",
-                quantity: quantity ? parseInt(quantity) : undefined,
-                pallets: pallets ? parseInt(pallets) : undefined,
-                type: type || "DRY",
-                containerNo,
-                size,
-                height,
-                reeferNo,
-                material,
-                color,
-                chassisNo,
-                temperature,
-                decksNo,
-                boxContains,
-                bookingDate: new Date(bookingDate),
-                fromLocation,
-                toLocation,
-                voyageNo,
-                contactName,
-                contactEmail: contactEmail || result.user.email,
-                contactPhone: contactPhone || "",
-                address: address || "",
-                idType: idType || "Passport",
-                damageFound,
-                damageLocation,
-                deficiencyComment,
-                paymentStatus: paymentStatus || "UNPAID",
-                totalAmount: grandTotal,
-                remark,
-                items: {
-                    create: (items || []).map((item: any) => ({
-                        itemType: item.itemType || item.type,
-                        unitPrice: parseFloat(item.unitPrice) || 0,
-                        quantity: parseInt(item.quantity) || 1,
-                        total: parseFloat(item.total) || 0,
-                        isPaid: item.isPaid || false,
-                    })),
+        // Create booking with transaction
+        const booking = await prisma.$transaction(async (tx) => {
+            const newBooking = await tx.cargoBooking.create({
+                data: {
+                    invoiceNo,
+                    userId: result.user.id,
+                    service,
+                    cargoSize: cargoSize?.toUpperCase() || "MEDIUM",
+                    quantity: quantity ? parseInt(quantity) : null,
+                    pallets: pallets ? parseInt(pallets) : null,
+                    type: type || "DRY",
+                    containerNo: containerNo || null,
+                    size: size || null,
+                    height: height || null,
+                    reeferNo: reeferNo || null,
+                    material: material || null,
+                    color: color || null,
+                    chassisNo: chassisNo || null,
+                    temperature: temperature || null,
+                    decksNo: decksNo || null,
+                    boxContains: boxContains || null,
+                    bookingDate: new Date(bookingDate),
+                    fromLocation,
+                    toLocation,
+                    voyageNo: voyageNo || null,
+                    contactName: contactName.trim(),
+                    contactEmail: contactEmail || result.user.email,
+                    contactPhone: contactPhone || "",
+                    address: address || "",
+                    idType: idType || "Passport",
+                    damageFound: damageFound || null,
+                    damageLocation: damageLocation || null,
+                    deficiencyComment: deficiencyComment || null,
+                    paymentStatus: paymentStatus || "UNPAID",
+                    totalAmount: grandTotal,
+                    remark: remark || null,
+                    items: {
+                        create: (items || []).map((item: any) => ({
+                            itemType: item.itemType || item.type,
+                            unitPrice: parseFloat(item.unitPrice) || 0,
+                            quantity: parseInt(item.quantity) || 1,
+                            total: parseFloat(item.total) || 0,
+                            isPaid: item.isPaid || false,
+                        })),
+                    },
                 },
-            },
-            include: { items: true },
+                include: { items: true },
+            });
+
+            // Create container images if provided
+            if (containerImages && containerImages.length > 0) {
+                await tx.cargoBookingImage.createMany({
+                    data: containerImages.map((img: any, index: number) => ({
+                        cargoBookingId: newBooking.id,
+                        imageUrl: img.url,
+                        imageType: "CONTAINER",
+                        caption: img.caption || `Container image ${index + 1}`,
+                        sortOrder: index,
+                    })),
+                });
+            }
+
+            // Create user document images if provided
+            if (userDocuments && userDocuments.length > 0) {
+                await tx.cargoBookingImage.createMany({
+                    data: userDocuments.map((doc: any, index: number) => ({
+                        cargoBookingId: newBooking.id,
+                        imageUrl: doc.url,
+                        imageType: "USER_DOCUMENT",
+                        caption: doc.caption || `${idType || 'Document'} ${index + 1}`,
+                        sortOrder: index,
+                    })),
+                });
+            }
+
+            // Create invoice
+            await tx.invoice.create({
+                data: {
+                    invoiceNo,
+                    userId: result.user.id,
+                    cargoBookingId: newBooking.id,
+                    subtotal: totalAmount,
+                    vatAmount,
+                    totalAmount: grandTotal,
+                    paymentStatus: paymentStatus || "UNPAID",
+                },
+            });
+
+            return newBooking;
         });
 
-        // Create invoice
-        await prisma.invoice.create({
-            data: {
-                invoiceNo,
-                userId: result.user.id,
-                cargoBookingId: booking.id,
-                subtotal: totalAmount,
-                vatAmount,
-                totalAmount: grandTotal,
-                paymentStatus: paymentStatus || "UNPAID",
+        const completeBooking = await prisma.cargoBooking.findUnique({
+            where: { id: booking.id },
+            include: { 
+                items: true, 
+                images: true,
+                invoice: true,
             },
         });
 
@@ -162,11 +220,16 @@ export async function POST(request: NextRequest) {
             ipAddress: getClientIp(request),
         });
 
-        return NextResponse.json({ booking, invoiceNo }, { status: 201 });
+        return NextResponse.json({ 
+            booking: completeBooking, 
+            invoiceNo,
+            message: "Booking created successfully"
+        }, { status: 201 });
+
     } catch (error: any) {
         console.error("Create cargo booking error:", error);
         return NextResponse.json(
-            { error: "Failed to create booking" },
+            { error: error.message || "Failed to create booking" },
             { status: 500 }
         );
     }

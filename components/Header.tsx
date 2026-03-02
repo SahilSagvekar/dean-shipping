@@ -13,7 +13,7 @@ export function Header({ currentPage, onNavigate }: { currentPage: string; onNav
     { label: 'Schedule', path: '/schedule' },
     { label: 'About Us', path: '/about' },
     { label: 'Your Shipment', path: '/shipment' },
-    { label: 'Pay Now', path: '/pay-now' },
+    { label: 'Pay Now', path: '/paynow' },
     { label: 'Contact Us', path: '/contact' },
   ];
 

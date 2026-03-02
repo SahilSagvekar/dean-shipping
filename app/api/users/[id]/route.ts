@@ -6,7 +6,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { requireAdmin, requireAuth, createAuditLog, getClientIp } from "@/lib/auth";
+import { requireAdmin, requireAuth, createAuditLog, getClientIp, hashPassword } from "@/lib/auth";
 
 export async function GET(
     request: NextRequest,
@@ -32,6 +32,7 @@ export async function GET(
             countryCode: true,
             mobileNumber: true,
             role: true,
+            designation: true,
             agentCode: true,
             avatarUrl: true,
             isActive: true,
@@ -69,10 +70,10 @@ export async function PATCH(
     }
 
     const body = await request.json();
-    const allowedFields = ["firstName", "lastName", "email", "avatarUrl"];
+    const allowedFields = ["firstName", "lastName", "email", "avatarUrl", "designation"];
     // Admins can also update role and active status
     if (result.user.role === "ADMIN") {
-        allowedFields.push("role", "isActive", "agentCode");
+        allowedFields.push("role", "isActive", "agentCode", "mobileNumber", "countryCode");
     }
 
     const updateData: any = {};
@@ -80,6 +81,10 @@ export async function PATCH(
         if (body[field] !== undefined) {
             updateData[field] = body[field];
         }
+    }
+
+    if (body.password) {
+        updateData.password = await hashPassword(body.password);
     }
 
     try {

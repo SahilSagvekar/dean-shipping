@@ -1,36 +1,171 @@
 "use client"
 
-import { useState } from 'react';
-import { Plus, Grid3x3, RefreshCw, Trash2, Eye, EyeOff, Search, ChevronDown } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Plus, Grid3x3, RefreshCw, Trash2, Eye, EyeOff, Search, ChevronDown, Loader2 } from 'lucide-react';
 import imgLogo from "@/app/assets/0630bc807bbd9122cb449e66c33d18d13536d121.png";
 import imgHero from "@/app/assets/c84df36e65722170900b0920e2cc3eb7cf14fbd0.png";
+import { toast } from "sonner";
 
 // Sidebar is now handled by (dashboard)/layout.tsx
 
-
-const agents = [
-  { id: 1, name: 'Henry Rogers', email: 'hendryrogers@demo.com', role: 'Freight Supervisor' },
-  { id: 2, name: 'Joseph Fernandes', email: 'jfernandes01@demo.com', role: 'Freight Agent' },
-  { id: 3, name: 'Bruno White', email: 'brunowhite@demo.com', role: 'Freight Supervisor' },
-];
+interface Agent {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  designation: string;
+  mobileNumber: string;
+  role: string;
+}
 
 function AgentManagementContent() {
-  const [activeTab, setActiveTab] = useState<'add' | 'view' | 'change'>('add');
+  const [activeTab, setActiveTab] = useState<'add' | 'view' | 'change'>('view');
+  const [agents, setAgents] = useState<Agent[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [showOldPassword, setShowOldPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
   const [formData, setFormData] = useState({
-    name: 'Henry Rogers',
-    email: 'hendry123@demo.com',
-    password: 'HenryR@011',
+    name: '',
+    email: '',
+    mobileNumber: '',
+    password: '',
     role: 'Freight Supervisor',
   });
 
   const [passwordData, setPasswordData] = useState({
-    oldPassword: 'HenryR@011',
-    newPassword: 'HenryR@000',
+    targetAgentId: '',
+    newPassword: '',
   });
+
+  const fetchAgents = async () => {
+    setLoading(true);
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch('/api/users?role=AGENT', {
+        headers: {
+          ...(token ? { "Authorization": `Bearer ${token}` } : {}),
+        }
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setAgents(data.users || []);
+      } else {
+        toast.error(data.error || "Failed to fetch agents");
+      }
+    } catch (err) {
+      toast.error("An error occurred while fetching agents");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAgents();
+  }, []);
+
+  const handleAddAgent = async () => {
+    if (!formData.name || !formData.email || !formData.mobileNumber || !formData.password) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch('/api/users', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { "Authorization": `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          mobileNumber: formData.mobileNumber,
+          password: formData.password,
+          designation: formData.role,
+          role: 'AGENT'
+        })
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        toast.success("Agent added successfully");
+        setFormData({ name: '', email: '', mobileNumber: '', password: '', role: 'Freight Supervisor' });
+        fetchAgents();
+        setActiveTab('view');
+      } else {
+        toast.error(data.error || "Failed to add agent");
+      }
+    } catch (err) {
+      toast.error("An error occurred");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDeleteAgent = async (id: string) => {
+    if (!confirm("Are you sure you want to deactivate this agent?")) return;
+
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`/api/users/${id}`, {
+        method: 'DELETE',
+        headers: {
+          ...(token ? { "Authorization": `Bearer ${token}` } : {}),
+        }
+      });
+      if (res.ok) {
+        toast.success("Agent deactivated");
+        fetchAgents();
+      } else {
+        const data = await res.json();
+        toast.error(data.error || "Failed to deactivate agent");
+      }
+    } catch (err) {
+      toast.error("An error occurred");
+    }
+  };
+
+  const handleChangePassword = async () => {
+    if (!passwordData.targetAgentId || !passwordData.newPassword) {
+      toast.error("Please select an agent and enter a new password");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`/api/users/${passwordData.targetAgentId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { "Authorization": `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ password: passwordData.newPassword })
+      });
+
+      if (res.ok) {
+        toast.success("Password updated successfully");
+        setPasswordData({ targetAgentId: '', newPassword: '' });
+      } else {
+        const data = await res.json();
+        toast.error(data.error || "Failed to update password");
+      }
+    } catch (err) {
+      toast.error("An error occurred");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const filteredAgents = agents.filter(a =>
+    `${a.firstName} ${a.lastName}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    a.email.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
     <div className="bg-white">
@@ -94,13 +229,14 @@ function AgentManagementContent() {
               <h2 className="text-[24px] font-medium text-[#296341]">Add New Agent</h2>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-x-12 gap-y-8 mb-10">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-12 gap-y-8 mb-10">
               <div>
                 <label className="block text-[22px] font-medium mb-2">Name</label>
                 <input
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  placeholder="Full Name"
                   className="w-full border border-[#296341] rounded-[4px] px-4 py-2 text-[18px] bg-white shadow-sm outline-none"
                 />
               </div>
@@ -110,6 +246,17 @@ function AgentManagementContent() {
                   type="email"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  placeholder="email@example.com"
+                  className="w-full border border-[#296341] rounded-[4px] px-4 py-2 text-[18px] bg-white shadow-sm outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-[22px] font-medium mb-2">Mobile Number</label>
+                <input
+                  type="text"
+                  value={formData.mobileNumber}
+                  onChange={(e) => setFormData({ ...formData, mobileNumber: e.target.value })}
+                  placeholder="2421234567"
                   className="w-full border border-[#296341] rounded-[4px] px-4 py-2 text-[18px] bg-white shadow-sm outline-none"
                 />
               </div>
@@ -119,6 +266,7 @@ function AgentManagementContent() {
                   type="text"
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  placeholder="••••••••"
                   className="w-full border border-[#296341] rounded-[4px] px-4 py-2 text-[18px] bg-white shadow-sm outline-none"
                 />
               </div>
@@ -137,7 +285,12 @@ function AgentManagementContent() {
                 </div>
               </div>
               <div className="md:col-span-1 flex items-end">
-                <button className="bg-[#132540] text-white px-16 py-2 rounded-[8px] text-[24px] font-medium hover:bg-[#1a3254] transition-colors w-full md:w-auto">
+                <button
+                  onClick={handleAddAgent}
+                  disabled={isSubmitting}
+                  className="bg-[#132540] text-white px-16 py-2 rounded-[8px] text-[24px] font-medium hover:bg-[#1a3254] transition-colors w-full md:w-auto disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {isSubmitting && <Loader2 className="w-5 h-5 animate-spin" />}
                   Save
                 </button>
               </div>
@@ -154,23 +307,34 @@ function AgentManagementContent() {
             </div>
 
             <div className="space-y-4">
-              {agents.map((agent, index) => (
-                <div
-                  key={agent.id}
-                  className="border border-[#296341] bg-white flex items-center px-6 py-2 rounded-sm shadow-sm"
-                >
-                  <div className="w-[60px] text-[20px] font-bold">{index + 1}.</div>
-                  <div className="w-[300px] text-[18px]">{agent.name}</div>
-                  <div className="flex-1 text-[18px] text-center">{agent.email}</div>
-                  <div className="w-[300px] text-[18px] flex items-center justify-between px-4">
-                    <span>{agent.role}</span>
-                    <ChevronDown className="w-6 h-6 text-[#296341]" />
-                  </div>
-                  <button className="p-2 ml-4 hover:bg-red-50 rounded transition-colors group">
-                    <Trash2 className="w-6 h-6 text-[#296341] group-hover:text-red-500" />
-                  </button>
+              {loading ? (
+                <div className="flex justify-center p-8">
+                  <Loader2 className="w-8 h-8 animate-spin text-[#296341]" />
                 </div>
-              ))}
+              ) : filteredAgents.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">No agents found.</div>
+              ) : (
+                filteredAgents.map((agent, index) => (
+                  <div
+                    key={agent.id}
+                    className="border border-[#296341] bg-white flex items-center px-6 py-2 rounded-sm shadow-sm"
+                  >
+                    <div className="w-[60px] text-[20px] font-bold">{index + 1}.</div>
+                    <div className="w-[300px] text-[18px]">{agent.firstName} {agent.lastName}</div>
+                    <div className="flex-1 text-[18px] text-center">{agent.email}</div>
+                    <div className="w-[300px] text-[18px] flex items-center justify-between px-4">
+                      <span>{agent.designation}</span>
+                      <ChevronDown className="w-6 h-6 text-[#296341]" />
+                    </div>
+                    <button
+                      onClick={() => handleDeleteAgent(agent.id)}
+                      className="p-2 ml-4 hover:bg-red-50 rounded transition-colors group"
+                    >
+                      <Trash2 className="w-6 h-6 text-[#296341] group-hover:text-red-500" />
+                    </button>
+                  </div>
+                ))
+              )}
             </div>
           </div>
         )}
@@ -196,42 +360,32 @@ function AgentManagementContent() {
             </div>
 
             <div className="bg-white rounded-lg p-10 shadow-lg border border-gray-100">
-              {/* User Info Header */}
-              <div className="flex items-center justify-between mb-10 border-b border-gray-100 pb-6">
-                <div className="flex items-center gap-16">
-                  <div className="text-[22px] font-medium text-[#296341]">Henry Rogers</div>
-                  <div className="text-[22px] font-medium text-[#296341]">hendryrogers@demo.com</div>
+              {/* Reset Password Form */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
+                <div>
+                  <label className="block text-[20px] font-medium mb-2">Select Agent</label>
+                  <select
+                    value={passwordData.targetAgentId}
+                    onChange={(e) => setPasswordData({ ...passwordData, targetAgentId: e.target.value })}
+                    className="w-full border border-[#296341] rounded-[4px] px-4 py-2 text-[18px] bg-white shadow-sm outline-none"
+                  >
+                    <option value="">Select an agent</option>
+                    {agents.map(agent => (
+                      <option key={agent.id} value={agent.id}>
+                        {agent.firstName} {agent.lastName} ({agent.email})
+                      </option>
+                    ))}
+                  </select>
                 </div>
-                <div className="text-[22px] font-medium text-[#296341]">Freight Supervisor</div>
-              </div>
-
-              {/* Password Fields */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 mb-10">
-                <div className="flex items-center gap-4">
-                  <label className="text-[20px] font-medium whitespace-nowrap min-w-[140px]">Old password:</label>
-                  <div className="relative flex-1">
-                    <input
-                      type={showOldPassword ? 'text' : 'password'}
-                      value={passwordData.oldPassword}
-                      onChange={(e) => setPasswordData({ ...passwordData, oldPassword: e.target.value })}
-                      className="w-full bg-[#e5f7f1] border border-gray-400 rounded-[4px] px-4 py-2 text-[18px] pr-12 outline-none"
-                    />
-                    <button
-                      onClick={() => setShowOldPassword(!showOldPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"
-                    >
-                      {showOldPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                    </button>
-                  </div>
-                </div>
-                <div className="flex items-center gap-4">
-                  <label className="text-[20px] font-medium whitespace-nowrap min-w-[150px]">New password:</label>
-                  <div className="relative flex-1">
+                <div>
+                  <label className="block text-[20px] font-medium mb-2">New Password</label>
+                  <div className="relative">
                     <input
                       type={showNewPassword ? 'text' : 'password'}
                       value={passwordData.newPassword}
                       onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
                       className="w-full bg-[#e5f7f1] border border-gray-400 rounded-[4px] px-4 py-2 text-[18px] pr-12 outline-none"
+                      placeholder="Enter new password"
                     />
                     <button
                       onClick={() => setShowNewPassword(!showNewPassword)}
@@ -244,7 +398,12 @@ function AgentManagementContent() {
               </div>
 
               <div className="flex justify-center">
-                <button className="bg-[#132540] text-white px-16 py-2 rounded-[8px] text-[24px] font-medium hover:bg-[#1a3254] transition-colors">
+                <button
+                  onClick={handleChangePassword}
+                  disabled={isSubmitting}
+                  className="bg-[#132540] text-white px-16 py-2 rounded-[8px] text-[24px] font-medium hover:bg-[#1a3254] transition-colors disabled:opacity-50 flex items-center gap-2"
+                >
+                  {isSubmitting && <Loader2 className="w-5 h-5 animate-spin" />}
                   Save
                 </button>
               </div>

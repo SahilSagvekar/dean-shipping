@@ -71,7 +71,7 @@ function ScheduleItem({ data, onEdit }: { data: Schedule; onEdit: () => void }) 
           </div>
         ))
       )}
-      
+
       {/* Status indicators */}
       <div className="flex gap-2 mt-2">
         {data.isPublished && (
@@ -270,24 +270,32 @@ function EditScheduleModal({
 
 function ScheduleManagementContent() {
   const { user, apiFetch } = useAuth();
-  
+
+  // Helper to get local YYYY-MM-DD
+  const toLocalISO = (date: Date) => {
+    const offset = date.getTimezoneOffset();
+    const localDate = new Date(date.getTime() - (offset * 60 * 1000));
+    return localDate.toISOString().split('T')[0];
+  };
+
   // State
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [locations, setLocations] = useState<{ code: string; name: string }[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
-  
+
   // Week navigation
   const [currentWeekStart, setCurrentWeekStart] = useState(() => {
     const now = new Date();
+    now.setHours(0, 0, 0, 0);
     const dayOfWeek = now.getDay();
     const diff = now.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1); // Monday
     return new Date(now.setDate(diff));
   });
-  
+
   // Edit modal
   const [editingSchedule, setEditingSchedule] = useState<Schedule | null>(null);
-  
+
   // Schedule launch
   const [launchDate, setLaunchDate] = useState("");
   const [launchTime, setLaunchTime] = useState("00:00");
@@ -331,12 +339,12 @@ function ScheduleManagementContent() {
       setIsLoading(true);
       setError("");
       try {
-        const startDate = weekDates[0].toISOString().split('T')[0];
-        const endDate = weekDates[5].toISOString().split('T')[0];
-        
+        const startDate = toLocalISO(weekDates[0]);
+        const endDate = toLocalISO(weekDates[5]);
+
         const res = await apiFetch(`/api/schedules?startDate=${startDate}&endDate=${endDate}&limit=100`);
         const data = await res.json();
-        
+
         if (res.ok) {
           setSchedules(data.schedules || []);
         } else {
@@ -353,22 +361,23 @@ function ScheduleManagementContent() {
 
   // Get schedule for specific date and ship
   const getSchedule = (date: Date, shipName: string): Schedule | null => {
-    const dateStr = date.toISOString().split('T')[0];
-    return schedules.find(s => 
-      s.date.split('T')[0] === dateStr && s.shipName === shipName
-    ) || null;
+    const dateStr = toLocalISO(date);
+    return schedules.find(s => {
+      const sDateStr = toLocalISO(new Date(s.date));
+      return sDateStr === dateStr && s.shipName === shipName;
+    }) || null;
   };
 
   // Create or get schedule for editing
   const handleEditClick = async (date: Date, shipName: string) => {
     let schedule = getSchedule(date, shipName);
-    
+
     if (!schedule) {
       // Create a new schedule entry
-      const dateStr = date.toISOString().split('T')[0];
+      const dateStr = toLocalISO(date);
       const weekday = weekdays[date.getDay() === 0 ? 6 : date.getDay() - 1];
       const month = months[date.getMonth()];
-      
+
       try {
         const res = await apiFetch("/api/schedules", {
           method: "POST",
@@ -381,7 +390,7 @@ function ScheduleManagementContent() {
             events: [],
           }),
         });
-        
+
         const data = await res.json();
         if (res.ok) {
           schedule = data.schedule;
@@ -395,27 +404,27 @@ function ScheduleManagementContent() {
         return;
       }
     }
-    
+
     setEditingSchedule(schedule);
   };
 
   // Save schedule changes
   const handleSaveSchedule = async (updates: Partial<Schedule>) => {
     if (!editingSchedule) return;
-    
+
     const res = await apiFetch(`/api/schedules/${editingSchedule.id}`, {
       method: "PATCH",
       body: JSON.stringify(updates),
     });
-    
+
     const data = await res.json();
-    
+
     if (!res.ok) {
       throw new Error(data.error || "Failed to save");
     }
-    
+
     // Update local state
-    setSchedules(schedules.map(s => 
+    setSchedules(schedules.map(s =>
       s.id === editingSchedule.id ? data.schedule : s
     ));
   };
@@ -423,7 +432,7 @@ function ScheduleManagementContent() {
   // Launch all schedules now
   const handleLaunchNow = async () => {
     if (!confirm("This will publish all schedules for this week immediately. Continue?")) return;
-    
+
     setIsLaunching(true);
     try {
       // Update all schedules to published
@@ -433,14 +442,14 @@ function ScheduleManagementContent() {
           body: JSON.stringify({ isPublished: true, isLaunched: true }),
         });
       }
-      
+
       // Refresh schedules
       const res = await apiFetch(`/api/schedules?limit=100`);
       const data = await res.json();
       if (res.ok) {
         setSchedules(data.schedules || []);
       }
-      
+
       alert("Schedules published successfully!");
     } catch (err) {
       alert("Failed to publish schedules");
@@ -455,16 +464,16 @@ function ScheduleManagementContent() {
       alert("Please select date and time");
       return;
     }
-    
+
     const launchAt = new Date(`${launchDate}T${launchTime}`);
-    
+
     if (launchAt <= new Date()) {
       alert("Please select a future date and time");
       return;
     }
-    
+
     if (!confirm(`Schedule all changes to launch on ${launchAt.toLocaleString()}?`)) return;
-    
+
     setIsScheduling(true);
     try {
       // Update all schedules with launchAt
@@ -474,14 +483,14 @@ function ScheduleManagementContent() {
           body: JSON.stringify({ launchAt: launchAt.toISOString() }),
         });
       }
-      
+
       // Refresh schedules
       const res = await apiFetch(`/api/schedules?limit=100`);
       const data = await res.json();
       if (res.ok) {
         setSchedules(data.schedules || []);
       }
-      
+
       alert(`Schedules will be published on ${launchAt.toLocaleString()}`);
     } catch (err) {
       alert("Failed to schedule launch");
@@ -583,7 +592,7 @@ function ScheduleManagementContent() {
                   {weekDates.map((date, index) => {
                     const scheduleA = getSchedule(date, "SHIP_A");
                     const scheduleB = getSchedule(date, "SHIP_B");
-                    
+
                     return (
                       <div key={index} className="grid grid-cols-[180px_1fr_1fr]">
                         {/* Date Column */}
@@ -600,7 +609,7 @@ function ScheduleManagementContent() {
                           {scheduleA ? (
                             <ScheduleItem data={scheduleA} onEdit={() => handleEditClick(date, "SHIP_A")} />
                           ) : (
-                            <div 
+                            <div
                               className="flex-1 flex items-center justify-center text-white/50 cursor-pointer hover:bg-white/10 transition-colors"
                               onClick={() => handleEditClick(date, "SHIP_A")}
                             >
@@ -615,7 +624,7 @@ function ScheduleManagementContent() {
                           {scheduleB ? (
                             <ScheduleItem data={scheduleB} onEdit={() => handleEditClick(date, "SHIP_B")} />
                           ) : (
-                            <div 
+                            <div
                               className="flex-1 flex items-center justify-center text-white/50 cursor-pointer hover:bg-white/10 transition-colors"
                               onClick={() => handleEditClick(date, "SHIP_B")}
                             >
@@ -654,7 +663,7 @@ function ScheduleManagementContent() {
                     className="border border-gray-300 rounded-md px-4 py-2 text-lg"
                   />
                 </div>
-                <button 
+                <button
                   onClick={handleScheduleLaunch}
                   disabled={isScheduling || !launchDate}
                   className="bg-[#296341] text-white px-6 py-2 rounded-md flex items-center gap-2 font-bold hover:bg-[#1a422b] transition-colors disabled:opacity-50"
@@ -665,7 +674,7 @@ function ScheduleManagementContent() {
               </div>
 
               {/* Launch Now Button */}
-              <button 
+              <button
                 onClick={handleLaunchNow}
                 disabled={isLaunching}
                 className="bg-[#132540] text-white px-10 py-4 rounded-lg text-[22px] font-bold hover:bg-[#1a3254] transition-all shadow-md active:scale-95 disabled:opacity-50 flex items-center gap-2"

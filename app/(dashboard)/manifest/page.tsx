@@ -1,619 +1,411 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import {
-    MapPin,
-    ChevronRight,
-    ChevronDown,
-    ChevronUp,
-    Printer,
-    ArrowRight,
-} from "lucide-react";
-import Image from "next/image";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/auth-context";
+import { toast } from "sonner";
+import {
+  ChevronDown,
+  ChevronRight,
+  MapPin,
+  Loader2,
+  Ship,
+  Package,
+  Calendar,
+  DollarSign,
+  CreditCard,
+  Printer,
+  Filter,
+  Search
+} from "lucide-react";
 import imgRectangle228 from "@/app/assets/0630bc807bbd9122cb449e66c33d18d13536d121.png";
 import imgRectangle2 from "@/app/assets/7bfea36700cced4af0de8d5f4074e11966bfadd9.png";
 
-// ── Types ────────────────────────────────────────────────────────────────────
-
-interface VoyageSummary {
-    id: string;
-    voyageNo: number;
-    shipName: string;
-    date: string;
-    status: string;
-    from: { code: string; name: string };
-    to: { code: string; name: string };
-    summary: {
-        totalBookings: number;
-        dry: number;
-        frozen: number;
-        cooler: number;
-        totalAmount: number;
-        paidAmount: number;
-        unpaidAmount: number;
-    };
+// Types
+interface Shipment {
+  id: string;
+  invoiceNo: string;
+  senderName: string;
+  receiverName: string;
+  itemDetails: string;
+  paymentMode: string;
+  amount: number;
+  paymentStatus: 'PAID' | 'UNPAID';
+  updatedAt: string;
 }
 
-interface CargoBooking {
-    id: string;
-    invoiceNo: string;
-    user: { firstName: string; lastName: string };
-    contactName: string;
-    items: { itemType: string; quantity: number; total: number }[];
-    invoice: { paymentMode: string | null; paymentStatus: string } | null;
-    totalAmount: number;
-    paymentStatus: string;
-    updatedAt: string;
-    type: string;
+interface Route {
+  id: string;
+  fromLocation: string;
+  toLocation: string;
+  shipments: Shipment[];
+  totalShipments: number;
 }
 
-interface VoyageDetail {
-    voyage: {
-        id: string;
-        voyageNo: number;
-        shipName: string;
-        date: string;
-        status: string;
-        from: { code: string; name: string };
-        to: { code: string; name: string };
-    };
-    bookings: {
-        dry: CargoBooking[];
-        frozen: CargoBooking[];
-        cooler: CargoBooking[];
-    };
-    summary: {
-        totalBookings: number;
-        dry: number;
-        frozen: number;
-        cooler: number;
-        totalAmount: number;
-        paidAmount: number;
-        unpaidAmount: number;
-    };
+interface Voyage {
+  id: string;
+  voyageNo: string;
+  date: string;
+  status: string;
+  routes: Route[];
+  color: string;
 }
 
-// ── StatusBadge ──────────────────────────────────────────────────────────────
+// Voyage color palette
+const VOYAGE_COLORS = [
+  'bg-[#5f8a71]', // Current/Active - Green
+  'bg-[#edb8c1]', // Pink
+  'bg-[#aed1ff]', // Blue
+  'bg-[#d8d2b2]', // Beige
+  'bg-[#99d9e4]', // Cyan
+  'bg-[#ccc4c4]', // Gray
+  'bg-[rgba(25,177,134,0.5)]', // Teal
+];
 
-function StatusBadge({ status }: { status: string }) {
-    const isPaid = status === "PAID";
-    return (
-        <span
-            className={`inline-flex items-center justify-center px-3 py-1 rounded text-sm font-semibold min-w-[70px] ${isPaid
-                    ? "bg-green-100 text-green-600 border border-green-300"
-                    : "bg-red-100 text-red-500 border border-red-300"
-                }`}
-        >
-            {isPaid ? "Paid" : "Unpaid"}
-        </span>
-    );
+// Route row colors
+const ROUTE_COLORS = [
+  'bg-[#b5faff]', // Cyan
+  'bg-[#e5f7f1]', // Light green
+];
+
+// Payment Status Badge
+function PaymentStatusBadge({ status }: { status: 'PAID' | 'UNPAID' }) {
+  return (
+    <div className={`border border-black px-4 py-1 min-w-[90px] text-center`}>
+      <span className={`font-bold text-sm ${status === 'PAID' ? 'text-[#70cf5d]' : 'text-[#cf5d5d]'}`}>
+        {status === 'PAID' ? 'Paid' : 'Unpaid'}
+      </span>
+    </div>
+  );
 }
 
-// ── CargoTypeTable ────────────────────────────────────────────────────────────
-// Renders one DRY / FROZEN / COOLER section table, matching the dashboard style.
+// Shipment Row Component
+function ShipmentRow({ shipment, index }: { shipment: Shipment; index: number }) {
+  return (
+    <>
+      <tr className="border-b border-[#5F8A71]/30">
+        <td className="py-3 px-2 text-sm font-medium text-black">{shipment.invoiceNo}</td>
+        <td className="py-3 px-2 text-sm font-medium text-black">{shipment.senderName}</td>
+        <td className="py-3 px-2 text-sm font-medium text-black">{shipment.receiverName}</td>
+        <td className="py-3 px-2 text-sm font-medium text-black">{shipment.itemDetails}</td>
+        <td className="py-3 px-2 text-sm font-medium text-black">{shipment.paymentMode || '------'}</td>
+        <td className="py-3 px-2 text-sm font-medium text-black">${shipment.amount.toFixed(2)}</td>
+        <td className="py-3 px-2">
+          <PaymentStatusBadge status={shipment.paymentStatus} />
+        </td>
+        <td className="py-3 px-2 text-sm font-medium text-black">
+          {new Date(shipment.updatedAt).toLocaleString('en-GB', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit'
+          }).replace(',', ', ')}
+        </td>
+      </tr>
+    </>
+  );
+}
 
-const BADGE_COLOR: Record<string, string> = {
-    DRY:    "bg-amber-500",
-    FROZEN: "bg-blue-500",
-    COOLER: "bg-cyan-500",
-};
-
-function CargoTypeTable({
-    title,
-    badge,
-    bookings,
-    statusFilter,
-    onStatusChange,
+// Route Card Component (Expandable)
+function RouteCard({
+  route,
+  index,
+  voyageNo,
+  voyageDate,
+  isExpanded,
+  onToggle,
 }: {
-    title: string;
-    badge: "DRY" | "FROZEN" | "COOLER";
-    bookings: CargoBooking[];
-    statusFilter: string;
-    onStatusChange: (v: string) => void;
+  route: Route;
+  index: number;
+  voyageNo: string;
+  voyageDate: string;
+  isExpanded: boolean;
+  onToggle: () => void;
 }) {
-    const filtered = bookings.filter((b) => {
-        if (statusFilter === "paid")   return b.paymentStatus === "PAID";
-        if (statusFilter === "unpaid") return b.paymentStatus !== "PAID";
-        return true; // "all"
-    });
+  const [statusFilter, setStatusFilter] = useState<'ALL' | 'PAID' | 'UNPAID'>('ALL');
+  
+  const filteredShipments = route.shipments.filter(s => {
+    if (statusFilter === 'ALL') return true;
+    return s.paymentStatus === statusFilter;
+  });
 
-    return (
-        <div className="bg-white rounded-xl border border-emerald-200 shadow-sm overflow-hidden mb-5">
-            {/* Section header */}
-            <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between bg-gray-50">
-                <div>
-                    <h4 className="text-lg font-bold text-gray-800 italic">{title}</h4>
-                    <p className="text-sm text-gray-500">
-                        {bookings.length} booking{bookings.length !== 1 ? "s" : ""}
-                    </p>
-                </div>
-                <div className="flex items-center gap-4">
-                    <span
-                        className={`px-5 py-1.5 rounded-lg text-white font-black text-xl ${BADGE_COLOR[badge] ?? "bg-gray-500"
-                            }`}
-                    >
-                        {badge}
-                    </span>
-                    <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors active:scale-95">
-                        <Printer className="w-5 h-5 text-gray-600" />
-                    </button>
-                </div>
-            </div>
+  const bgColor = index % 2 === 0 ? ROUTE_COLORS[0] : ROUTE_COLORS[1];
 
-            {/* Table */}
-            <div className="overflow-x-auto">
-                <table className="w-full min-w-[900px]">
-                    <thead>
-                        <tr className="bg-emerald-100">
-                            <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 w-[110px]">Invoice</th>
-                            <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 w-[130px]">Sender</th>
-                            <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 w-[130px]">Receiver</th>
-                            <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Item Details</th>
-                            <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 w-[130px]">Payment Mode</th>
-                            <th className="px-4 py-3 text-right text-sm font-semibold text-gray-700 w-[100px]">Amount</th>
-                            <th className="px-4 py-3 text-center text-sm font-semibold text-gray-700 w-[120px]">
-                                {/* Inline status filter */}
-                                <select
-                                    value={statusFilter}
-                                    onChange={(e) => onStatusChange(e.target.value)}
-                                    className="bg-white border border-gray-300 rounded px-2 py-1 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                                >
-                                    <option value="all">All</option>
-                                    <option value="paid">Paid</option>
-                                    <option value="unpaid">Unpaid</option>
-                                </select>
-                            </th>
-                            <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 w-[160px]">Updated At</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100">
-                        {filtered.length === 0 ? (
-                            <tr>
-                                <td colSpan={8} className="px-4 py-10 text-center text-gray-400 font-medium">
-                                    No {badge.toLowerCase()} cargo shipments found.
-                                </td>
-                            </tr>
-                        ) : (
-                            filtered.map((booking) => {
-                                const sender      = `${booking.user.firstName} ${booking.user.lastName}`;
-                                const receiver    = booking.contactName || "N/A";
-                                const itemDetails = booking.items.length > 0
-                                    ? booking.items.map((i) => `${i.itemType}${i.quantity > 1 ? ` ×${i.quantity}` : ""}`).join(", ")
-                                    : "N/A";
-                                const paymentMode = booking.invoice?.paymentMode || "---";
-
-                                return (
-                                    <tr
-                                        key={booking.id}
-                                        className="hover:bg-gray-50 transition-colors cursor-pointer"
-                                    >
-                                        <td className="px-4 py-3 text-sm text-gray-800 font-bold italic">
-                                            #{booking.invoiceNo}
-                                        </td>
-                                        <td className="px-4 py-3 text-sm text-gray-700 font-medium">{sender}</td>
-                                        <td className="px-4 py-3 text-sm text-gray-700 font-medium">{receiver}</td>
-                                        <td className="px-4 py-3 text-sm text-gray-700">{itemDetails}</td>
-                                        <td className="px-4 py-3 text-sm text-gray-700">{paymentMode}</td>
-                                        <td className="px-4 py-3 text-sm text-gray-800 font-black text-right">
-                                            ${booking.totalAmount.toLocaleString("en-US", {
-                                                minimumFractionDigits: 2,
-                                                maximumFractionDigits: 2,
-                                            })}
-                                        </td>
-                                        <td className="px-4 py-3 text-center">
-                                            <StatusBadge status={booking.paymentStatus} />
-                                        </td>
-                                        <td className="px-4 py-3 text-sm text-gray-600">
-                                            {new Date(booking.updatedAt).toLocaleString()}
-                                        </td>
-                                    </tr>
-                                );
-                            })
-                        )}
-                    </tbody>
-                </table>
-            </div>
-
-            {/* Footer */}
-            <div className="px-6 py-3 border-t border-gray-200 bg-gray-50 flex items-center justify-between">
-                <span className="text-sm text-gray-500">
-                    Showing {filtered.length} of {bookings.length} shipments
-                </span>
-            </div>
+  return (
+    <div className="mb-3">
+      {/* Route Header */}
+      <div
+        className={`${bgColor} border border-[#296341] rounded-[10px] h-[60px] flex items-center justify-between px-6 cursor-pointer hover:shadow-md transition-shadow`}
+        onClick={onToggle}
+      >
+        <div className="flex items-center gap-3">
+          <MapPin className="w-6 h-6 text-[#296341]" />
+          <span className="text-xl md:text-2xl font-medium text-black">
+            {route.fromLocation} <span className="mx-4">→</span> {route.toLocation}
+          </span>
         </div>
-    );
-}
+        <ChevronRight className={`w-6 h-6 text-[#296341] transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
+      </div>
 
-// ── VoyageContent ─────────────────────────────────────────────────────────────
-// Fetches & renders the DRY / FROZEN / COOLER tables for one voyage.
-// Mounts when the accordion is opened, unmounts when closed.
+      {/* Expanded Shipments Table */}
+      {isExpanded && (
+        <div className="mt-2 bg-[#e5f7f1] border border-[#296341] rounded-[5px] overflow-hidden">
+          {/* Table Header with Voyage Info */}
+          <div className="px-4 py-3 border-b border-[#296341]">
+            <p className="text-lg font-medium text-black">
+              VOYAGE {voyageNo} &nbsp;&nbsp; {voyageDate}
+            </p>
+          </div>
 
-function VoyageContent({
-    voyageId,
-    apiFetch,
-}: {
-    voyageId: string;
-    apiFetch: (url: string, options?: RequestInit) => Promise<Response>;
-}) {
-    const [loading, setLoading]     = useState(true);
-    const [detail, setDetail]       = useState<VoyageDetail | null>(null);
-    const [error, setError]         = useState<string | null>(null);
-    const [dryFilter, setDry]       = useState("all");
-    const [frozenFilter, setFrozen] = useState("all");
-    const [coolerFilter, setCooler] = useState("all");
-
-    useEffect(() => {
-        let cancelled = false;
-
-        async function load() {
-            setLoading(true);
-            setError(null);
-            try {
-                const res = await apiFetch(`/api/manifest/voyages/${voyageId}`);
-                if (!res.ok) throw new Error(`HTTP ${res.status}`);
-                const data: VoyageDetail = await res.json();
-                if (!cancelled) setDetail(data);
-            } catch (e: any) {
-                if (!cancelled) setError("Failed to load voyage details. Please try again.");
-            } finally {
-                if (!cancelled) setLoading(false);
-            }
-        }
-
-        load();
-        return () => { cancelled = true; };
-    }, [voyageId, apiFetch]);
-
-    if (loading) {
-        return (
-            <div className="flex items-center justify-center py-12">
-                <div className="flex flex-col items-center gap-3">
-                    <div className="w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin" />
-                    <p className="text-emerald-600 font-semibold animate-pulse">Loading shipments…</p>
-                </div>
-            </div>
-        );
-    }
-
-    if (error || !detail) {
-        return (
-            <div className="py-8 text-center text-red-500 font-medium">
-                {error ?? "No data found."}
-            </div>
-        );
-    }
-
-    return (
-        <div>
-            {/* Route + summary bar */}
-            <div className="bg-white rounded-xl p-4 border border-emerald-200 shadow-sm mb-5">
-                <div className="flex flex-wrap items-center justify-between gap-4">
-                    <div className="flex items-center gap-3">
-                        <MapPin className="w-5 h-5 text-emerald-600" />
-                        <span className="text-xl font-semibold text-gray-800">
-                            {detail.voyage.from.code}
-                        </span>
-                        <ArrowRight className="w-5 h-5 text-emerald-600" />
-                        <span className="text-xl font-semibold text-gray-800">
-                            {detail.voyage.to.code}
-                        </span>
-                        <span className="ml-2 text-sm text-gray-500">
-                            ({detail.voyage.from.name} → {detail.voyage.to.name})
-                        </span>
+          {/* Column Headers */}
+          <div className="bg-[#d4e0d9] border-b border-[#296341]">
+            <table className="w-full">
+              <thead>
+                <tr>
+                  <th className="py-3 px-2 text-left text-sm font-semibold text-black">Invoice</th>
+                  <th className="py-3 px-2 text-left text-sm font-semibold text-black">Sender</th>
+                  <th className="py-3 px-2 text-left text-sm font-semibold text-black">Receiver/AGENT</th>
+                  <th className="py-3 px-2 text-left text-sm font-semibold text-black">Item Details</th>
+                  <th className="py-3 px-2 text-left text-sm font-semibold text-black">Payment Mode</th>
+                  <th className="py-3 px-2 text-left text-sm font-semibold text-black">Amount</th>
+                  <th className="py-3 px-2 text-left text-sm font-semibold text-black">
+                    <div className="flex items-center gap-2">
+                      <select
+                        value={statusFilter}
+                        onChange={(e) => {
+                          e.stopPropagation();
+                          setStatusFilter(e.target.value as any);
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                        className="bg-white border border-black rounded px-2 py-1 text-sm font-semibold outline-none"
+                      >
+                        <option value="ALL">All</option>
+                        <option value="PAID">Paid</option>
+                        <option value="UNPAID">Unpaid</option>
+                      </select>
                     </div>
+                  </th>
+                  <th className="py-3 px-2 text-left text-sm font-semibold text-black">Updated at</th>
+                </tr>
+              </thead>
+            </table>
+          </div>
 
-                    {/* Counts & revenue */}
-                    <div className="flex items-center gap-5 text-sm font-semibold">
-                        <span className="flex items-center gap-1">
-                            <span className="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block" />
-                            <span className="text-amber-700">{detail.summary.dry} DRY</span>
-                        </span>
-                        <span className="flex items-center gap-1">
-                            <span className="w-2.5 h-2.5 rounded-full bg-blue-500 inline-block" />
-                            <span className="text-blue-700">{detail.summary.frozen} FROZEN</span>
-                        </span>
-                        <span className="flex items-center gap-1">
-                            <span className="w-2.5 h-2.5 rounded-full bg-cyan-500 inline-block" />
-                            <span className="text-cyan-700">{detail.summary.cooler} COOLER</span>
-                        </span>
-                        <span className="text-gray-400">|</span>
-                        <span className="text-emerald-700">
-                            ${detail.summary.totalAmount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} total
-                        </span>
-                        <span className="text-green-600">
-                            ${detail.summary.paidAmount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} paid
-                        </span>
-                        <span className="text-red-500">
-                            ${detail.summary.unpaidAmount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} unpaid
-                        </span>
-                    </div>
-                </div>
-            </div>
-
-            {/* DRY / FROZEN / COOLER tables */}
-            <CargoTypeTable
-                title="DRY Cargo Shipments"
-                badge="DRY"
-                bookings={detail.bookings.dry}
-                statusFilter={dryFilter}
-                onStatusChange={setDry}
-            />
-            <CargoTypeTable
-                title="Frozen Cargo Shipments"
-                badge="FROZEN"
-                bookings={detail.bookings.frozen}
-                statusFilter={frozenFilter}
-                onStatusChange={setFrozen}
-            />
-            <CargoTypeTable
-                title="Cooler Cargo Shipments"
-                badge="COOLER"
-                bookings={detail.bookings.cooler}
-                statusFilter={coolerFilter}
-                onStatusChange={setCooler}
-            />
-        </div>
-    );
-}
-
-// ── Main Page ─────────────────────────────────────────────────────────────────
-
-export default function Manifest() {
-    const { user, apiFetch, isLoading: authLoading } = useAuth();
-
-    const [voyages, setVoyages]                 = useState<VoyageSummary[]>([]);
-    const [loadingVoyages, setLoadingVoyages]   = useState(true);
-    const [page, setPage]                       = useState(1);
-    const [totalPages, setTotalPages]           = useState(1);
-
-    // The current (latest) voyage is always expanded on mount
-    const [currentExpanded, setCurrentExpanded] = useState(true);
-    // Track which past voyages are expanded
-    const [expandedIds, setExpandedIds]         = useState<Set<string>>(new Set());
-
-    // ── Fetch voyages list ────────────────────────────────────────────────────
-
-    const fetchVoyages = useCallback(
-        async (pageNum: number) => {
-            setLoadingVoyages(true);
-            try {
-                const res = await apiFetch(`/api/manifest/voyages?page=${pageNum}&limit=10`);
-                if (!res.ok) throw new Error(`HTTP ${res.status}`);
-                const data = await res.json();
-
-                setVoyages((prev) =>
-                    pageNum === 1 ? data.voyages ?? [] : [...prev, ...(data.voyages ?? [])]
-                );
-                setTotalPages(data.pagination?.totalPages ?? 1);
-                setPage(pageNum);
-            } catch (err) {
-                console.error("Failed to fetch voyages:", err);
-            } finally {
-                setLoadingVoyages(false);
-            }
-        },
-        [apiFetch]
-    );
-
-    useEffect(() => {
-        // Wait for the auth context to finish hydrating from localStorage.
-        // Without this guard the first render fires with token=null → 401.
-        if (authLoading) return;
-        fetchVoyages(1);
-    }, [fetchVoyages, authLoading]);
-
-    const togglePastVoyage = (id: string) => {
-        setExpandedIds((prev) => {
-            const next = new Set(prev);
-            next.has(id) ? next.delete(id) : next.add(id);
-            return next;
-        });
-    };
-
-    // First voyage = current; the rest are past
-    const currentVoyage = voyages[0] ?? null;
-    const pastVoyages   = voyages.slice(1);
-
-    // ── Render ────────────────────────────────────────────────────────────────
-
-    return (
-        <div className="min-h-screen bg-gray-100">
-
-            {/* ── Header ────────────────────────────────────────────────── */}
-            <header className="relative h-[453px] rounded-b-[50px] overflow-hidden">
-                <div className="absolute inset-0">
-                    <Image
-                        src={imgRectangle2.src}
-                        alt="Container Yard"
-                        fill
-                        className="object-cover"
-                        priority
-                    />
-                </div>
-
-                <div className="relative z-10 h-full flex flex-col">
-                    <div className="flex items-center justify-between px-[108px] pt-[22px]">
-                        <div className="absolute left-1/2 -translate-x-1/2 top-[6px]">
-                            <Image
-                                src={imgRectangle228.src}
-                                alt="Dean's Shipping Ltd."
-                                width={483}
-                                height={132}
-                                className="object-contain"
-                                priority
-                            />
-                        </div>
-                    </div>
-
-                    <div className="flex-1 flex flex-col items-center justify-center">
-                        <h2 className="text-[40px] font-semibold text-white tracking-wide uppercase">
-                            {user?.role ?? "STAFF"}
-                        </h2>
-                        <p className="text-[30px] font-medium text-white mt-2">
-                            {user ? `${user.firstName} ${user.lastName}` : ""}
-                        </p>
-                    </div>
-                </div>
-            </header>
-
-            {/* ── Main ──────────────────────────────────────────────────── */}
-            <main className="max-w-6xl mx-auto px-4 -mt-8 pt-32 pb-12">
-
-                {/* Full-page loader */}
-                {loadingVoyages && voyages.length === 0 ? (
-                    <div className="flex flex-col items-center gap-4 py-24">
-                        <div className="w-12 h-12 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin" />
-                        <p className="text-emerald-600 text-lg font-semibold animate-pulse tracking-widest">
-                            SYNCING DATA…
-                        </p>
-                    </div>
-
-                ) : voyages.length === 0 ? (
-                    <div className="text-center py-24 text-gray-400 font-medium text-lg">
-                        No voyages found.
-                    </div>
-
+          {/* Shipment Rows */}
+          <div className="max-h-[400px] overflow-y-auto">
+            <table className="w-full">
+              <tbody>
+                {filteredShipments.length === 0 ? (
+                  <tr>
+                    <td colSpan={8} className="py-8 text-center text-gray-500">
+                      No shipments found
+                    </td>
+                  </tr>
                 ) : (
-                    <>
-                        {/* ── Current Voyage (latest) ──────────────────── */}
-                        {currentVoyage && (
-                            <div className="bg-emerald-600 rounded-xl shadow-lg overflow-hidden mb-8">
-                                {/* Toggle header */}
-                                <button
-                                    onClick={() => setCurrentExpanded((v) => !v)}
-                                    className="w-full flex items-center justify-between px-6 py-5 text-white hover:bg-emerald-700 transition-colors"
-                                >
-                                    <div className="flex items-center gap-5">
-                                        <h3 className="text-2xl font-black tracking-tight">
-                                            VOYAGE {currentVoyage.voyageNo}
-                                        </h3>
-                                        <span className="text-xl opacity-90">
-                                            {new Date(currentVoyage.date).toLocaleDateString("en-GB")}
-                                        </span>
-                                        <span className="text-xs px-3 py-1 bg-white/20 rounded-full font-semibold tracking-wider">
-                                            {currentVoyage.status}
-                                        </span>
-                                    </div>
-
-                                    <div className="flex items-center gap-5">
-                                        <div className="text-right text-sm opacity-80 hidden sm:block">
-                                            <div className="font-bold">
-                                                {currentVoyage.summary.totalBookings} shipments
-                                            </div>
-                                            <div>
-                                                ${currentVoyage.summary.totalAmount.toLocaleString("en-US", {
-                                                    minimumFractionDigits: 2,
-                                                    maximumFractionDigits: 2,
-                                                })}
-                                            </div>
-                                        </div>
-                                        {currentExpanded
-                                            ? <ChevronUp className="w-8 h-8 flex-shrink-0" />
-                                            : <ChevronDown className="w-8 h-8 flex-shrink-0" />
-                                        }
-                                    </div>
-                                </button>
-
-                                {/* Content */}
-                                {currentExpanded && (
-                                    <div className="bg-emerald-50 p-6">
-                                        <VoyageContent
-                                            voyageId={currentVoyage.id}
-                                            apiFetch={apiFetch}
-                                        />
-                                    </div>
-                                )}
-                            </div>
-                        )}
-
-                        {/* ── Past Voyages ──────────────────────────────── */}
-                        {pastVoyages.length > 0 && (
-                            <div className="space-y-4">
-                                <h3 className="text-xl font-bold text-gray-800 px-2">
-                                    Past Voyages
-                                </h3>
-
-                                <div className="space-y-3">
-                                    {pastVoyages.map((voyage) => {
-                                        const isExpanded = expandedIds.has(voyage.id);
-                                        return (
-                                            <div
-                                                key={voyage.id}
-                                                className="border border-gray-200 rounded-lg overflow-hidden"
-                                            >
-                                                {/* Accordion toggle */}
-                                                <button
-                                                    onClick={() => togglePastVoyage(voyage.id)}
-                                                    className="w-full flex items-center justify-between px-6 py-4 bg-gradient-to-r from-emerald-50 to-teal-50 hover:from-emerald-100 hover:to-teal-100 transition-colors"
-                                                >
-                                                    <div className="flex flex-wrap items-center gap-4">
-                                                        <span className="text-xl font-black text-gray-800">
-                                                            VOYAGE {voyage.voyageNo}
-                                                        </span>
-                                                        <span className="text-base text-gray-600">
-                                                            {new Date(voyage.date).toLocaleDateString("en-GB")}
-                                                        </span>
-                                                        <span className="px-2 py-0.5 bg-emerald-100 text-emerald-700 text-sm rounded-full font-medium">
-                                                            {voyage.summary.totalBookings} shipments
-                                                        </span>
-                                                        <span className="flex items-center gap-2 text-sm text-gray-500 font-semibold">
-                                                            {voyage.from.code}
-                                                            <ArrowRight className="w-4 h-4" />
-                                                            {voyage.to.code}
-                                                        </span>
-                                                    </div>
-
-                                                    <div className="flex items-center gap-4">
-                                                        <div className="text-right text-sm text-gray-600 hidden sm:block">
-                                                            <div className="font-semibold">
-                                                                ${voyage.summary.totalAmount.toLocaleString("en-US", {
-                                                                    minimumFractionDigits: 2,
-                                                                    maximumFractionDigits: 2,
-                                                                })}
-                                                            </div>
-                                                            <div className="flex gap-2 justify-end text-xs">
-                                                                <span className="text-amber-600">{voyage.summary.dry}D</span>
-                                                                <span className="text-blue-600">{voyage.summary.frozen}F</span>
-                                                                <span className="text-cyan-600">{voyage.summary.cooler}C</span>
-                                                            </div>
-                                                        </div>
-                                                        {isExpanded
-                                                            ? <ChevronUp className="w-6 h-6 text-emerald-600 flex-shrink-0" />
-                                                            : <ChevronDown className="w-6 h-6 text-emerald-600 flex-shrink-0" />
-                                                        }
-                                                    </div>
-                                                </button>
-
-                                                {/* Voyage detail */}
-                                                {isExpanded && (
-                                                    <div className="p-6 bg-white border-t border-gray-200">
-                                                        <VoyageContent
-                                                            voyageId={voyage.id}
-                                                            apiFetch={apiFetch}
-                                                        />
-                                                    </div>
-                                                )}
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-
-                                {/* Load More */}
-                                {page < totalPages && (
-                                    <button
-                                        onClick={() => fetchVoyages(page + 1)}
-                                        disabled={loadingVoyages}
-                                        className="w-full py-4 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors font-medium text-lg border-2 border-dashed border-emerald-300 hover:border-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed"
-                                    >
-                                        {loadingVoyages ? "Loading…" : "Load More Voyages…"}
-                                    </button>
-                                )}
-                            </div>
-                        )}
-                    </>
+                  filteredShipments.slice(0, 5).map((shipment, idx) => (
+                    <ShipmentRow key={shipment.id} shipment={shipment} index={idx} />
+                  ))
                 )}
-            </main>
+              </tbody>
+            </table>
+          </div>
+
+          {/* Footer */}
+          <div className="flex items-center justify-between px-4 py-3 border-t border-[#296341]">
+            <p className="text-sm text-gray-600">
+              Showing {Math.min(5, filteredShipments.length)} of {route.totalShipments} Shipments
+            </p>
+            <button className="border border-[#296341] text-[#296341] rounded-[10px] px-4 py-1.5 text-sm font-medium hover:bg-white transition-colors flex items-center gap-2">
+              View all
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
         </div>
-    );
+      )}
+    </div>
+  );
+}
+
+// Voyage Accordion Component
+function VoyageAccordion({
+  voyage,
+  index,
+  isExpanded,
+  onToggle,
+}: {
+  voyage: Voyage;
+  index: number;
+  isExpanded: boolean;
+  onToggle: () => void;
+}) {
+  const [expandedRouteId, setExpandedRouteId] = useState<string | null>(null);
+  const colorClass = index === 0 ? VOYAGE_COLORS[0] : VOYAGE_COLORS[(index % (VOYAGE_COLORS.length - 1)) + 1];
+
+  // Format date
+  const formattedDate = new Date(voyage.date).toLocaleDateString('en-GB', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric'
+  }).replace(/\//g, ' / ');
+
+  return (
+    <div className="mb-3">
+      {/* Voyage Header */}
+      <div
+        className={`${colorClass} border border-black h-[70px] flex items-center justify-between px-6 cursor-pointer hover:shadow-lg transition-shadow`}
+        onClick={onToggle}
+      >
+        <div className="flex items-center gap-8">
+          <span className="text-xl md:text-2xl font-semibold text-black">
+            VOYAGE {voyage.voyageNo}
+          </span>
+          <span className="text-xl md:text-2xl font-medium text-black">
+            {formattedDate}
+          </span>
+        </div>
+        <ChevronDown className={`w-8 h-8 text-black transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+      </div>
+
+      {/* Expanded Routes */}
+      {isExpanded && (
+        <div className={`${colorClass} border-x border-b border-black px-4 py-4`}>
+          {voyage.routes.map((route, idx) => (
+            <RouteCard
+              key={route.id}
+              route={route}
+              index={idx}
+              voyageNo={voyage.voyageNo}
+              voyageDate={formattedDate}
+              isExpanded={expandedRouteId === route.id}
+              onToggle={() => setExpandedRouteId(expandedRouteId === route.id ? null : route.id)}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Main Component
+export default function ManifestPage() {
+  const { apiFetch, user } = useAuth();
+  const [isLoading, setIsLoading] = useState(true);
+  const [voyages, setVoyages] = useState<Voyage[]>([]);
+  const [expandedVoyageId, setExpandedVoyageId] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+
+  // Fetch voyages
+  const fetchVoyages = async (pageNum = 1, append = false) => {
+    if (pageNum === 1) setIsLoading(true);
+    try {
+      const res = await apiFetch(`/api/voyages?page=${pageNum}&limit=10&include=routes,shipments`);
+      if (res.ok) {
+        const data = await res.json();
+        const newVoyages = data.voyages || [];
+        
+        if (append) {
+          setVoyages(prev => [...prev, ...newVoyages]);
+        } else {
+          setVoyages(newVoyages);
+          // Auto-expand first voyage
+          if (newVoyages.length > 0) {
+            setExpandedVoyageId(newVoyages[0].id);
+          }
+        }
+        
+        setHasMore(newVoyages.length === 10);
+        setPage(pageNum);
+      } else {
+        toast.error('Failed to load voyages');
+      }
+    } catch (error) {
+      console.error('Error fetching voyages:', error);
+      toast.error('Failed to load voyages');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchVoyages();
+  }, []);
+
+  const handleLoadMore = () => {
+    fetchVoyages(page + 1, true);
+  };
+
+  return (
+    <div className="min-h-screen bg-white">
+      {/* Hero Header */}
+      <header className="relative">
+        <div className="h-[350px] md:h-[450px] w-full overflow-hidden rounded-b-[50px]">
+          <img
+            src={imgRectangle2.src}
+            alt="Containers"
+            className="w-full h-full object-cover"
+          />
+        </div>
+        
+        {/* Logo */}
+        <div className="absolute top-4 left-1/2 -translate-x-1/2">
+          <img
+            src={imgRectangle228.src}
+            alt="Dean's Shipping Ltd."
+            className="h-24 md:h-32 object-contain"
+          />
+        </div>
+
+        {/* Role & Name */}
+        <div className="absolute bottom-16 left-1/2 -translate-x-1/2 text-center text-white">
+          <h1 className="text-3xl md:text-4xl font-semibold mb-2">FREIGHT SUPERVISOR</h1>
+          <p className="text-xl md:text-2xl font-medium">
+            {user ? `${user.firstName} ${user.lastName}` : 'Staff Member'}
+          </p>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <div className="bg-[#5f8a71] min-h-[600px] py-6 px-4 md:px-8">
+        <div className="max-w-[1200px] mx-auto">
+          {/* Loading State */}
+          {isLoading ? (
+            <div className="flex items-center justify-center py-20">
+              <Loader2 className="w-12 h-12 animate-spin text-white" />
+            </div>
+          ) : voyages.length === 0 ? (
+            <div className="text-center py-20 bg-white/20 rounded-xl">
+              <Ship className="w-16 h-16 mx-auto mb-4 text-white/70" />
+              <p className="text-xl text-white">No voyages found</p>
+            </div>
+          ) : (
+            <>
+              {/* Voyage Accordions */}
+              {voyages.map((voyage, index) => (
+                <VoyageAccordion
+                  key={voyage.id}
+                  voyage={voyage}
+                  index={index}
+                  isExpanded={expandedVoyageId === voyage.id}
+                  onToggle={() => setExpandedVoyageId(
+                    expandedVoyageId === voyage.id ? null : voyage.id
+                  )}
+                />
+              ))}
+
+              {/* Load More */}
+              {hasMore && (
+                <button
+                  onClick={handleLoadMore}
+                  className="text-xl font-medium text-black hover:text-white transition-colors mt-4"
+                >
+                  Load More ......
+                </button>
+              )}
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
 }

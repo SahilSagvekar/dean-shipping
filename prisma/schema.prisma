@@ -64,11 +64,12 @@ enum PaymentStatus {
 
 enum EquipmentType {
   FORKLIFT
-  MULE_TRACTOR
+  MULE
   CHASSIS
-  CONTAINER_EQ
+  CONTAINER
   FLAT_RACK
 }
+
 
 enum EquipmentStatus {
   AVAILABLE
@@ -91,10 +92,11 @@ enum IncidentStatus {
 }
 
 enum VehicleStatus {
-  WAITING
-  LOADED
-  DEPARTED
-  COMPLETED
+  PENDING
+  IN_DOCK
+  IN_TRANSIT
+  DELIVERED
+  CANCELLED
 }
 
 enum VoyageStatus {
@@ -133,6 +135,8 @@ model User {
   countryCode  String   @default("+1")
   mobileNumber String   @unique
   role         Role     @default(USER)
+  password     String?
+  designation  String?
   isActive     Boolean  @default(true)
   avatarUrl    String?
 
@@ -421,6 +425,20 @@ model CargoItem {
 // PASSENGER BOOKING
 // ============================================
 
+model PassengerLuggage {
+  id                  String            @id @default(cuid())
+  passengerBookingId  String
+  passengerBooking    PassengerBooking  @relation(fields: [passengerBookingId], references: [id], onDelete: Cascade)
+  type                String            // CARRY_ON, CHECKED_BAG, OVERSIZED, SPECIAL
+  weight              Float             @default(0)
+  quantity            Int               @default(1)
+  price               Float             @default(0)
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+
+  @@index([passengerBookingId])
+}
+
 model PassengerBooking {
   id        String @id @default(cuid())
   invoiceNo String @unique @default(cuid())
@@ -459,6 +477,7 @@ model PassengerBooking {
   images        BookingImage[]
   invoice       Invoice?
   manifestItems ManifestItem[]
+  luggage       PassengerLuggage[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -552,13 +571,15 @@ model EquipmentAssignment {
 
 model Vehicle {
   id             String        @id @default(cuid())
+  invoiceNo      String?       @unique
   registrationNo String
   ownerName      String
-  contactNo      String
+  ownerEmail     String?
+  contactNo      String    @default("")
   vehicleType    String
   fromLocation   String
   toLocation     String
-  status         VehicleStatus @default(WAITING)
+  status         VehicleStatus @default(PENDING)
   bookingDate    DateTime
 
   // Optional voyage assignment
@@ -570,6 +591,7 @@ model Vehicle {
 
   @@index([status])
   @@index([bookingDate])
+  @@index([registrationNo])
 }
 
 // ============================================
