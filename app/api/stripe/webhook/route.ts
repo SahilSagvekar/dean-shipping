@@ -9,7 +9,8 @@ import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import prisma from "@/lib/prisma";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+// Lazy-init Stripe to prevent build-time crashes if STRIPE_SECRET_KEY is missing
+const getStripe = () => new Stripe(process.env.STRIPE_SECRET_KEY || "sk_test_dummy", {
     apiVersion: "2026-01-28.clover",
 });
 
@@ -26,6 +27,7 @@ export async function POST(request: NextRequest) {
     let event: Stripe.Event;
 
     try {
+        const stripe = getStripe();
         event = stripe.webhooks.constructEvent(body, sig, WEBHOOK_SECRET);
     } catch (err: any) {
         console.error("Webhook signature verification failed:", err.message);

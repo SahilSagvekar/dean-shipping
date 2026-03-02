@@ -9,11 +9,12 @@ import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import prisma from "@/lib/prisma";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+
+// Lazy-init Stripe to prevent build-time crashes if STRIPE_SECRET_KEY is missing
+const getStripe = () => new Stripe(process.env.STRIPE_SECRET_KEY || "sk_test_dummy", {
     apiVersion: "2026-01-28.clover",
 });
-
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
 export async function POST(request: NextRequest) {
     try {
@@ -140,6 +141,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Create the Stripe Checkout Session
+        const stripe = getStripe();
         const session = await stripe.checkout.sessions.create({
             payment_method_types: ["card"],
             line_items: lineItems,
