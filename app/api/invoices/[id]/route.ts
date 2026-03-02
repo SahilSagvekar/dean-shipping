@@ -22,24 +22,23 @@ export async function GET(
         where: { id },
         include: {
             user: {
-                select: { 
-                    firstName: true, 
-                    lastName: true, 
-                    email: true, 
+                select: {
+                    firstName: true,
+                    lastName: true,
+                    email: true,
                     mobileNumber: true,
-                    address: true 
                 },
             },
             cargoBooking: {
-                include: { 
-                    items: true, 
-                    images: true 
+                include: {
+                    items: true,
+                    images: true
                 },
             },
             passengerBooking: {
-                include: { 
+                include: {
                     images: true,
-                    luggage: true 
+                    luggage: true
                 },
             },
         },
@@ -51,24 +50,23 @@ export async function GET(
             where: { invoiceNo: id },
             include: {
                 user: {
-                    select: { 
-                        firstName: true, 
-                        lastName: true, 
-                        email: true, 
+                    select: {
+                        firstName: true,
+                        lastName: true,
+                        email: true,
                         mobileNumber: true,
-                        address: true 
                     },
                 },
                 cargoBooking: {
-                    include: { 
-                        items: true, 
-                        images: true 
+                    include: {
+                        items: true,
+                        images: true
                     },
                 },
                 passengerBooking: {
-                    include: { 
+                    include: {
                         images: true,
-                        luggage: true 
+                        luggage: true
                     },
                 },
             },
@@ -107,7 +105,7 @@ export async function PATCH(
         }
 
         const updateData: any = {};
-        
+
         if (body.paymentStatus !== undefined) {
             updateData.paymentStatus = body.paymentStatus;
             if (body.paymentStatus === "PAID") {
@@ -116,7 +114,7 @@ export async function PATCH(
                 updateData.paidAt = null;
             }
         }
-        
+
         if (body.paymentMode !== undefined) {
             updateData.paymentMode = body.paymentMode;
         }
@@ -152,16 +150,16 @@ export async function PATCH(
             action: "UPDATE_INVOICE_PAYMENT",
             entity: "invoice",
             entityId: id,
-            metadata: { 
+            metadata: {
                 invoiceNo: invoice.invoiceNo,
-                paymentStatus: body.paymentStatus, 
+                paymentStatus: body.paymentStatus,
                 paymentMode: body.paymentMode,
                 previousStatus: existingInvoice.paymentStatus
             },
             ipAddress: getClientIp(request),
         });
 
-        return NextResponse.json({ 
+        return NextResponse.json({
             invoice,
             message: `Invoice ${invoice.invoiceNo} updated successfully`
         });
@@ -186,7 +184,7 @@ export async function DELETE(
     // Only admins can delete invoices
     if (result.user.role !== "ADMIN") {
         return NextResponse.json(
-            { error: "Only administrators can delete invoices" }, 
+            { error: "Only administrators can delete invoices" },
             { status: 403 }
         );
     }
@@ -205,7 +203,7 @@ export async function DELETE(
             ipAddress: getClientIp(request),
         });
 
-        return NextResponse.json({ 
+        return NextResponse.json({
             message: "Invoice deleted successfully",
             invoiceNo: invoice.invoiceNo
         });
