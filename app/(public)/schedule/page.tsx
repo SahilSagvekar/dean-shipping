@@ -140,10 +140,18 @@ function ScheduleSection() {
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+
+  const toLocalISO = (date: Date) => {
+    const offset = date.getTimezoneOffset();
+    const localDate = new Date(date.getTime() - (offset * 60 * 1000));
+    return localDate.toISOString().split('T')[0];
+  };
+
   const [currentWeekStart, setCurrentWeekStart] = useState(() => {
     const now = new Date();
+    now.setHours(0, 0, 0, 0);
     const dayOfWeek = now.getDay();
-    const diff = now.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
+    const diff = now.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1); // Monday
     return new Date(now.setDate(diff));
   });
 
@@ -166,7 +174,9 @@ function ScheduleSection() {
       setIsLoading(true);
       setError("");
       try {
-        const res = await fetch(`/api/schedules?published=true&limit=100`);
+        const startDate = toLocalISO(weekDates[0]);
+        const endDate = toLocalISO(weekDates[5]);
+        const res = await fetch(`/api/schedules?published=true&startDate=${startDate}&endDate=${endDate}&limit=100`);
         const data = await res.json();
         if (res.ok) setSchedules(data.schedules || []);
         else setError(data.error || "Failed to load schedules");
@@ -180,8 +190,8 @@ function ScheduleSection() {
   }, [currentWeekStart]);
 
   const getScheduleForDate = (date: Date, shipName: string): Schedule | null => {
-    const dateStr = date.toISOString().split('T')[0];
-    return schedules.find(s => s.date.split('T')[0] === dateStr && s.shipName === shipName && s.isPublished) || null;
+    const dateStr = toLocalISO(date);
+    return schedules.find(s => toLocalISO(new Date(s.date)) === dateStr && s.shipName === shipName && s.isPublished) || null;
   };
 
   const navigateWeek = (weeks: number) => {
