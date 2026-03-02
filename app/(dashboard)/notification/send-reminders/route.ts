@@ -29,14 +29,14 @@ export async function POST(request: NextRequest) {
                 cargoBooking: {
                     select: {
                         service: true,
-                        fromLocation: { select: { code: true, name: true } },
-                        toLocation: { select: { code: true, name: true } },
+                        fromLocation: true,
+                        toLocation: true,
                     },
                 },
                 passengerBooking: {
                     select: {
-                        fromLocation: { select: { code: true, name: true } },
-                        toLocation: { select: { code: true, name: true } },
+                        fromLocation: true,
+                        toLocation: true,
                     },
                 },
             },
@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
                     };
                 }
                 acc[userId].invoices.push(invoice);
-                acc[userId].totalAmount += invoice.grandTotal;
+                acc[userId].totalAmount += invoice.totalAmount;
             }
             return acc;
         }, {});
@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
         const notifications = [];
         for (const userId in userInvoices) {
             const { user, invoices, totalAmount } = userInvoices[userId];
-            
+
             const notification = await prisma.notification.create({
                 data: {
                     userId,
@@ -79,7 +79,7 @@ export async function POST(request: NextRequest) {
                     type: "payment_reminder",
                 },
             });
-            
+
             notifications.push(notification);
         }
 

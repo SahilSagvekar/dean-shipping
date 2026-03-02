@@ -502,6 +502,8 @@ model BookingImage {
 
   imageUrl  String // Supabase Storage URL
   imageType String // "cargo", "id_document", "deficiency"
+  caption   String?
+  sortOrder Int @default(0)
 
   createdAt DateTime @default(now())
 

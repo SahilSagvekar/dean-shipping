@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
 
         // Detailed validation with specific error messages
         const errors: string[] = [];
-        
+
         if (!service) errors.push("Service is required");
         if (!bookingDate) errors.push("Booking date is required");
         if (!fromLocation) errors.push("From location is required");
@@ -162,7 +162,7 @@ export async function POST(request: NextRequest) {
 
             // Create container images if provided
             if (containerImages && containerImages.length > 0) {
-                await tx.cargoBookingImage.createMany({
+                await tx.bookingImage.createMany({
                     data: containerImages.map((img: any, index: number) => ({
                         cargoBookingId: newBooking.id,
                         imageUrl: img.url,
@@ -175,7 +175,7 @@ export async function POST(request: NextRequest) {
 
             // Create user document images if provided
             if (userDocuments && userDocuments.length > 0) {
-                await tx.cargoBookingImage.createMany({
+                await tx.bookingImage.createMany({
                     data: userDocuments.map((doc: any, index: number) => ({
                         cargoBookingId: newBooking.id,
                         imageUrl: doc.url,
@@ -204,8 +204,8 @@ export async function POST(request: NextRequest) {
 
         const completeBooking = await prisma.cargoBooking.findUnique({
             where: { id: booking.id },
-            include: { 
-                items: true, 
+            include: {
+                items: true,
                 images: true,
                 invoice: true,
             },
@@ -220,8 +220,8 @@ export async function POST(request: NextRequest) {
             ipAddress: getClientIp(request),
         });
 
-        return NextResponse.json({ 
-            booking: completeBooking, 
+        return NextResponse.json({
+            booking: completeBooking,
             invoiceNo,
             message: "Booking created successfully"
         }, { status: 201 });

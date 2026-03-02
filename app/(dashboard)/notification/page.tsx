@@ -29,8 +29,8 @@ interface Invoice {
   invoiceNo: string;
   paymentStatus: 'PAID' | 'UNPAID';
   subtotal: number;
-  vat: number;
-  grandTotal: number;
+  vatAmount: number;
+  totalAmount: number;
   createdAt: string;
   user?: {
     firstName: string;
@@ -40,13 +40,13 @@ interface Invoice {
   };
   cargoBooking?: {
     service: string;
-    fromLocation: { code: string; name: string };
-    toLocation: { code: string; name: string };
+    fromLocation: string;
+    toLocation: string;
     items: { type: string; quantity: number }[];
   };
   passengerBooking?: {
-    fromLocation: { code: string; name: string };
-    toLocation: { code: string; name: string };
+    fromLocation: string;
+    toLocation: string;
   };
 }
 
@@ -73,13 +73,13 @@ const REMINDER_FREQUENCIES = [
 ];
 
 // Radio Button Component
-function RadioButton({ 
-  selected, 
-  onClick, 
-  label 
-}: { 
-  selected: boolean; 
-  onClick: () => void; 
+function RadioButton({
+  selected,
+  onClick,
+  label
+}: {
+  selected: boolean;
+  onClick: () => void;
   label: string;
 }) {
   return (
@@ -87,9 +87,8 @@ function RadioButton({
       onClick={onClick}
       className="flex items-center gap-3 cursor-pointer group"
     >
-      <div className={`w-[30px] h-[30px] rounded-full border-[3px] flex items-center justify-center transition-colors ${
-        selected ? 'border-black bg-black' : 'border-black bg-white group-hover:bg-gray-100'
-      }`}>
+      <div className={`w-[30px] h-[30px] rounded-full border-[3px] flex items-center justify-center transition-colors ${selected ? 'border-black bg-black' : 'border-black bg-white group-hover:bg-gray-100'
+        }`}>
         {selected && <div className="w-3 h-3 rounded-full bg-white" />}
       </div>
       <span className="text-xl md:text-2xl font-medium text-black">{label}</span>
@@ -111,26 +110,23 @@ function PaymentStatusToggle({
     <div className="relative bg-white border border-[#296341] rounded-full h-[27px] w-[210px] flex items-center">
       {/* Sliding background */}
       <div
-        className={`absolute h-[27px] w-[114px] rounded-full transition-all duration-200 ${
-          isPaid ? 'left-0 bg-green-500' : 'left-[96px] bg-[#ff4747]'
-        } border border-black`}
+        className={`absolute h-[27px] w-[114px] rounded-full transition-all duration-200 ${isPaid ? 'left-0 bg-green-500' : 'left-[96px] bg-[#ff4747]'
+          } border border-black`}
       />
       {/* Labels */}
       <button
         onClick={() => !disabled && onChange(true)}
         disabled={disabled}
-        className={`relative z-10 flex-1 text-center text-sm font-semibold transition-colors ${
-          isPaid ? 'text-white' : 'text-gray-500'
-        }`}
+        className={`relative z-10 flex-1 text-center text-sm font-semibold transition-colors ${isPaid ? 'text-white' : 'text-gray-500'
+          }`}
       >
         PAID
       </button>
       <button
         onClick={() => !disabled && onChange(false)}
         disabled={disabled}
-        className={`relative z-10 flex-1 text-center text-sm font-semibold transition-colors ${
-          !isPaid ? 'text-white' : 'text-gray-500'
-        }`}
+        className={`relative z-10 flex-1 text-center text-sm font-semibold transition-colors ${!isPaid ? 'text-white' : 'text-gray-500'
+          }`}
       >
         UNPAID
       </button>
@@ -173,9 +169,9 @@ function PendingPaymentCard({
   const user = invoice.user;
   const cargo = invoice.cargoBooking;
   const passenger = invoice.passengerBooking;
-  
-  const fromCode = cargo?.fromLocation?.code || passenger?.fromLocation?.code || 'N/A';
-  const toCode = cargo?.toLocation?.code || passenger?.toLocation?.code || 'N/A';
+
+  const fromCode = cargo?.fromLocation || passenger?.fromLocation || 'N/A';
+  const toCode = cargo?.toLocation || passenger?.toLocation || 'N/A';
   const product = cargo?.items?.[0]?.type || (passenger ? 'Passenger' : 'N/A');
   const quantity = cargo?.items?.reduce((sum, item) => sum + item.quantity, 0) || 1;
 
@@ -183,25 +179,25 @@ function PendingPaymentCard({
     <div className="bg-[#effaf6] border border-[#296341] rounded-[10px] p-4 space-y-3">
       {/* Row 1: Name, Invoice, Date, Location */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <FieldDisplay 
-          label="Name" 
-          value={user ? `${user.firstName} ${user.lastName}` : 'Unknown'} 
+        <FieldDisplay
+          label="Name"
+          value={user ? `${user.firstName} ${user.lastName}` : 'Unknown'}
         />
-        <FieldDisplay 
-          label="Invoice no." 
-          value={`#${invoice.invoiceNo}`} 
+        <FieldDisplay
+          label="Invoice no."
+          value={`#${invoice.invoiceNo}`}
         />
-        <FieldDisplay 
-          label="Date" 
+        <FieldDisplay
+          label="Date"
           value={new Date(invoice.createdAt).toLocaleDateString('en-GB', {
             day: '2-digit',
             month: '2-digit',
             year: 'numeric'
-          }).replace(/\//g, ' / ')} 
+          }).replace(/\//g, ' / ')}
         />
-        <FieldDisplay 
-          label="Location" 
-          value={`${fromCode} → ${toCode}`} 
+        <FieldDisplay
+          label="Location"
+          value={`${fromCode} → ${toCode}`}
         />
       </div>
 
@@ -209,7 +205,7 @@ function PendingPaymentCard({
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 items-center">
         <InlineField label="Product" value={product} />
         <InlineField label="Quantity" value={String(quantity)} />
-        <InlineField label="Amount" value={`$${invoice.grandTotal.toFixed(2)}`} />
+        <InlineField label="Amount" value={`$${invoice.totalAmount.toFixed(2)}`} />
         <div className="flex justify-end">
           <PaymentStatusToggle
             isPaid={invoice.paymentStatus === 'PAID'}
@@ -234,17 +230,17 @@ export default function NotificationsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
   const [updatingInvoiceId, setUpdatingInvoiceId] = useState<string | null>(null);
-  
+
   // Reminder settings
   const [reminderFrequency, setReminderFrequency] = useState<string>('DAILY');
   const [lastReminderSent, setLastReminderSent] = useState<string | null>(null);
-  
+
   // Pending payments
   const [pendingInvoices, setPendingInvoices] = useState<Invoice[]>([]);
   const [totalPending, setTotalPending] = useState(0);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  
+
   // Notifications
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -444,7 +440,7 @@ export default function NotificationsPage() {
                 <p className="text-gray-600 text-lg">
                   Showing {pendingInvoices.length} of {totalPending} Pending Payment
                 </p>
-                
+
                 <button
                   onClick={() => {
                     // Navigate to full invoices page or load more
