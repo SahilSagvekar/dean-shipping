@@ -148,7 +148,7 @@ export async function POST(request: NextRequest) {
             action: "LOGIN",
             entity: "user",
             entityId: user.id,
-            metadata: { loginType: role, otpBypassed: isBypass },
+            metadata: { loginType: role, otpBypassed: isDevMode },
             ipAddress: getClientIp(request),
         });
 
