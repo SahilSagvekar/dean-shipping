@@ -5,7 +5,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { requireAdmin, requireStaff, createAuditLog, getClientIp } from "@/lib/auth";
+import { requireAdmin, requireStaff, createAuditLog, getClientIp, hashPassword } from "@/lib/auth";
 
 export async function GET(request: NextRequest) {
     const result = await requireStaff(request);
@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
 
     try {
         const body = await request.json();
-        const { firstName, lastName, email, countryCode, mobileNumber, role, agentCode } = body;
+        const { firstName, lastName, email, countryCode, mobileNumber, role, agentCode, password } = body;
 
         if (!firstName || !lastName || !email || !mobileNumber) {
             return NextResponse.json(
@@ -76,6 +76,8 @@ export async function POST(request: NextRequest) {
                 { status: 400 }
             );
         }
+
+        const hashedPassword = password ? await hashPassword(password) : undefined;
 
         const user = await prisma.user.create({
             data: {
@@ -85,6 +87,7 @@ export async function POST(request: NextRequest) {
                 countryCode: countryCode || "+1",
                 mobileNumber,
                 role: role || "USER",
+                password: hashedPassword,
                 agentCode: role === "AGENT" ? agentCode : undefined,
             },
         });

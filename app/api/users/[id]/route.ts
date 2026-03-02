@@ -6,7 +6,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { requireAdmin, requireAuth, createAuditLog, getClientIp } from "@/lib/auth";
+import { requireAdmin, requireAuth, createAuditLog, getClientIp, hashPassword } from "@/lib/auth";
 
 export async function GET(
     request: NextRequest,
@@ -80,6 +80,10 @@ export async function PATCH(
         if (body[field] !== undefined) {
             updateData[field] = body[field];
         }
+    }
+
+    if (body.password) {
+        updateData.password = await hashPassword(body.password);
     }
 
     try {

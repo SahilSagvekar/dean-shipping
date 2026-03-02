@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
 import prisma from "./prisma";
 import { Prisma } from "@prisma/client";
+import bcrypt from "bcryptjs";
 
 const JWT_SECRET = process.env.JWT_SECRET!;
 const JWT_EXPIRES_IN = "7d";
@@ -44,6 +45,21 @@ export function verifyToken(token: string): JwtPayload {
     } catch {
         throw new Error("Invalid or expired token");
     }
+}
+
+/**
+ * Hash a password using bcrypt
+ */
+export async function hashPassword(password: string): Promise<string> {
+    const salt = await bcrypt.genSalt(10);
+    return bcrypt.hash(password, salt);
+}
+
+/**
+ * Compare a plain text password with a hashed password
+ */
+export async function comparePassword(password: string, hashed: string): Promise<boolean> {
+    return bcrypt.compare(password, hashed);
 }
 
 // ============================================

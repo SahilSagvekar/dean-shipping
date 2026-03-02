@@ -135,6 +135,8 @@ model User {
   countryCode  String   @default("+1")
   mobileNumber String   @unique
   role         Role     @default(USER)
+  password     String?
+  designation  String?
   isActive     Boolean  @default(true)
   avatarUrl    String?
 
