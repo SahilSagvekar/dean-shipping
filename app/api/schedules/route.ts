@@ -22,18 +22,18 @@ export async function GET(request: NextRequest) {
     const where: any = {};
     if (shipName) where.shipName = shipName;
     if (month) where.month = month;
-    
+
     // Date range filter
     if (startDate || endDate) {
         where.date = {};
         if (startDate) where.date.gte = new Date(startDate);
         if (endDate) where.date.lte = new Date(endDate + "T23:59:59.999Z");
     }
-    
+
     // Only show published schedules for public access
     if (published === "true") {
         where.isPublished = true;
-        
+
         // Also check for scheduled launches that should now be published
         // This is a simple check - in production you'd use a cron job
         const now = new Date();
@@ -114,7 +114,8 @@ export async function POST(request: NextRequest) {
                 events: {
                     create: (events || []).map((event: any, index: number) => ({
                         location: event.location,
-                        time: event.time,
+                        startTime: event.startTime,
+                        endTime: event.endTime,
                         type: event.type,
                         notes: event.notes,
                         sortOrder: index,

@@ -11,7 +11,8 @@ import { useAuth } from "@/lib/auth-context";
 interface ScheduleEvent {
   id?: string;
   location: string;
-  time: string;
+  startTime: string;
+  endTime: string;
   type: string;
   notes: string;
   sortOrder?: number;
@@ -62,7 +63,11 @@ function ScheduleItem({ data, onEdit }: { data: Schedule; onEdit: () => void }) 
             <div className="flex items-center gap-2 mb-1">
               <MapPin className="w-5 h-5 fill-white text-white" />
               <span className="text-[22px] font-bold">{event.location}</span>
-              {event.time && <span className="text-[22px] font-bold ml-2">({event.time})</span>}
+              {(event.startTime || event.endTime) && (
+                <span className="text-[22px] font-bold ml-2">
+                  ({event.startTime}{event.startTime && event.endTime ? " - " : ""}{event.endTime})
+                </span>
+              )}
             </div>
             <div className="pl-7">
               <p className="text-[20px] font-bold leading-tight">{event.type}</p>
@@ -105,13 +110,35 @@ function EditScheduleModal({
   const [isSaving, setIsSaving] = useState(false);
 
   const addEvent = () => {
-    setEvents([...events, { location: locations[0]?.code || "", time: "", type: eventTypes[0], notes: "" }]);
+    setEvents([...events, { location: locations[0]?.code || "", startTime: "", endTime: "", type: eventTypes[0], notes: "" }]);
   };
 
   const updateEvent = (index: number, field: keyof ScheduleEvent, value: string) => {
     const updated = [...events];
     updated[index] = { ...updated[index], [field]: value };
     setEvents(updated);
+  };
+
+  const updateTime = (index: number, field: "startTime" | "endTime", type: "value" | "ampm", newValue: string) => {
+    const updated = [...events];
+    const current = updated[index][field] || "";
+    const [val, ampm] = current.split(" ");
+
+    let result = "";
+    if (type === "value") {
+      result = `${newValue} ${ampm || "AM"}`;
+    } else {
+      result = `${val || ""} ${newValue}`;
+    }
+
+    updated[index] = { ...updated[index], [field]: result.trim() };
+    setEvents(updated);
+  };
+
+  const getTimeParts = (timeStr: string) => {
+    if (!timeStr) return { value: "", ampm: "AM" };
+    const [value, ampm] = timeStr.split(" ");
+    return { value: value || "", ampm: ampm || "AM" };
   };
 
   const removeEvent = (index: number) => {
@@ -205,15 +232,47 @@ function EditScheduleModal({
                             ))}
                           </select>
                         </div>
-                        <div>
-                          <label className="block text-sm font-medium mb-1">Time</label>
-                          <input
-                            type="text"
-                            value={event.time}
-                            onChange={(e) => updateEvent(index, "time", e.target.value)}
-                            placeholder="e.g., 8am - 3pm"
-                            className="w-full border border-gray-300 rounded-lg px-3 py-2"
-                          />
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-sm font-medium mb-1">Start Time</label>
+                            <div className="flex gap-2">
+                              <input
+                                type="text"
+                                value={getTimeParts(event.startTime).value}
+                                onChange={(e) => updateTime(index, "startTime", "value", e.target.value)}
+                                placeholder="e.g., 8"
+                                className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                              />
+                              <select
+                                value={getTimeParts(event.startTime).ampm}
+                                onChange={(e) => updateTime(index, "startTime", "ampm", e.target.value)}
+                                className="border border-gray-300 rounded-lg px-2 py-2 bg-gray-50"
+                              >
+                                <option value="AM">AM</option>
+                                <option value="PM">PM</option>
+                              </select>
+                            </div>
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium mb-1">End Time</label>
+                            <div className="flex gap-2">
+                              <input
+                                type="text"
+                                value={getTimeParts(event.endTime).value}
+                                onChange={(e) => updateTime(index, "endTime", "value", e.target.value)}
+                                placeholder="e.g., 3"
+                                className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                              />
+                              <select
+                                value={getTimeParts(event.endTime).ampm}
+                                onChange={(e) => updateTime(index, "endTime", "ampm", e.target.value)}
+                                className="border border-gray-300 rounded-lg px-2 py-2 bg-gray-50"
+                              >
+                                <option value="AM">AM</option>
+                                <option value="PM">PM</option>
+                              </select>
+                            </div>
+                          </div>
                         </div>
                         <div>
                           <label className="block text-sm font-medium mb-1">Type</label>

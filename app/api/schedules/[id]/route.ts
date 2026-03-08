@@ -56,7 +56,8 @@ export async function PATCH(
             updateData.events = {
                 create: events.map((event: any, index: number) => ({
                     location: event.location,
-                    time: event.time,
+                    startTime: event.startTime,
+                    endTime: event.endTime,
                     type: event.type,
                     notes: event.notes,
                     sortOrder: index,

@@ -77,6 +77,8 @@ export async function POST(request: NextRequest) {
             // Based on schema, mobileNumber is @unique.
             const strippedPhone = mobileNumber.replace(/^\+\d{1,3}/, "");
 
+            console.log("Attempting login for mobile number:", mobileNumber, "stripped:", strippedPhone);
+
             user = await prisma.user.findFirst({
                 where: {
                     OR: [
@@ -85,6 +87,8 @@ export async function POST(request: NextRequest) {
                     ]
                 },
             });
+
+            console.log("User:", user, "user id:", user?.id);
 
             if (user) {
                 if (!user.password) {

@@ -20,6 +20,7 @@ import {
   AlertTriangle,
   Settings,
   LogOut,
+  MapPin,
 } from "lucide-react";
 
 // ============================================
@@ -129,6 +130,11 @@ export const navigationItems: NavItem[] = [
     title: "Price Management",
     href: "/price-management",
     icon: Banknote,
+  },
+  {
+    title: "Location Management",
+    href: "/location-management",
+    icon: MapPin,
   },
   {
     title: "Freight Entry",

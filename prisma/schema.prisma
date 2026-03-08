@@ -351,7 +351,8 @@ model ScheduleEvent {
   schedule   Schedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
 
   location String // Nassau, Marsh Harbour, Green Turtle Cay
-  time     String? // "8am - 3pm"
+  startTime String? // "8am"
+  endTime   String? // "3pm"
   type     String // "Freight Drop Off", "Freight Pick Up", "Freight Pick-up"
   notes    String? // "(Dry Freight Only)", "(Include Freezer & Cooler items)"
 

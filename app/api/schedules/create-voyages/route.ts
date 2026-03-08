@@ -85,38 +85,30 @@ export async function POST(request: NextRequest) {
                 continue;
             }
 
-            // Resolve locations from schedule events
-            const resolvedStops: {
-                location: typeof allLocations[0];
-                event: typeof schedule.events[0];
-                stopOrder: number;
-            }[] = [];
+            // Resolve and merge locations from schedule events
+            const stopsMap = new Map<string, {
+                location: typeof allLocations[0],
+                events: typeof schedule.events
+            }>();
 
-            for (let i = 0; i < schedule.events.length; i++) {
-                const event = schedule.events[i];
+            for (const event of schedule.events) {
                 const location = resolveLocation(event.location);
-
                 if (!location) {
                     console.warn(`Could not resolve location "${event.location}" for schedule ${schedule.id}`);
                     continue;
                 }
 
-                // Check if this location is already in our stops (multiple events at same location → merge)
-                const existingStop = resolvedStops.find(
-                    (s) => s.location.id === location.id
-                );
-
-                if (existingStop) {
-                    // Merge activities — don't add a duplicate stop
-                    continue;
+                if (!stopsMap.has(location.id)) {
+                    stopsMap.set(location.id, { location, events: [] });
                 }
-
-                resolvedStops.push({
-                    location,
-                    event,
-                    stopOrder: resolvedStops.length + 1,
-                });
+                stopsMap.get(location.id)!.events.push(event);
             }
+
+            const resolvedStops = Array.from(stopsMap.values()).map((stop, index) => ({
+                location: stop.location,
+                events: stop.events,
+                stopOrder: index + 1,
+            }));
 
             if (resolvedStops.length < 2) {
                 // Need at least 2 stops for a voyage
@@ -145,19 +137,25 @@ export async function POST(request: NextRequest) {
                 // Create VoyageStops
                 await tx.voyageStop.createMany({
                     data: resolvedStops.map((stop, index) => {
-                        // Parse time from the event (e.g., "8am - 3pm")
-                        const timeParts = stop.event.time?.split("-").map((t) => t.trim()) || [];
                         const isFirst = index === 0;
                         const isLast = index === resolvedStops.length - 1;
+
+                        // Merge activities and notes from all events at this location
+                        const activities = Array.from(new Set(stop.events.map(e => e.type)));
+                        const notes = stop.events.map(e => e.notes).filter(Boolean).join("; ");
+
+                        // Use startTime of first event and endTime of last event at this location
+                        const arrivalTime = isFirst ? null : stop.events[0].startTime || null;
+                        const departureTime = isLast ? null : stop.events[stop.events.length - 1].endTime || null;
 
                         return {
                             voyageId: newVoyage.id,
                             locationId: stop.location.id,
                             stopOrder: stop.stopOrder,
-                            departureTime: isLast ? null : timeParts[0] || null,
-                            arrivalTime: isFirst ? null : timeParts[0] || null,
-                            activities: [stop.event.type],
-                            notes: stop.event.notes || null,
+                            departureTime,
+                            arrivalTime,
+                            activities,
+                            notes: notes || null,
                         };
                     }),
                 });

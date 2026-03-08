@@ -10,7 +10,8 @@ import imgRectangle490 from "@/app/assets/cf53a64ce492864216e5a9b357abee066ed011
 interface ScheduleEvent {
   id: string;
   location: string;
-  time: string;
+  startTime: string;
+  endTime: string;
   type: string;
   notes: string;
 }
@@ -115,7 +116,11 @@ function ScheduleCard({ date, day, month, isHoliday, events }: any) {
                 <MapPin className="w-5 h-5 mt-1 text-emerald-400 flex-shrink-0" />
                 <div>
                   <div className="text-lg md:text-[20px] font-bold text-white leading-tight mb-1">
-                    {e.location} {e.time && <span className="ml-2 font-semibold text-white/70">({e.time})</span>}
+                    {e.location} {(e.startTime || e.endTime) && (
+                      <span className="ml-2 font-semibold text-white/70">
+                        ({e.startTime}{e.startTime && e.endTime ? " - " : ""}{e.endTime})
+                      </span>
+                    )}
                   </div>
                   <div className="text-base md:text-[22px] font-black text-emerald-300 uppercase leading-tight mb-1">
                     {e.type}
