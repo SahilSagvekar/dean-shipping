@@ -104,7 +104,7 @@ export async function POST(request: NextRequest) {
                 mobileNumber,
                 role: role || "USER",
                 password: hashedPassword,
-                // designation,
+                designation,
                 agentCode: role === "AGENT" ? agentCode : undefined,
             },
         });

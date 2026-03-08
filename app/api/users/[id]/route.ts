@@ -32,7 +32,7 @@ export async function GET(
             countryCode: true,
             mobileNumber: true,
             role: true,
-            // designation: true,
+            designation: true,
             agentCode: true,
             avatarUrl: true,
             isActive: true,

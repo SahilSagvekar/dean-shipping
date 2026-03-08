@@ -136,7 +136,7 @@ model User {
   mobileNumber String   @unique
   role         Role     @default(USER)
   password     String?
-  // designation  String?
+  designation  String?
   isActive     Boolean  @default(true)
   avatarUrl    String?
 
