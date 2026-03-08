@@ -310,7 +310,7 @@ function PriceManagementContent() {
           <div className="space-y-10">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
               <div>
-                <label className="block text-[24px] font-bold mb-3">Size</label>
+                <label className="block text-[24px] font-bold mb-3">Size (ft)</label>
                 <input
                   type="text"
                   value={formSize}
