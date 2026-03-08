@@ -19,9 +19,9 @@ export async function POST(request: NextRequest) {
         const bookingId = formData.get("bookingId") as string;
         const imageType = formData.get("imageType") as string; // "cargo", "id_document", "deficiency"
 
-        if (!file || !bookingId || !imageType) {
+        if (!file || !bookingId || !imageType || !bookingType) {
             return NextResponse.json(
-                { error: "Missing required fields: file, bookingId, imageType" },
+                { error: "Missing required fields: file, bookingId, imageType, bookingType" },
                 { status: 400 }
             );
         }

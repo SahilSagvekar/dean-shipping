@@ -15,10 +15,10 @@ export async function GET(request: NextRequest) {
     if (result instanceof NextResponse) return result;
 
     const { searchParams } = new URL(request.url);
-    const page   = Math.max(1, parseInt(searchParams.get("page")  || "1"));
-    const limit  = Math.min(50, Math.max(1, parseInt(searchParams.get("limit") || "10")));
+    const page = Math.max(1, parseInt(searchParams.get("page") || "1"));
+    const limit = Math.min(50, Math.max(1, parseInt(searchParams.get("limit") || "10")));
     const status = searchParams.get("status") || undefined; // VoyageStatus filter
-    const skip   = (page - 1) * limit;
+    const skip = (page - 1) * limit;
 
     const where: any = {};
     if (status) where.status = status;
@@ -29,13 +29,30 @@ export async function GET(request: NextRequest) {
                 where,
                 include: {
                     from: { select: { code: true, name: true } },
-                    to:   { select: { code: true, name: true } },
+                    to: { select: { code: true, name: true } },
+                    stops: {
+                        include: {
+                            location: { select: { id: true, code: true, name: true } },
+                        },
+                        orderBy: { stopOrder: "asc" },
+                    },
                     // Pull only the lightweight fields we need for summary
                     cargoBookings: {
                         select: {
-                            type:          true,
-                            totalAmount:   true,
+                            type: true,
+                            totalAmount: true,
                             paymentStatus: true,
+                            fromLocation: true,
+                            toLocation: true,
+                        },
+                    },
+                    passengerBookings: {
+                        select: {
+                            totalAmount: true,
+                            paymentStatus: true,
+                            adultCount: true,
+                            childCount: true,
+                            infantCount: true,
                         },
                     },
                 },
@@ -49,32 +66,45 @@ export async function GET(request: NextRequest) {
         // Build a summary object for each voyage
         const voyagesWithSummary = voyages.map((voyage) => {
             const bookings = voyage.cargoBookings;
+            const passengers = voyage.passengerBookings;
 
-            const dryCount    = bookings.filter((b) => b.type === "DRY").length;
+            const dryCount = bookings.filter((b) => b.type === "DRY").length;
             const frozenCount = bookings.filter((b) => b.type === "FROZEN").length;
             const coolerCount = bookings.filter((b) => b.type === "COOLER").length;
 
-            const totalAmount = bookings.reduce((sum, b) => sum + b.totalAmount, 0);
-            const paidAmount  = bookings
-                .filter((b) => b.paymentStatus === "PAID")
-                .reduce((sum, b) => sum + b.totalAmount, 0);
+            const cargoAmount = bookings.reduce((sum, b) => sum + b.totalAmount, 0);
+            const passengerAmount = passengers.reduce((sum, b) => sum + b.totalAmount, 0);
+            const totalAmount = cargoAmount + passengerAmount;
+            const paidAmount = [
+                ...bookings.filter((b) => b.paymentStatus === "PAID"),
+                ...passengers.filter((b) => b.paymentStatus === "PAID"),
+            ].reduce((sum, b) => sum + b.totalAmount, 0);
+
+            const totalPassengers = passengers.reduce(
+                (sum, b) => sum + b.adultCount + b.childCount + b.infantCount,
+                0
+            );
 
             return {
-                id:       voyage.id,
+                id: voyage.id,
                 voyageNo: voyage.voyageNo,
                 shipName: voyage.shipName,
-                date:     voyage.date,
-                status:   voyage.status,
-                from:     voyage.from,
-                to:       voyage.to,
+                date: voyage.date,
+                status: voyage.status,
+                from: voyage.from,
+                to: voyage.to,
+                stops: voyage.stops,
                 summary: {
-                    totalBookings: bookings.length,
-                    dry:           dryCount,
-                    frozen:        frozenCount,
-                    cooler:        coolerCount,
+                    totalBookings: bookings.length + passengers.length,
+                    cargoBookings: bookings.length,
+                    passengerBookings: passengers.length,
+                    totalPassengers,
+                    dry: dryCount,
+                    frozen: frozenCount,
+                    cooler: coolerCount,
                     totalAmount,
                     paidAmount,
-                    unpaidAmount:  totalAmount - paidAmount,
+                    unpaidAmount: totalAmount - paidAmount,
                 },
             };
         });

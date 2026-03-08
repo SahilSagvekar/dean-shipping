@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { Menu, Search, ChevronDown, Package, DollarSign, Clock, CheckCircle, FileText, Box, Printer } from 'lucide-react';
+import { Menu, Search, ChevronDown, Package, DollarSign, Clock, CheckCircle, FileText, Box, Printer, Ship, MapPin, Calendar, Users, ArrowRight } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useAuth } from '@/lib/auth-context';
 import imgLogo from "@/app/assets/ffb62b7af25544291ca34f641dc70191ad198db6.png";
@@ -103,7 +103,7 @@ function ShipmentTable({ title, badge, shipments, showCount }: any) {
       <div className="flex items-center justify-between mt-4">
         <p className="text-[14px] text-[#3b3b3b]">Showing {shipments.length} records</p>
         <button className="border-2 border-[#296341] rounded-[10px] px-6 py-2 text-[15px] font-black text-[#296341] hover:bg-[#296341] hover:text-white transition-all transform active:scale-95">
-          View all Shipments ΓåÆ
+          View all Shipments
         </button>
       </div>
     </div>
@@ -146,6 +146,7 @@ export default function App() {
   const stats = data?.stats || {};
   const recentShipments = data?.recentShipments || { dry: [], frozen: [], cooler: [] };
   const recentActivity = data?.recentActivity || [];
+  const upcomingVoyages = data?.upcomingVoyages || [];
 
   return (
     <div className="bg-white">
@@ -269,6 +270,70 @@ export default function App() {
             </div>
           </div>
         </div>
+
+        {/* Upcoming Voyages */}
+        {upcomingVoyages.length > 0 && (
+          <div className="border border-[#296341] rounded-[5px] p-6 mb-8">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-[20px] font-black italic mb-1 uppercase tracking-widest text-[#296341]">
+                  Upcoming Voyages
+                </h2>
+                <p className="text-[14px] text-[#7b7b7b] font-medium">Next scheduled departures with stops</p>
+              </div>
+              <Ship className="w-10 h-10 text-[#296341]" />
+            </div>
+            <div className="space-y-3">
+              {upcomingVoyages.map((voyage: any, idx: number) => {
+                const dateStr = new Date(voyage.date).toLocaleDateString('en-GB', {
+                  weekday: 'short',
+                  day: '2-digit',
+                  month: 'short',
+                  year: 'numeric',
+                });
+                const routeStr = voyage.stops && voyage.stops.length > 0
+                  ? voyage.stops.map((s: any) => s.location.code).join(' → ')
+                  : `${voyage.from?.code || '?'} → ${voyage.to?.code || '?'}`;
+                const cargoCount = voyage._count?.cargoBookings || 0;
+                const paxCount = voyage._count?.passengerBookings || 0;
+
+                return (
+                  <div
+                    key={voyage.id}
+                    className="flex items-center gap-4 bg-[#e5f7f1] border border-[#296341]/30 rounded-xl px-5 py-4 hover:shadow-md transition-shadow"
+                  >
+                    <div className="flex-shrink-0 w-14 h-14 bg-[#296341] rounded-xl flex flex-col items-center justify-center text-white">
+                      <Ship className="w-6 h-6" />
+                      <span className="text-[10px] font-bold mt-0.5">#{voyage.voyageNo}</span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-3 mb-1">
+                        <span className="text-[16px] font-black text-[#1a365d]">{voyage.shipName}</span>
+                        <span className="text-[14px] text-gray-500 font-medium flex items-center gap-1">
+                          <Calendar className="w-3.5 h-3.5" /> {dateStr}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1 text-[13px] font-bold text-[#296341]">
+                        <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
+                        <span className="truncate">{routeStr}</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-4 text-center flex-shrink-0">
+                      <div>
+                        <p className="text-[10px] font-bold text-gray-400 uppercase">Cargo</p>
+                        <p className="text-[18px] font-black text-[#296341]">{cargoCount}</p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-bold text-gray-400 uppercase">Pax</p>
+                        <p className="text-[18px] font-black text-purple-700">{paxCount}</p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Shipment Tables */}
         <ShipmentTable

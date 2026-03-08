@@ -66,6 +66,9 @@ function PassengerBookingContent() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingLocations, setIsLoadingLocations] = useState(true);
   const [locations, setLocations] = useState<Location[]>([]);
+  const [upcomingVoyages, setUpcomingVoyages] = useState<any[]>([]);
+  const [selectedVoyageId, setSelectedVoyageId] = useState("");
+  const [isLoadingVoyages, setIsLoadingVoyages] = useState(false);
 
   // Passenger counts
   const [infantCount, setInfantCount] = useState(0);
@@ -135,13 +138,32 @@ function PassengerBookingContent() {
     fetchLocations();
   }, [apiFetch]);
 
+  // Fetch upcoming voyages
+  useEffect(() => {
+    async function fetchVoyages() {
+      setIsLoadingVoyages(true);
+      try {
+        const res = await apiFetch('/api/voyages?upcoming=true&limit=50');
+        if (res.ok) {
+          const data = await res.json();
+          setUpcomingVoyages(data.voyages || []);
+        }
+      } catch (err) {
+        console.error("Failed to fetch voyages:", err);
+      } finally {
+        setIsLoadingVoyages(false);
+      }
+    }
+    fetchVoyages();
+  }, [apiFetch]);
+
   // Calculate totals
   const calculateTotals = () => {
-    const passengerTotal = 
-      (infantCount * PRICING.infant) + 
-      (childCount * PRICING.child) + 
+    const passengerTotal =
+      (infantCount * PRICING.infant) +
+      (childCount * PRICING.child) +
       (adultCount * PRICING.adult);
-    
+
     const luggageTotal = luggageItems.reduce((sum, item) => {
       const pricePerItem = PRICING.luggage[item.type] || 0;
       return sum + (pricePerItem * item.quantity);
@@ -177,7 +199,7 @@ function PassengerBookingContent() {
 
     setIdImages([...idImages, ...newImages]);
     toast.success(`${newImages.length} image(s) added`);
-    
+
     if (idImageRef.current) {
       idImageRef.current.value = '';
     }
@@ -190,8 +212,8 @@ function PassengerBookingContent() {
 
   // Upload image to server
   const uploadImage = async (
-    file: File, 
-    bookingId: string, 
+    file: File,
+    bookingId: string,
     imageType: string
   ): Promise<string> => {
     const formData = new FormData();
@@ -209,7 +231,7 @@ function PassengerBookingContent() {
       const data = await res.json();
       return data.url;
     }
-    
+
     const errorData = await res.json().catch(() => ({}));
     throw new Error(errorData.error || 'Upload failed');
   };
@@ -231,8 +253,8 @@ function PassengerBookingContent() {
     }
 
     if (editingLuggage) {
-      setLuggageItems(luggageItems.map(item => 
-        item.id === editingLuggage.id 
+      setLuggageItems(luggageItems.map(item =>
+        item.id === editingLuggage.id
           ? { ...item, type: newLuggageType, weight, quantity: qty, price }
           : item
       ));
@@ -306,6 +328,7 @@ function PassengerBookingContent() {
         bookingDate,
         fromLocation,
         toLocation,
+        voyageId: selectedVoyageId || null,
         idType,
         paymentStatus,
         remark: remark || null,
@@ -354,7 +377,7 @@ function PassengerBookingContent() {
       }
 
       setCreatedBooking(data);
-      
+
       if (uploadErrors > 0) {
         toast.success(`Booking created! Invoice: #${data.invoiceNo}`);
         toast.warning(`${uploadErrors} image(s) failed to upload`);
@@ -517,15 +540,15 @@ function PassengerBookingContent() {
                     </div>
                   </div>
                   <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden bg-white shadow-sm w-full sm:w-[150px]">
-                    <button 
-                      onClick={() => group.setCount(Math.max(0, group.count - 1))} 
+                    <button
+                      onClick={() => group.setCount(Math.max(0, group.count - 1))}
                       className="flex-1 py-2 md:py-3 flex items-center justify-center hover:bg-gray-50 text-gray-400"
                     >
                       <Minus className="w-5 h-5" />
                     </button>
                     <span className="w-[50px] text-center text-xl md:text-[22px] font-black text-[#296341]">{group.count}</span>
-                    <button 
-                      onClick={() => group.setCount(group.count + 1)} 
+                    <button
+                      onClick={() => group.setCount(group.count + 1)}
                       className="flex-1 py-2 md:py-3 flex items-center justify-center hover:bg-gray-50 text-[#296341]"
                     >
                       <Plus className="w-5 h-5" />
@@ -535,11 +558,45 @@ function PassengerBookingContent() {
               ))}
             </div>
 
-            {/* From / To Location */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 md:gap-8 pt-4">
-              <div className="space-y-2">
+            {/* Voyage Picker */}
+            <div className="space-y-2 mt-4">
+              <label className="text-base md:text-[18px] font-bold text-gray-800">
+                Select Voyage <span className="text-red-500">*</span>
+              </label>
+              <div className="relative">
+                <select
+                  value={selectedVoyageId}
+                  onChange={(e) => {
+                    const vid = e.target.value;
+                    setSelectedVoyageId(vid);
+                    const v = upcomingVoyages.find(voy => voy.id === vid);
+                    if (v) {
+                      setBookingDate(new Date(v.date).toISOString().split('T')[0]);
+                      if (v.stops && v.stops.length >= 2) {
+                        setFromLocation(v.stops[0].location.code);
+                        setToLocation(v.stops[v.stops.length - 1].location.code);
+                      }
+                    }
+                  }}
+                  disabled={isLoadingVoyages}
+                  className="w-full h-12 md:h-[50px] bg-white border border-gray-200 rounded-md px-4 shadow-sm appearance-none outline-none focus:ring-2 focus:ring-[#296341] text-base md:text-[18px] font-bold disabled:bg-gray-100"
+                >
+                  <option value="">-- Select an upcoming voyage --</option>
+                  {upcomingVoyages.map(v => (
+                    <option key={v.id} value={v.id}>
+                      Voyage #{v.voyageNo} - {v.shipName} ({new Date(v.date).toLocaleDateString()})
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-[#296341]" />
+              </div>
+              {isLoadingVoyages && <p className="text-sm text-gray-500">Loading voyages...</p>}
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-6 md:gap-8 pt-4">
+              <div className="flex-1 space-y-2">
                 <label className="text-base md:text-[18px] font-bold text-gray-800 flex items-center gap-2">
-                  <MapPin className="text-[#296341] w-5 h-5 fill-[#296341]/10" /> 
+                  <MapPin className="text-[#296341] w-5 h-5 fill-[#296341]/10" />
                   From <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
@@ -554,7 +611,15 @@ function PassengerBookingContent() {
                     ) : locations.length === 0 ? (
                       <option>No locations available</option>
                     ) : (
-                      locations.map(loc => (
+                      // If a voyage is selected, only show locations from its stops
+                      (selectedVoyageId
+                        ? upcomingVoyages.find(v => v.id === selectedVoyageId)?.stops.map((s: any) => ({
+                          code: s.location.code,
+                          name: s.location.name,
+                          id: s.location.id
+                        })) || locations
+                        : locations
+                      ).map((loc: any) => (
                         <option key={loc.id} value={loc.code}>{loc.code} - {loc.name}</option>
                       ))
                     )}
@@ -562,9 +627,9 @@ function PassengerBookingContent() {
                   <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-[#296341]" />
                 </div>
               </div>
-              <div className="space-y-2">
+              <div className="flex-1 space-y-2">
                 <label className="text-base md:text-[18px] font-bold text-gray-800 flex items-center gap-2">
-                  <MapPin className="text-[#296341] w-5 h-5 fill-[#296341]/10" /> 
+                  <MapPin className="text-[#296341] w-5 h-5 fill-[#296341]/10" />
                   To <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
@@ -579,7 +644,15 @@ function PassengerBookingContent() {
                     ) : locations.length === 0 ? (
                       <option>No locations available</option>
                     ) : (
-                      locations.map(loc => (
+                      // If a voyage is selected, only show locations from its stops
+                      (selectedVoyageId
+                        ? upcomingVoyages.find(v => v.id === selectedVoyageId)?.stops.map((s: any) => ({
+                          code: s.location.code,
+                          name: s.location.name,
+                          id: s.location.id
+                        })) || locations
+                        : locations
+                      ).map((loc: any) => (
                         <option key={loc.id} value={loc.code}>{loc.code} - {loc.name}</option>
                       ))
                     )}
@@ -610,13 +683,13 @@ function PassengerBookingContent() {
               {/* ID Image Gallery */}
               <div className="flex flex-col sm:flex-row gap-4 items-start py-4">
                 <div className="flex sm:flex-col gap-4 mt-2 w-full sm:w-auto justify-center">
-                  <button 
+                  <button
                     onClick={() => idImageRef.current?.click()}
                     className="w-12 h-12 flex items-center justify-center bg-[#eef6f2] rounded-lg hover:bg-[#d1e5da] transition-colors"
                   >
                     <Camera className="w-6 h-6 text-[#296341]" />
                   </button>
-                  <button 
+                  <button
                     onClick={() => idImageRef.current?.click()}
                     className="w-12 h-12 flex items-center justify-center bg-[#eef6f2] rounded-lg hover:bg-[#d1e5da] transition-colors"
                   >
@@ -626,7 +699,7 @@ function PassengerBookingContent() {
 
                 <div className="flex flex-wrap gap-4 flex-1 w-full">
                   {idImages.length === 0 ? (
-                    <div 
+                    <div
                       onClick={() => idImageRef.current?.click()}
                       className="w-full h-[200px] border-2 border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center cursor-pointer hover:border-[#296341] transition-colors"
                     >
@@ -637,8 +710,8 @@ function PassengerBookingContent() {
                     <>
                       {idImages.map((img, index) => (
                         <div key={img.id} className="relative w-[150px] h-[200px] rounded-lg overflow-hidden border border-gray-200 shadow-sm group">
-                          <img 
-                            src={img.preview || img.url || imgDriversLicense.src} 
+                          <img
+                            src={img.preview || img.url || imgDriversLicense.src}
                             alt={`${idType} ${index + 1}`}
                             className="w-full h-full object-cover"
                           />
@@ -654,7 +727,7 @@ function PassengerBookingContent() {
                         </div>
                       ))}
                       {idImages.length < 4 && (
-                        <div 
+                        <div
                           onClick={() => idImageRef.current?.click()}
                           className="w-[150px] h-[200px] border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center cursor-pointer hover:border-[#296341] transition-colors"
                         >
@@ -672,7 +745,7 @@ function PassengerBookingContent() {
                   <h3 className="text-lg font-bold text-gray-700 flex items-center gap-2">
                     <Briefcase className="w-5 h-5 text-[#296341]" /> Luggage
                   </h3>
-                  <button 
+                  <button
                     onClick={() => {
                       setEditingLuggage(null);
                       setNewLuggageType("CHECKED_BAG");
@@ -702,13 +775,13 @@ function PassengerBookingContent() {
                         </div>
                         <span className="font-bold text-gray-700 mr-4">${item.price}</span>
                         <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <Edit2 
+                          <Edit2
                             onClick={() => handleEditLuggage(item)}
-                            className="w-5 h-5 text-gray-400 hover:text-[#296341] cursor-pointer" 
+                            className="w-5 h-5 text-gray-400 hover:text-[#296341] cursor-pointer"
                           />
-                          <Trash2 
+                          <Trash2
                             onClick={() => handleDeleteLuggage(item.id)}
-                            className="w-5 h-5 text-gray-400 hover:text-red-500 cursor-pointer" 
+                            className="w-5 h-5 text-gray-400 hover:text-red-500 cursor-pointer"
                           />
                         </div>
                       </div>
@@ -751,7 +824,7 @@ function PassengerBookingContent() {
               {/* Breakdown */}
               <div className="space-y-4 mb-8">
                 <h3 className="text-center font-black text-lg md:text-[20px] tracking-widest text-[#244234]">BOOKING SUMMARY</h3>
-                
+
                 <div className="bg-white/50 rounded-xl p-4 space-y-2">
                   {adultCount > 0 && (
                     <div className="flex justify-between text-sm">
@@ -801,8 +874,8 @@ function PassengerBookingContent() {
                   <div>
                     <p className="text-[10px] md:text-[12px] font-bold text-gray-400 uppercase">Date</p>
                     <p className="text-lg md:text-[22px] font-black">
-                      {bookingDate ? new Date(bookingDate).toLocaleDateString('en-GB', { 
-                        day: '2-digit', month: '2-digit', year: '2-digit' 
+                      {bookingDate ? new Date(bookingDate).toLocaleDateString('en-GB', {
+                        day: '2-digit', month: '2-digit', year: '2-digit'
                       }).replace(/\//g, '/') : '-'}
                     </p>
                   </div>
@@ -857,7 +930,7 @@ function PassengerBookingContent() {
 
             {/* Action Buttons */}
             <div className="mt-8 md:mt-32 space-y-4">
-              <button 
+              <button
                 onClick={handleSubmit}
                 disabled={isSubmitting}
                 className="w-full bg-[#132540] py-4 md:py-5 rounded-xl md:rounded-2xl text-white text-xl md:text-[24px] font-black tracking-widest hover:bg-[#1a3254] transition-all shadow-lg active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
@@ -865,7 +938,7 @@ function PassengerBookingContent() {
                 {isSubmitting && <Loader2 className="w-6 h-6 animate-spin" />}
                 {isSubmitting ? 'SUBMITTING...' : 'SUBMIT'}
               </button>
-              <button 
+              <button
                 onClick={resetForm}
                 className="w-full bg-gray-200 py-3 rounded-xl text-gray-600 text-lg font-bold hover:bg-gray-300 transition-all"
               >
@@ -896,7 +969,7 @@ function PassengerBookingContent() {
               <h3 className="text-[24px] font-bold text-[#296341]">
                 {editingLuggage ? 'Edit Luggage' : 'Add Luggage'}
               </h3>
-              <button 
+              <button
                 onClick={() => {
                   setShowLuggageModal(false);
                   setEditingLuggage(null);
@@ -911,8 +984,8 @@ function PassengerBookingContent() {
               <div className="space-y-2">
                 <label className="text-[14px] font-bold text-gray-500">Luggage Type</label>
                 <div className="relative">
-                  <select 
-                    value={newLuggageType} 
+                  <select
+                    value={newLuggageType}
                     onChange={(e) => setNewLuggageType(e.target.value)}
                     className="w-full h-[50px] border border-gray-200 rounded-lg px-4 text-[18px] font-bold appearance-none outline-none focus:ring-2 focus:ring-[#296341]"
                   >
@@ -927,7 +1000,7 @@ function PassengerBookingContent() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className="text-[14px] font-bold text-gray-500">Weight (kg)</label>
-                  <input 
+                  <input
                     type="number"
                     value={newLuggageWeight}
                     onChange={(e) => setNewLuggageWeight(e.target.value)}
@@ -939,7 +1012,7 @@ function PassengerBookingContent() {
                 </div>
                 <div className="space-y-2">
                   <label className="text-[14px] font-bold text-gray-500">Quantity</label>
-                  <input 
+                  <input
                     type="number"
                     value={newLuggageQuantity}
                     onChange={(e) => setNewLuggageQuantity(e.target.value)}
@@ -960,7 +1033,7 @@ function PassengerBookingContent() {
               )}
 
               <div className="flex gap-4 pt-4">
-                <button 
+                <button
                   onClick={() => {
                     setShowLuggageModal(false);
                     setEditingLuggage(null);
@@ -969,7 +1042,7 @@ function PassengerBookingContent() {
                 >
                   Cancel
                 </button>
-                <button 
+                <button
                   onClick={handleAddLuggage}
                   className="flex-1 py-3 rounded-lg bg-[#296341] text-white font-bold hover:bg-emerald-800 transition-colors"
                 >

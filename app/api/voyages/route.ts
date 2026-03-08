@@ -1,6 +1,6 @@
 // ============================================
-// GET /api/voyages - List voyages with routes and shipments
-// POST /api/voyages - Create new voyage
+// GET /api/voyages - List voyages with stops and shipments
+// POST /api/voyages - Create new voyage (with multi-stop support)
 // ============================================
 
 import { NextRequest, NextResponse } from "next/server";
@@ -14,98 +14,48 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "10");
+    const status = searchParams.get("status") || undefined;
+    const upcoming = searchParams.get("upcoming"); // "true" to get only future voyages
     const skip = (page - 1) * limit;
 
     try {
-        // Get voyages - use "date" (schema field), "from"/"to" (relation names)
+        const where: any = {};
+        if (status) where.status = status;
+        if (upcoming === "true") {
+            where.date = { gte: new Date() };
+        }
+
         const voyages = await prisma.voyage.findMany({
-            orderBy: { date: "desc" },
+            where,
+            orderBy: { date: upcoming === "true" ? "asc" : "desc" },
             skip,
             take: limit,
             include: {
-                from: { select: { code: true, name: true } },
-                to: { select: { code: true, name: true } },
+                from: { select: { id: true, code: true, name: true } },
+                to: { select: { id: true, code: true, name: true } },
+                stops: {
+                    include: {
+                        location: { select: { id: true, code: true, name: true } },
+                    },
+                    orderBy: { stopOrder: "asc" },
+                },
+                schedule: {
+                    select: { id: true, date: true, shipName: true },
+                },
+                _count: {
+                    select: {
+                        cargoBookings: true,
+                        passengerBookings: true,
+                        manifestItems: true,
+                    },
+                },
             },
         });
 
-        // For each voyage, get routes (unique from/to combinations from cargo bookings)
-        const voyagesWithRoutes = await Promise.all(
-            voyages.map(async (voyage) => {
-                // Get all cargo bookings for this voyage (voyageNo is stored as a string on CargoBooking)
-                const cargoBookings = await prisma.cargoBooking.findMany({
-                    where: { voyageNo: String(voyage.voyageNo) },
-                    include: {
-                        invoice: {
-                            select: {
-                                invoiceNo: true,
-                                totalAmount: true,   // schema field (not grandTotal)
-                                paymentStatus: true,
-                                paymentMode: true,
-                                updatedAt: true,
-                            },
-                        },
-                        items: true,
-                        user: {
-                            select: { firstName: true, lastName: true },
-                        },
-                    },
-                });
-
-                // Group by route (from -> to) using plain string fields on CargoBooking
-                const routeMap: { [key: string]: any } = {};
-
-                cargoBookings.forEach((booking) => {
-                    const routeKey = `${booking.fromLocation}-${booking.toLocation}`;
-
-                    if (!routeMap[routeKey]) {
-                        routeMap[routeKey] = {
-                            id: routeKey,
-                            fromLocation: booking.fromLocation,
-                            toLocation: booking.toLocation,
-                            shipments: [],
-                            totalShipments: 0,
-                        };
-                    }
-
-                    // Build item details from CargoItem.itemType (schema field)
-                    const itemDetails = booking.items
-                        .map(item => `${item.itemType}${item.quantity > 1 ? ` x ${item.quantity}` : ""}`)
-                        .join(", ") || booking.service;
-
-                    routeMap[routeKey].shipments.push({
-                        id: booking.id,
-                        invoiceNo: booking.invoice?.invoiceNo || booking.invoiceNo,
-                        senderName:
-                            `${booking.user?.firstName || ""} ${booking.user?.lastName || ""}`.trim() ||
-                            booking.contactName,
-                        receiverName: booking.contactName,
-                        itemDetails,
-                        paymentMode: booking.invoice?.paymentMode || "",
-                        amount: booking.invoice?.totalAmount || booking.totalAmount,
-                        paymentStatus: booking.invoice?.paymentStatus || booking.paymentStatus,
-                        updatedAt: booking.invoice?.updatedAt || booking.updatedAt,
-                    });
-
-                    routeMap[routeKey].totalShipments++;
-                });
-
-                return {
-                    id: voyage.id,
-                    voyageNo: voyage.voyageNo,
-                    shipName: voyage.shipName,
-                    date: voyage.date,           // schema field (not departureDate)
-                    status: voyage.status,
-                    from: voyage.from,
-                    to: voyage.to,
-                    routes: Object.values(routeMap),
-                };
-            })
-        );
-
-        const total = await prisma.voyage.count();
+        const total = await prisma.voyage.count({ where });
 
         return NextResponse.json({
-            voyages: voyagesWithRoutes,
+            voyages,
             pagination: {
                 page,
                 limit,
@@ -128,21 +78,24 @@ export async function POST(request: NextRequest) {
 
     try {
         const body = await request.json();
-        // Accept both old field names (departureDate / vesselName) and correct schema names (date / shipName)
         const voyageNo = body.voyageNo;
         const shipName = body.shipName || body.vesselName;
         const date = body.date || body.departureDate;
         const fromLocationCode = body.fromLocationCode || body.fromCode;
         const toLocationCode = body.toLocationCode || body.toCode;
         const status = body.status;
+        const scheduleId = body.scheduleId;
+        const stops = body.stops; // Array of { locationCode, stopOrder, arrivalTime, departureTime, activities, notes }
 
         // Validation
         const errors: string[] = [];
         if (!voyageNo) errors.push("Voyage number is required");
         if (!date) errors.push("Date is required");
         if (!shipName) errors.push("Ship name is required");
-        if (!fromLocationCode) errors.push("From location is required");
-        if (!toLocationCode) errors.push("To location is required");
+
+        // Either from/to codes OR stops array is required
+        if (!stops?.length && !fromLocationCode) errors.push("From location or stops are required");
+        if (!stops?.length && !toLocationCode) errors.push("To location or stops are required");
 
         if (errors.length > 0) {
             return NextResponse.json(
@@ -151,7 +104,7 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // voyageNo must be an integer (unique Int in schema)
+        // voyageNo must be an integer
         const voyageNoInt = parseInt(String(voyageNo));
         if (isNaN(voyageNoInt)) {
             return NextResponse.json(
@@ -172,34 +125,121 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // Find locations by code
-        const fromLocation = await prisma.location.findUnique({
-            where: { code: fromLocationCode },
-        });
-        const toLocation = await prisma.location.findUnique({
-            where: { code: toLocationCode },
-        });
+        // Resolve from/to locations (first/last stop)
+        let fromLocation: any;
+        let toLocation: any;
 
-        if (!fromLocation || !toLocation) {
-            return NextResponse.json(
-                { error: "Invalid location codes" },
-                { status: 400 }
-            );
+        if (stops?.length >= 2) {
+            // Resolve locations from the stops array
+            const firstStopCode = stops[0].locationCode;
+            const lastStopCode = stops[stops.length - 1].locationCode;
+
+            fromLocation = await prisma.location.findUnique({ where: { code: firstStopCode } });
+            toLocation = await prisma.location.findUnique({ where: { code: lastStopCode } });
+
+            if (!fromLocation || !toLocation) {
+                return NextResponse.json(
+                    { error: "Invalid location codes in stops" },
+                    { status: 400 }
+                );
+            }
+
+            // Validate all stop location codes
+            const locationCodes = stops.map((s: any) => s.locationCode);
+            const locations = await prisma.location.findMany({
+                where: { code: { in: locationCodes } },
+            });
+            if (locations.length !== new Set(locationCodes).size) {
+                return NextResponse.json(
+                    { error: "One or more stop location codes are invalid" },
+                    { status: 400 }
+                );
+            }
+        } else {
+            // Fallback to simple from/to codes
+            fromLocation = await prisma.location.findUnique({ where: { code: fromLocationCode } });
+            toLocation = await prisma.location.findUnique({ where: { code: toLocationCode } });
+
+            if (!fromLocation || !toLocation) {
+                return NextResponse.json(
+                    { error: "Invalid location codes" },
+                    { status: 400 }
+                );
+            }
         }
 
-        // Create voyage using correct schema field names: shipName, date, fromId, toId
-        const voyage = await prisma.voyage.create({
-            data: {
-                voyageNo: voyageNoInt,
-                shipName: shipName,
-                date: new Date(date),
-                fromId: fromLocation.id,
-                toId: toLocation.id,
-                status: status || "SCHEDULED",
-            },
+        // Create voyage with stops in a transaction
+        const voyage = await prisma.$transaction(async (tx) => {
+            const newVoyage = await tx.voyage.create({
+                data: {
+                    voyageNo: voyageNoInt,
+                    shipName,
+                    date: new Date(date),
+                    fromId: fromLocation.id,
+                    toId: toLocation.id,
+                    status: status || "SCHEDULED",
+                    scheduleId: scheduleId || null,
+                },
+            });
+
+            // Create VoyageStops
+            if (stops?.length) {
+                // Resolve all location codes to IDs
+                const locationCodes = stops.map((s: any) => s.locationCode);
+                const locations = await tx.location.findMany({
+                    where: { code: { in: locationCodes } },
+                });
+                const codeToId: Record<string, string> = {};
+                locations.forEach((loc) => { codeToId[loc.code] = loc.id; });
+
+                await tx.voyageStop.createMany({
+                    data: stops.map((stop: any, index: number) => ({
+                        voyageId: newVoyage.id,
+                        locationId: codeToId[stop.locationCode],
+                        stopOrder: stop.stopOrder ?? index + 1,
+                        arrivalTime: stop.arrivalTime || null,
+                        departureTime: stop.departureTime || null,
+                        activities: stop.activities || [],
+                        notes: stop.notes || null,
+                    })),
+                });
+            } else {
+                // Auto-create 2 stops from from/to
+                await tx.voyageStop.createMany({
+                    data: [
+                        {
+                            voyageId: newVoyage.id,
+                            locationId: fromLocation.id,
+                            stopOrder: 1,
+                            departureTime: null,
+                            activities: ["Freight Drop Off"],
+                        },
+                        {
+                            voyageId: newVoyage.id,
+                            locationId: toLocation.id,
+                            stopOrder: 2,
+                            arrivalTime: null,
+                            activities: ["Freight Pick Up"],
+                        },
+                    ],
+                });
+            }
+
+            return newVoyage;
+        });
+
+        // Fetch the complete voyage with stops
+        const completeVoyage = await prisma.voyage.findUnique({
+            where: { id: voyage.id },
             include: {
                 from: { select: { code: true, name: true } },
                 to: { select: { code: true, name: true } },
+                stops: {
+                    include: {
+                        location: { select: { code: true, name: true } },
+                    },
+                    orderBy: { stopOrder: "asc" },
+                },
             },
         });
 
@@ -208,14 +248,18 @@ export async function POST(request: NextRequest) {
             action: "CREATE_VOYAGE",
             entity: "voyage",
             entityId: voyage.id,
-            metadata: { voyageNo: voyageNoInt },
+            metadata: {
+                voyageNo: voyageNoInt,
+                shipName,
+                stopsCount: stops?.length || 2,
+            },
             ipAddress: getClientIp(request),
         });
 
         return NextResponse.json(
             {
-                voyage,
-                message: `Voyage ${voyageNoInt} created successfully`,
+                voyage: completeVoyage,
+                message: `Voyage ${voyageNoInt} created successfully with ${stops?.length || 2} stops`,
             },
             { status: 201 }
         );

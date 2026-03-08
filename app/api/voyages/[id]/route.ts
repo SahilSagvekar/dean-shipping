@@ -20,19 +20,31 @@ export async function GET(
     const voyage = await prisma.voyage.findUnique({
         where: { id },
         include: {
-            from: { select: { code: true, name: true } },
-            to: { select: { code: true, name: true } },
+            from: { select: { id: true, code: true, name: true } },
+            to: { select: { id: true, code: true, name: true } },
+            stops: {
+                include: {
+                    location: { select: { id: true, code: true, name: true } },
+                },
+                orderBy: { stopOrder: "asc" },
+            },
             schedule: true,
             cargoBookings: {
                 include: {
                     user: { select: { firstName: true, lastName: true } },
                     items: true,
+                    invoice: {
+                        select: { invoiceNo: true, totalAmount: true, paymentStatus: true },
+                    },
                 },
                 orderBy: { createdAt: "desc" },
             },
             passengerBookings: {
                 include: {
                     user: { select: { firstName: true, lastName: true } },
+                    invoice: {
+                        select: { invoiceNo: true, totalAmount: true, paymentStatus: true },
+                    },
                 },
                 orderBy: { createdAt: "desc" },
             },

@@ -67,16 +67,17 @@ export async function POST(request: NextRequest) {
 
     try {
         const body = await request.json();
-        const { 
-            registrationNo, 
-            ownerName, 
+        const {
+            registrationNo,
+            ownerName,
             ownerEmail,
-            contactNo, 
-            vehicleType, 
-            fromLocation, 
-            toLocation, 
-            bookingDate, 
-            notes 
+            contactNo,
+            vehicleType,
+            fromLocation,
+            toLocation,
+            bookingDate,
+            voyageId,
+            notes
         } = body;
 
         // Validation
@@ -103,12 +104,12 @@ export async function POST(request: NextRequest) {
         const existingVehicle = await prisma.vehicle.findFirst({
             where: {
                 registrationNo: registrationNo.trim().toUpperCase(),
-                status: { 
+                status: {
                     in: [
-                        VehicleStatus.PENDING, 
-                        VehicleStatus.IN_DOCK, 
+                        VehicleStatus.PENDING,
+                        VehicleStatus.IN_DOCK,
                         VehicleStatus.IN_TRANSIT
-                    ] 
+                    ]
                 },
             },
         });
@@ -133,6 +134,7 @@ export async function POST(request: NextRequest) {
                 fromLocation,
                 toLocation,
                 bookingDate: new Date(bookingDate),
+                voyageId: voyageId || null,
                 notes: notes?.trim() || null,
                 status: VehicleStatus.PENDING,
             },
@@ -143,7 +145,7 @@ export async function POST(request: NextRequest) {
             action: "ADD_VEHICLE",
             entity: "vehicle",
             entityId: vehicle.id,
-            metadata: { 
+            metadata: {
                 registrationNo: vehicle.registrationNo,
                 invoiceNo,
                 ownerName: vehicle.ownerName,
@@ -151,14 +153,14 @@ export async function POST(request: NextRequest) {
             ipAddress: getClientIp(request),
         });
 
-        return NextResponse.json({ 
+        return NextResponse.json({
             vehicle,
             message: `Vehicle ${vehicle.registrationNo} added to waitlist`
         }, { status: 201 });
     } catch (error: any) {
         console.error("Add vehicle error:", error);
         return NextResponse.json(
-            { error: error.message || "Failed to add vehicle" }, 
+            { error: error.message || "Failed to add vehicle" },
             { status: 500 }
         );
     }

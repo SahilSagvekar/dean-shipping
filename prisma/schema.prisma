@@ -136,7 +136,7 @@ model User {
   mobileNumber String   @unique
   role         Role     @default(USER)
   password     String?
-  designation  String?
+  // designation  String?
   isActive     Boolean  @default(true)
   avatarUrl    String?
 
@@ -179,6 +179,7 @@ model Location {
   // Voyage relations
   voyagesFrom Voyage[] @relation("VoyageFrom")
   voyagesTo   Voyage[] @relation("VoyageTo")
+  voyageStops VoyageStop[]
 
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
@@ -238,8 +239,9 @@ model Voyage {
   schedule   Schedule? @relation(fields: [scheduleId], references: [id])
 
   // Relations
-  manifestItems ManifestItem[]
-  cargoBookings CargoBooking[]
+  stops             VoyageStop[]
+  manifestItems     ManifestItem[]
+  cargoBookings     CargoBooking[]
   passengerBookings PassengerBooking[]
 
   notes     String?
@@ -249,6 +251,32 @@ model Voyage {
   @@index([date])
   @@index([shipName])
   @@index([status])
+}
+
+// ============================================
+// VOYAGE STOPS (Multi-stop routes)
+// ============================================
+
+model VoyageStop {
+  id        String   @id @default(cuid())
+  voyageId  String
+  voyage    Voyage   @relation(fields: [voyageId], references: [id], onDelete: Cascade)
+
+  locationId String
+  location   Location @relation(fields: [locationId], references: [id])
+
+  stopOrder     Int          // 1, 2, 3... (order of stops)
+  arrivalTime   String?      // "11:00 AM" (null for first stop — it departs)
+  departureTime String?      // "12:30 PM" (null for last stop — final destination)
+
+  // What happens at this stop
+  activities    String[]     // ["Freight Drop Off", "Freight Pick Up"]
+  notes         String?      // "(Dry Freight Only)"
+
+  createdAt DateTime @default(now())
+
+  @@index([voyageId])
+  @@unique([voyageId, stopOrder])
 }
 
 // ============================================

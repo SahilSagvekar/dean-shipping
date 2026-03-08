@@ -431,26 +431,55 @@ function ScheduleManagementContent() {
 
   // Launch all schedules now
   const handleLaunchNow = async () => {
-    if (!confirm("This will publish all schedules for this week immediately. Continue?")) return;
+    if (!confirm("This will publish all schedules for this week and create voyages. Continue?")) return;
 
     setIsLaunching(true);
     try {
-      // Update all schedules to published
+      // Step 1: Update all schedules to published
+      const scheduleIds: string[] = [];
       for (const schedule of schedules) {
         await apiFetch(`/api/schedules/${schedule.id}`, {
           method: "PATCH",
           body: JSON.stringify({ isPublished: true, isLaunched: true }),
         });
+        scheduleIds.push(schedule.id);
+      }
+
+      // Step 2: Auto-create voyages from the published schedules
+      try {
+        const voyageRes = await apiFetch("/api/schedules/create-voyages", {
+          method: "POST",
+          body: JSON.stringify({ scheduleIds }),
+        });
+        const voyageData = await voyageRes.json();
+        if (voyageRes.ok && voyageData.voyages?.length > 0) {
+          alert(
+            `Schedules published successfully!\n\n` +
+            `${voyageData.voyages.length} voyage(s) created:\n` +
+            voyageData.voyages
+              .map((v: any) => `• Voyage #${v.voyageNo} — ${v.shipName} (${v.stops?.length || 0} stops)`)
+              .join("\n")
+          );
+        } else if (voyageRes.ok) {
+          alert("Schedules published successfully!\n\nNo new voyages were created (may already exist or schedules have no events).");
+        } else {
+          // Schedules were published but voyage creation had an issue
+          alert(`Schedules published, but voyage creation had an issue: ${voyageData.error || "Unknown error"}`);
+        }
+      } catch (voyageErr) {
+        // Schedules were still published even if voyage creation fails
+        console.error("Voyage creation error:", voyageErr);
+        alert("Schedules published successfully!\n\nNote: Automatic voyage creation encountered an error. You can create voyages manually.");
       }
 
       // Refresh schedules
-      const res = await apiFetch(`/api/schedules?limit=100`);
+      const startDate = toLocalISO(weekDates[0]);
+      const endDate = toLocalISO(weekDates[5]);
+      const res = await apiFetch(`/api/schedules?startDate=${startDate}&endDate=${endDate}&limit=100`);
       const data = await res.json();
       if (res.ok) {
         setSchedules(data.schedules || []);
       }
-
-      alert("Schedules published successfully!");
     } catch (err) {
       alert("Failed to publish schedules");
     } finally {

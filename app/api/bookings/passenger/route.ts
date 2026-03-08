@@ -74,6 +74,7 @@ export async function POST(request: NextRequest) {
             bookingDate,
             fromLocation,
             toLocation,
+            voyageId,
             idType,
             paymentStatus,
             remark,
@@ -118,6 +119,7 @@ export async function POST(request: NextRequest) {
                 data: {
                     invoiceNo,
                     userId: result.user.id,
+                    voyageId: voyageId || null,
                     infantCount: infants,
                     childCount: children,
                     adultCount: adults,
@@ -134,15 +136,15 @@ export async function POST(request: NextRequest) {
                     // Create luggage items if provided
                     ...(luggage && luggage.length > 0
                         ? {
-                              luggage: {
-                                  create: luggage.map((item: any) => ({
-                                      type: item.type,
-                                      weight: parseFloat(item.weight) || 0,
-                                      quantity: parseInt(item.quantity) || 1,
-                                      price: parseFloat(item.price) || 0,
-                                  })),
-                              },
-                          }
+                            luggage: {
+                                create: luggage.map((item: any) => ({
+                                    type: item.type,
+                                    weight: parseFloat(item.weight) || 0,
+                                    quantity: parseInt(item.quantity) || 1,
+                                    price: parseFloat(item.price) || 0,
+                                })),
+                            },
+                        }
                         : {}),
                 },
                 include: {

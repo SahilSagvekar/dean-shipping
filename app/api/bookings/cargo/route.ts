@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
             service, cargoSize, quantity, pallets, type, containerNo,
             size, height, reeferNo, material, color, chassisNo,
             temperature, decksNo, boxContains, bookingDate,
-            fromLocation, toLocation, voyageNo,
+            fromLocation, toLocation, voyageId, voyageNo,
             contactName, contactEmail, contactPhone, address, idType,
             damageFound, damageLocation, deficiencyComment,
             paymentStatus, remark, items,
@@ -117,6 +117,7 @@ export async function POST(request: NextRequest) {
                 data: {
                     invoiceNo,
                     userId: result.user.id,
+                    voyageId: voyageId || null,
                     service,
                     cargoSize: cargoSize?.toUpperCase() || "MEDIUM",
                     quantity: quantity ? parseInt(quantity) : null,
@@ -146,6 +147,8 @@ export async function POST(request: NextRequest) {
                     deficiencyComment: deficiencyComment || null,
                     paymentStatus: paymentStatus || "UNPAID",
                     totalAmount: grandTotal,
+                    vatAmount,
+                    subtotal: totalAmount,
                     remark: remark || null,
                     items: {
                         create: (items || []).map((item: any) => ({

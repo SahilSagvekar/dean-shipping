@@ -56,6 +56,9 @@ export default function CargoBooking() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingLocations, setIsLoadingLocations] = useState(true);
   const [locations, setLocations] = useState<Location[]>([]);
+  const [upcomingVoyages, setUpcomingVoyages] = useState<any[]>([]);
+  const [selectedVoyageId, setSelectedVoyageId] = useState("");
+  const [isLoadingVoyages, setIsLoadingVoyages] = useState(false);
 
   // Form State
   const [service, setService] = useState('CONTAINER');
@@ -93,13 +96,13 @@ export default function CargoBooking() {
 
   // Items state
   const [items, setItems] = useState<CargoItem[]>([]);
-  
+
   // Image upload state
   const [containerImages, setContainerImages] = useState<UploadedImage[]>([]);
   const [userDocuments, setUserDocuments] = useState<UploadedImage[]>([]);
   const containerImageRef = useRef<HTMLInputElement>(null);
   const userDocumentRef = useRef<HTMLInputElement>(null);
-  
+
   // Modal states
   const [showAddItemModal, setShowAddItemModal] = useState(false);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
@@ -149,6 +152,25 @@ export default function CargoBooking() {
     fetchLocations();
   }, [apiFetch]);
 
+  // Fetch Upcoming Voyages
+  useEffect(() => {
+    async function fetchVoyages() {
+      setIsLoadingVoyages(true);
+      try {
+        const res = await apiFetch('/api/voyages?upcoming=true&limit=50');
+        if (res.ok) {
+          const data = await res.json();
+          setUpcomingVoyages(data.voyages || []);
+        }
+      } catch (err) {
+        console.error("Failed to fetch voyages:", err);
+      } finally {
+        setIsLoadingVoyages(false);
+      }
+    }
+    fetchVoyages();
+  }, [apiFetch]);
+
   // Calculate totals
   const calculateTotals = () => {
     const subtotal = items.reduce((sum, item) => sum + item.total, 0);
@@ -177,7 +199,7 @@ export default function CargoBooking() {
 
     setContainerImages([...containerImages, ...newImages]);
     toast.success(`${newImages.length} image(s) added`);
-    
+
     // Reset input
     if (containerImageRef.current) {
       containerImageRef.current.value = '';
@@ -204,7 +226,7 @@ export default function CargoBooking() {
 
     setUserDocuments([...userDocuments, ...newDocs]);
     toast.success(`${newDocs.length} document(s) added`);
-    
+
     if (userDocumentRef.current) {
       userDocumentRef.current.value = '';
     }
@@ -267,8 +289,8 @@ export default function CargoBooking() {
     const total = unitPrice * qty;
 
     if (editingItem) {
-      setItems(items.map(item => 
-        item.id === editingItem.id 
+      setItems(items.map(item =>
+        item.id === editingItem.id
           ? { ...item, type: newItemType, unitPrice, quantity: qty, total, isPaid: newItemIsPaid }
           : item
       ));
@@ -345,7 +367,7 @@ export default function CargoBooking() {
     setContainerImages([]);
     setUserDocuments([]);
     setCreatedBooking(null);
-    
+
     if (locations.length > 0) {
       setFromLocation(locations[0].code);
       if (locations.length > 1) {
@@ -379,152 +401,154 @@ export default function CargoBooking() {
 
   // Handle Form Submission
   const handleSubmit = async () => {
-  if (!validateForm()) {
-    console.log("Validation failed");
-    return;
-  }
-
-  setIsSubmitting(true);
-  
-  try {
-    // First, create the booking WITHOUT images
-    const payload = {
-      service,
-      cargoSize: cargoSize.toUpperCase(),
-      quantity: quantity ? parseInt(quantity) : null,
-      pallets: pallets ? parseInt(pallets) : null,
-      type,
-      containerNo: containerNo || null,
-      size: size || null,
-      height: height || null,
-      reeferNo: reefer || null,
-      material: material || null,
-      color: color || null,
-      chassisNo: chassisNo || null,
-      temperature: temperature || null,
-      decksNo: decksNo || null,
-      boxContains: boxContains || null,
-      voyageNo: voyageNo || null,
-      bookingDate,
-      fromLocation,
-      toLocation,
-      contactName: contactName.trim(),
-      contactEmail: contactEmail || null,
-      contactPhone: contactPhone || null,
-      address: address || null,
-      idType,
-      damageFound: damageFound || null,
-      damageLocation: damageLocation || null,
-      deficiencyComment: comment || null,
-      paymentStatus,
-      remark: remark || null,
-      items: items.map(item => ({
-        itemType: item.type,
-        unitPrice: item.unitPrice,
-        quantity: item.quantity,
-        total: item.total,
-        isPaid: item.isPaid
-      })),
-      // Don't send images here initially
-      containerImages: [],
-      userDocuments: [],
-    };
-
-    console.log("Submitting payload:", payload);
-
-    const res = await apiFetch('/api/bookings/cargo', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(payload)
-    });
-
-    const data = await res.json();
-    console.log("Response:", data);
-
-    if (!res.ok) {
-      if (data.errors && Array.isArray(data.errors)) {
-        data.errors.forEach((err: string) => toast.error(err));
-      } else {
-        toast.error(data.error || "Failed to create booking");
-      }
+    if (!validateForm()) {
+      console.log("Validation failed");
       return;
     }
 
-    // Booking created successfully, now upload images
-    const bookingId = data.booking.id;
-    let uploadErrors = 0;
+    setIsSubmitting(true);
 
-    // Upload container images
-    for (const img of containerImages) {
-      if (img.file) {
-        try {
-          await uploadImage(img.file, bookingId, 'CONTAINER', img.caption);
-        } catch (error) {
-          console.error('Failed to upload container image:', error);
-          uploadErrors++;
+    try {
+      // First, create the booking WITHOUT images
+      const payload = {
+        service,
+        cargoSize: cargoSize.toUpperCase(),
+        quantity: quantity ? parseInt(quantity) : null,
+        pallets: pallets ? parseInt(pallets) : null,
+        type,
+        containerNo: containerNo || null,
+        size: size || null,
+        height: height || null,
+        reeferNo: reefer || null,
+        material: material || null,
+        color: color || null,
+        chassisNo: chassisNo || null,
+        temperature: temperature || null,
+        decksNo: decksNo || null,
+        boxContains: boxContains || null,
+        voyageId: selectedVoyageId || null,
+        voyageNo: voyageNo || null,
+        bookingDate,
+        fromLocation,
+        toLocation,
+        contactName: contactName.trim(),
+        contactEmail: contactEmail || null,
+        contactPhone: contactPhone || null,
+        address: address || null,
+        idType,
+        damageFound: damageFound || null,
+        damageLocation: damageLocation || null,
+        deficiencyComment: comment || null,
+        paymentStatus,
+        remark: remark || null,
+        items: items.map(item => ({
+          itemType: item.type,
+          unitPrice: item.unitPrice,
+          quantity: item.quantity,
+          total: item.total,
+          isPaid: item.isPaid
+        })),
+        // Don't send images here initially
+        containerImages: [],
+        userDocuments: [],
+      };
+
+      console.log("Submitting payload:", payload);
+
+      const res = await apiFetch('/api/bookings/cargo', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await res.json();
+      console.log("Response:", data);
+
+      if (!res.ok) {
+        if (data.errors && Array.isArray(data.errors)) {
+          data.errors.forEach((err: string) => toast.error(err));
+        } else {
+          toast.error(data.error || "Failed to create booking");
+        }
+        return;
+      }
+
+      // Booking created successfully, now upload images
+      const bookingId = data.booking.id;
+      let uploadErrors = 0;
+
+      // Upload container images
+      for (const img of containerImages) {
+        if (img.file) {
+          try {
+            await uploadImage(img.file, bookingId, 'CONTAINER', img.caption);
+          } catch (error) {
+            console.error('Failed to upload container image:', error);
+            uploadErrors++;
+          }
         }
       }
-    }
 
-    // Upload user documents
-    for (const doc of userDocuments) {
-      if (doc.file) {
-        try {
-          await uploadImage(doc.file, bookingId, 'USER_DOCUMENT', doc.caption);
-        } catch (error) {
-          console.error('Failed to upload user document:', error);
-          uploadErrors++;
+      // Upload user documents
+      for (const doc of userDocuments) {
+        if (doc.file) {
+          try {
+            await uploadImage(doc.file, bookingId, 'USER_DOCUMENT', doc.caption);
+          } catch (error) {
+            console.error('Failed to upload user document:', error);
+            uploadErrors++;
+          }
         }
       }
+
+      setCreatedBooking(data);
+
+      if (uploadErrors > 0) {
+        toast.success(`Booking created! Invoice: #${data.invoiceNo}`);
+        toast.warning(`${uploadErrors} image(s) failed to upload`);
+      } else {
+        toast.success(`Booking created successfully! Invoice: #${data.invoiceNo}`);
+      }
+
+    } catch (err: any) {
+      console.error("Submission error:", err);
+      toast.error(err.message || "An error occurred during submission");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Updated upload function with required parameters
+  const uploadImage = async (
+    file: File,
+    bookingId: string,
+    imageType: 'CONTAINER' | 'USER_DOCUMENT',
+    caption?: string
+  ): Promise<string> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('bookingId', bookingId);
+    formData.append('imageType', imageType);
+    formData.append('bookingType', 'cargo');
+    if (caption) {
+      formData.append('caption', caption);
     }
 
-    setCreatedBooking(data);
-    
-    if (uploadErrors > 0) {
-      toast.success(`Booking created! Invoice: #${data.invoiceNo}`);
-      toast.warning(`${uploadErrors} image(s) failed to upload`);
-    } else {
-      toast.success(`Booking created successfully! Invoice: #${data.invoiceNo}`);
+    const res = await apiFetch('/api/upload', {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      return data.url;
     }
 
-  } catch (err: any) {
-    console.error("Submission error:", err);
-    toast.error(err.message || "An error occurred during submission");
-  } finally {
-    setIsSubmitting(false);
-  }
-};
-
-// Updated upload function with required parameters
-const uploadImage = async (
-  file: File, 
-  bookingId: string, 
-  imageType: 'CONTAINER' | 'USER_DOCUMENT',
-  caption?: string
-): Promise<string> => {
-  const formData = new FormData();
-  formData.append('file', file);
-  formData.append('bookingId', bookingId);
-  formData.append('imageType', imageType);
-  if (caption) {
-    formData.append('caption', caption);
-  }
-
-  const res = await apiFetch('/api/upload', {
-    method: 'POST',
-    body: formData,
-  });
-
-  if (res.ok) {
-    const data = await res.json();
-    return data.url;
-  }
-  
-  const errorData = await res.json().catch(() => ({}));
-  throw new Error(errorData.error || 'Upload failed');
-};
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.error || 'Upload failed');
+  };
 
   const cargoRadioTypes = ['Small', 'Medium', 'Large', 'Fragile', 'Hazardous', 'Live'];
   const itemTypes = ['DRY BOX(S)', 'FROZEN BOX(S)', 'CONTAINER', 'PALLET', 'CRATE', 'OTHER'];
@@ -618,30 +642,30 @@ const uploadImage = async (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="space-y-2">
               <label className="text-[16px] font-bold text-gray-500">Quantity</label>
-              <input 
+              <input
                 type="number"
-                value={quantity} 
-                onChange={(e) => setQuantity(e.target.value)} 
+                value={quantity}
+                onChange={(e) => setQuantity(e.target.value)}
                 placeholder="Enter quantity"
-                className="w-full h-[45px] border-b border-gray-300 outline-none focus:border-[#296341] text-[18px] py-2" 
+                className="w-full h-[45px] border-b border-gray-300 outline-none focus:border-[#296341] text-[18px] py-2"
               />
             </div>
             <div className="space-y-2">
               <label className="text-[16px] font-bold text-gray-500">Pallets#</label>
-              <input 
+              <input
                 type="number"
-                value={pallets} 
-                onChange={(e) => setPallets(e.target.value)} 
+                value={pallets}
+                onChange={(e) => setPallets(e.target.value)}
                 placeholder="Number of pallets"
-                className="w-full h-[45px] border-b border-gray-300 outline-none focus:border-[#296341] text-[18px] py-2" 
+                className="w-full h-[45px] border-b border-gray-300 outline-none focus:border-[#296341] text-[18px] py-2"
               />
             </div>
             <div className="space-y-2">
               <label className="text-[16px] font-bold text-gray-500">Type</label>
               <div className="relative">
-                <select 
-                  value={type} 
-                  onChange={(e) => setType(e.target.value)} 
+                <select
+                  value={type}
+                  onChange={(e) => setType(e.target.value)}
                   className="w-full h-[45px] border-b border-gray-300 outline-none focus:border-[#296341] text-[18px] py-2 appearance-none font-bold"
                 >
                   <option value="DRY">DRY</option>
@@ -655,9 +679,9 @@ const uploadImage = async (
 
             <div className="space-y-2">
               <label className="text-[16px] font-bold text-gray-500">Container#</label>
-              <input 
-                value={containerNo} 
-                onChange={(e) => setContainerNo(e.target.value)} 
+              <input
+                value={containerNo}
+                onChange={(e) => setContainerNo(e.target.value)}
                 placeholder="Container number"
                 className="w-full h-[45px] border-b border-gray-300 outline-none focus:border-[#296341] text-[18px] py-2 font-bold"
               />
@@ -665,9 +689,9 @@ const uploadImage = async (
             <div className="space-y-2">
               <label className="text-[16px] font-bold text-gray-500">Size</label>
               <div className="relative">
-                <select 
-                  value={size} 
-                  onChange={(e) => setSize(e.target.value)} 
+                <select
+                  value={size}
+                  onChange={(e) => setSize(e.target.value)}
                   className="w-full h-[45px] border-b border-gray-300 outline-none focus:border-[#296341] text-[18px] py-2 appearance-none font-bold"
                 >
                   <option value="">Select size</option>
@@ -682,9 +706,9 @@ const uploadImage = async (
             <div className="space-y-2">
               <label className="text-[16px] font-bold text-gray-500">Height</label>
               <div className="relative">
-                <select 
-                  value={height} 
-                  onChange={(e) => setHeight(e.target.value)} 
+                <select
+                  value={height}
+                  onChange={(e) => setHeight(e.target.value)}
                   className="w-full h-[45px] border-b border-gray-300 outline-none focus:border-[#296341] text-[18px] py-2 appearance-none font-bold"
                 >
                   <option value="">Select height</option>
@@ -697,28 +721,28 @@ const uploadImage = async (
 
             <div className="space-y-2">
               <label className="text-[16px] font-bold text-gray-500">Reefer#</label>
-              <input 
-                value={reefer} 
-                onChange={(e) => setReefer(e.target.value)} 
+              <input
+                value={reefer}
+                onChange={(e) => setReefer(e.target.value)}
                 placeholder="Reefer number"
-                className="w-full h-[45px] border-b border-gray-300 outline-none focus:border-[#296341] text-[18px] py-2" 
+                className="w-full h-[45px] border-b border-gray-300 outline-none focus:border-[#296341] text-[18px] py-2"
               />
             </div>
             <div className="space-y-2">
               <label className="text-[16px] font-bold text-gray-500">Material</label>
-              <input 
-                value={material} 
-                onChange={(e) => setMaterial(e.target.value)} 
+              <input
+                value={material}
+                onChange={(e) => setMaterial(e.target.value)}
                 placeholder="Material type"
-                className="w-full h-[45px] border-b border-gray-300 outline-none focus:border-[#296341] text-[18px] py-2" 
+                className="w-full h-[45px] border-b border-gray-300 outline-none focus:border-[#296341] text-[18px] py-2"
               />
             </div>
             <div className="space-y-2">
               <label className="text-[16px] font-bold text-gray-500">Color</label>
               <div className="relative">
-                <select 
-                  value={color} 
-                  onChange={(e) => setColor(e.target.value)} 
+                <select
+                  value={color}
+                  onChange={(e) => setColor(e.target.value)}
                   className="w-full h-[45px] border-b border-gray-300 outline-none focus:border-[#296341] text-[18px] py-2 appearance-none font-bold"
                 >
                   <option value="">Select color</option>
@@ -734,29 +758,29 @@ const uploadImage = async (
 
             <div className="space-y-2">
               <label className="text-[16px] font-bold text-gray-500">Chassis#</label>
-              <input 
-                value={chassisNo} 
-                onChange={(e) => setChassisNo(e.target.value)} 
+              <input
+                value={chassisNo}
+                onChange={(e) => setChassisNo(e.target.value)}
                 placeholder="Chassis number"
-                className="w-full h-[45px] border border-gray-200 rounded-md px-4 shadow-sm outline-none focus:ring-2 focus:ring-[#296341] text-[18px]" 
+                className="w-full h-[45px] border border-gray-200 rounded-md px-4 shadow-sm outline-none focus:ring-2 focus:ring-[#296341] text-[18px]"
               />
             </div>
             <div className="space-y-2">
               <label className="text-[16px] font-bold text-gray-500">Temperature</label>
-              <input 
-                value={temperature} 
-                onChange={(e) => setTemperature(e.target.value)} 
+              <input
+                value={temperature}
+                onChange={(e) => setTemperature(e.target.value)}
                 placeholder="e.g., -18°C"
-                className="w-full h-[45px] border border-gray-200 rounded-md px-4 shadow-sm outline-none focus:ring-2 focus:ring-[#296341] text-[18px]" 
+                className="w-full h-[45px] border border-gray-200 rounded-md px-4 shadow-sm outline-none focus:ring-2 focus:ring-[#296341] text-[18px]"
               />
             </div>
             <div className="space-y-2">
               <label className="text-[16px] font-bold text-gray-500">Decks#</label>
-              <input 
-                value={decksNo} 
-                onChange={(e) => setDecksNo(e.target.value)} 
+              <input
+                value={decksNo}
+                onChange={(e) => setDecksNo(e.target.value)}
                 placeholder="Number of decks"
-                className="w-full h-[45px] border border-gray-200 rounded-md px-4 shadow-sm outline-none focus:ring-2 focus:ring-[#296341] text-[18px]" 
+                className="w-full h-[45px] border border-gray-200 rounded-md px-4 shadow-sm outline-none focus:ring-2 focus:ring-[#296341] text-[18px]"
               />
             </div>
           </div>
@@ -770,25 +794,25 @@ const uploadImage = async (
                 Date <span className="text-red-500">*</span>
               </label>
               <div className="relative">
-                <input 
+                <input
                   type="date"
-                  value={bookingDate} 
-                  onChange={(e) => setBookingDate(e.target.value)} 
+                  value={bookingDate}
+                  onChange={(e) => setBookingDate(e.target.value)}
                   min={new Date().toISOString().split('T')[0]}
-                  className="w-full h-[50px] bg-white border border-gray-200 rounded-md px-4 shadow-sm outline-none focus:ring-2 focus:ring-[#296341] text-[18px]" 
+                  className="w-full h-[50px] bg-white border border-gray-200 rounded-md px-4 shadow-sm outline-none focus:ring-2 focus:ring-[#296341] text-[18px]"
                 />
                 <Calendar className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
               </div>
             </div>
             <div className="space-y-2">
               <label className="text-[18px] font-bold text-gray-700 flex items-center gap-2">
-                <MapPin className="text-[#296341] w-5 h-5 fill-[#296341]/10" /> 
+                <MapPin className="text-[#296341] w-5 h-5 fill-[#296341]/10" />
                 From <span className="text-red-500">*</span>
               </label>
               <div className="relative">
-                <select 
-                  value={fromLocation} 
-                  onChange={(e) => setFromLocation(e.target.value)} 
+                <select
+                  value={fromLocation}
+                  onChange={(e) => setFromLocation(e.target.value)}
                   disabled={isLoadingLocations}
                   className="w-full h-[50px] bg-white border border-gray-200 rounded-md px-4 shadow-sm appearance-none outline-none focus:ring-2 focus:ring-[#296341] text-[18px] font-bold disabled:bg-gray-100"
                 >
@@ -797,7 +821,15 @@ const uploadImage = async (
                   ) : locations.length === 0 ? (
                     <option>No locations available</option>
                   ) : (
-                    locations.map(loc => (
+                    // If a voyage is selected, only show locations from its stops
+                    (selectedVoyageId
+                      ? upcomingVoyages.find(v => v.id === selectedVoyageId)?.stops.map((s: any) => ({
+                        code: s.location.code,
+                        name: s.location.name,
+                        id: s.location.id
+                      })) || locations
+                      : locations
+                    ).map((loc: any) => (
                       <option key={loc.id} value={loc.code}>{loc.code} - {loc.name}</option>
                     ))
                   )}
@@ -807,13 +839,13 @@ const uploadImage = async (
             </div>
             <div className="space-y-2">
               <label className="text-[18px] font-bold text-gray-700 flex items-center gap-2">
-                <MapPin className="text-[#296341] w-5 h-5 fill-[#296341]/10" /> 
+                <MapPin className="text-[#296341] w-5 h-5 fill-[#296341]/10" />
                 To <span className="text-red-500">*</span>
               </label>
               <div className="relative">
-                <select 
-                  value={toLocation} 
-                  onChange={(e) => setToLocation(e.target.value)} 
+                <select
+                  value={toLocation}
+                  onChange={(e) => setToLocation(e.target.value)}
                   disabled={isLoadingLocations}
                   className="w-full h-[50px] bg-white border border-gray-200 rounded-md px-4 shadow-sm appearance-none outline-none focus:ring-2 focus:ring-[#296341] text-[18px] font-bold disabled:bg-gray-100"
                 >
@@ -822,7 +854,15 @@ const uploadImage = async (
                   ) : locations.length === 0 ? (
                     <option>No locations available</option>
                   ) : (
-                    locations.map(loc => (
+                    // If a voyage is selected, only show locations from its stops
+                    (selectedVoyageId
+                      ? upcomingVoyages.find(v => v.id === selectedVoyageId)?.stops.map((s: any) => ({
+                        code: s.location.code,
+                        name: s.location.name,
+                        id: s.location.id
+                      })) || locations
+                      : locations
+                    ).map((loc: any) => (
                       <option key={loc.id} value={loc.code}>{loc.code} - {loc.name}</option>
                     ))
                   )}
@@ -832,15 +872,47 @@ const uploadImage = async (
             </div>
           </div>
 
-          {/* Voyage Number */}
+          {/* Voyage Picker */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="md:col-span-2 space-y-2">
+              <label className="text-[18px] font-bold text-gray-700">Select Voyage <span className="text-red-500">*</span></label>
+              <div className="relative">
+                <select
+                  value={selectedVoyageId}
+                  onChange={(e) => {
+                    const vid = e.target.value;
+                    setSelectedVoyageId(vid);
+                    const v = upcomingVoyages.find(voy => voy.id === vid);
+                    if (v) {
+                      setVoyageNo(String(v.voyageNo));
+                      setBookingDate(new Date(v.date).toISOString().split('T')[0]);
+                      if (v.stops && v.stops.length >= 2) {
+                        setFromLocation(v.stops[0].location.code);
+                        setToLocation(v.stops[v.stops.length - 1].location.code);
+                      }
+                    }
+                  }}
+                  disabled={isLoadingVoyages}
+                  className="w-full h-[50px] bg-white border border-gray-200 rounded-md px-4 shadow-sm appearance-none outline-none focus:ring-2 focus:ring-[#296341] text-[18px] font-bold disabled:bg-gray-100"
+                >
+                  <option value="">-- Select an upcoming voyage --</option>
+                  {upcomingVoyages.map(v => (
+                    <option key={v.id} value={v.id}>
+                      Voyage #{v.voyageNo} - {v.shipName} ({new Date(v.date).toLocaleDateString()}) - {v.from.code} to {v.to.code}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-[#296341]" />
+              </div>
+              {isLoadingVoyages && <p className="text-sm text-gray-500">Loading voyages...</p>}
+            </div>
             <div className="space-y-2">
               <label className="text-[18px] font-bold text-gray-700">Voyage Number</label>
-              <input 
-                value={voyageNo} 
-                onChange={(e) => setVoyageNo(e.target.value)} 
-                placeholder="e.g., VOY-209"
-                className="w-full h-[50px] bg-white border border-gray-200 rounded-md px-4 shadow-sm outline-none focus:ring-2 focus:ring-[#296341] text-[18px]" 
+              <input
+                value={voyageNo}
+                onChange={(e) => setVoyageNo(e.target.value)}
+                placeholder="e.g., 209"
+                className="w-full h-[50px] bg-white border border-gray-200 rounded-md px-4 shadow-sm outline-none focus:ring-2 focus:ring-[#296341] text-[18px]"
               />
             </div>
           </div>
@@ -850,13 +922,13 @@ const uploadImage = async (
             <h3 className="text-[20px] font-bold text-gray-700">Container Images</h3>
             <div className="flex flex-col sm:flex-row gap-4 items-start">
               <div className="flex sm:flex-col gap-4 mt-2 w-full sm:w-auto justify-center">
-                <button 
+                <button
                   onClick={() => containerImageRef.current?.click()}
                   className="w-12 h-12 flex items-center justify-center bg-[#eef6f2] rounded-lg hover:bg-[#d1e5da] transition-colors"
                 >
                   <Camera className="w-6 h-6 text-[#296341]" />
                 </button>
-                <button 
+                <button
                   onClick={() => containerImageRef.current?.click()}
                   className="w-12 h-12 flex items-center justify-center bg-[#eef6f2] rounded-lg hover:bg-[#d1e5da] transition-colors"
                 >
@@ -866,7 +938,7 @@ const uploadImage = async (
 
               <div className="flex flex-wrap gap-4 flex-1 w-full">
                 {containerImages.length === 0 ? (
-                  <div 
+                  <div
                     onClick={() => containerImageRef.current?.click()}
                     className="w-full h-[200px] border-2 border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center cursor-pointer hover:border-[#296341] transition-colors"
                   >
@@ -876,8 +948,8 @@ const uploadImage = async (
                 ) : (
                   containerImages.map((img, index) => (
                     <div key={img.id} className="relative w-[150px] h-[150px] rounded-lg overflow-hidden border border-gray-200 shadow-sm group">
-                      <img 
-                        src={img.preview || img.url || imgContainer.src} 
+                      <img
+                        src={img.preview || img.url || imgContainer.src}
                         alt={`Container ${index + 1}`}
                         className="w-full h-full object-cover"
                       />
@@ -896,7 +968,7 @@ const uploadImage = async (
                   ))
                 )}
                 {containerImages.length > 0 && (
-                  <div 
+                  <div
                     onClick={() => containerImageRef.current?.click()}
                     className="w-[150px] h-[150px] border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center cursor-pointer hover:border-[#296341] transition-colors"
                   >
@@ -910,9 +982,9 @@ const uploadImage = async (
           {/* Box Contains row */}
           <div className="space-y-2 pt-4 border-b border-gray-100 pb-4">
             <label className="text-[18px] font-bold text-gray-500">Box Contains</label>
-            <input 
-              value={boxContains} 
-              onChange={(e) => setBoxContains(e.target.value)} 
+            <input
+              value={boxContains}
+              onChange={(e) => setBoxContains(e.target.value)}
               placeholder="e.g., clothing, shoes, non-perishables"
               className="w-full h-[45px] border-b border-gray-300 outline-none focus:border-[#296341] text-[18px] py-2"
             />
@@ -925,9 +997,9 @@ const uploadImage = async (
               <div className="space-y-1">
                 <label className="text-[14px] font-bold text-gray-500">Damage Found</label>
                 <div className="relative">
-                  <select 
-                    value={damageFound} 
-                    onChange={(e) => setDamageFound(e.target.value)} 
+                  <select
+                    value={damageFound}
+                    onChange={(e) => setDamageFound(e.target.value)}
                     className="w-full h-[45px] border-b border-gray-300 outline-none focus:border-[#296341] text-[18px] font-bold appearance-none bg-transparent"
                   >
                     <option value="">None</option>
@@ -944,9 +1016,9 @@ const uploadImage = async (
               <div className="space-y-1">
                 <label className="text-[14px] font-bold text-gray-500">Damage Location</label>
                 <div className="relative">
-                  <select 
-                    value={damageLocation} 
-                    onChange={(e) => setDamageLocation(e.target.value)} 
+                  <select
+                    value={damageLocation}
+                    onChange={(e) => setDamageLocation(e.target.value)}
                     className="w-full h-[45px] border-b border-gray-300 outline-none focus:border-[#296341] text-[18px] font-bold appearance-none bg-transparent"
                   >
                     <option value="">Select location</option>
@@ -965,11 +1037,11 @@ const uploadImage = async (
               </div>
               <div className="space-y-1">
                 <label className="text-[14px] font-bold text-gray-500">Comment</label>
-                <input 
-                  value={comment} 
-                  onChange={(e) => setComment(e.target.value)} 
+                <input
+                  value={comment}
+                  onChange={(e) => setComment(e.target.value)}
                   placeholder="Describe the deficiency..."
-                  className="w-full h-[45px] border-b border-gray-300 outline-none focus:border-[#296341] text-[18px]" 
+                  className="w-full h-[45px] border-b border-gray-300 outline-none focus:border-[#296341] text-[18px]"
                 />
               </div>
             </div>
@@ -977,7 +1049,7 @@ const uploadImage = async (
 
           {/* Add Item Button */}
           <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 py-6">
-            <button 
+            <button
               onClick={() => {
                 setEditingItem(null);
                 setNewItemType("DRY BOX(S)");
@@ -1002,48 +1074,48 @@ const uploadImage = async (
                 <label className="text-[14px] font-bold text-gray-500">
                   Full Name <span className="text-red-500">*</span>
                 </label>
-                <input 
-                  value={contactName} 
-                  onChange={(e) => setContactName(e.target.value)} 
+                <input
+                  value={contactName}
+                  onChange={(e) => setContactName(e.target.value)}
                   placeholder="Enter full name"
-                  className="w-full h-[45px] text-[18px] font-bold uppercase outline-none border-b border-transparent focus:border-[#296341]" 
+                  className="w-full h-[45px] text-[18px] font-bold uppercase outline-none border-b border-transparent focus:border-[#296341]"
                 />
               </div>
               <div className="space-y-2 border-l-4 border-gray-100 pl-4">
                 <label className="text-[14px] font-bold text-gray-500">Address</label>
-                <input 
-                  value={address} 
-                  onChange={(e) => setAddress(e.target.value)} 
+                <input
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
                   placeholder="Enter address"
-                  className="w-full h-[45px] text-[18px] font-bold outline-none border-b border-transparent focus:border-[#296341]" 
+                  className="w-full h-[45px] text-[18px] font-bold outline-none border-b border-transparent focus:border-[#296341]"
                 />
               </div>
               <div className="space-y-2 border-l-4 border-gray-100 pl-4">
                 <label className="text-[14px] font-bold text-gray-500">Email Address</label>
-                <input 
+                <input
                   type="email"
-                  value={contactEmail} 
-                  onChange={(e) => setContactEmail(e.target.value)} 
+                  value={contactEmail}
+                  onChange={(e) => setContactEmail(e.target.value)}
                   placeholder="Enter email"
-                  className="w-full h-[45px] bg-[#f9fafb] border border-gray-100 rounded-md px-4 shadow-sm outline-none focus:ring-2 focus:ring-[#296341]" 
+                  className="w-full h-[45px] bg-[#f9fafb] border border-gray-100 rounded-md px-4 shadow-sm outline-none focus:ring-2 focus:ring-[#296341]"
                 />
               </div>
               <div className="space-y-2 border-l-4 border-gray-100 pl-4">
                 <label className="text-[14px] font-bold text-gray-500">Contact Number</label>
-                <input 
+                <input
                   type="tel"
-                  value={contactPhone} 
-                  onChange={(e) => setContactPhone(e.target.value)} 
+                  value={contactPhone}
+                  onChange={(e) => setContactPhone(e.target.value)}
                   placeholder="Enter phone number"
-                  className="w-full h-[45px] bg-[#f9fafb] border border-gray-100 rounded-md px-4 shadow-sm outline-none focus:ring-2 focus:ring-[#296341]" 
+                  className="w-full h-[45px] bg-[#f9fafb] border border-gray-100 rounded-md px-4 shadow-sm outline-none focus:ring-2 focus:ring-[#296341]"
                 />
               </div>
               <div className="flex items-center gap-4">
                 <span className="text-[16px] font-bold text-gray-600">ID Type :</span>
                 <div className="relative flex-1">
-                  <select 
-                    value={idType} 
-                    onChange={(e) => setIdType(e.target.value)} 
+                  <select
+                    value={idType}
+                    onChange={(e) => setIdType(e.target.value)}
                     className="w-full h-[45px] bg-white border border-gray-100 rounded-md px-4 shadow-sm appearance-none outline-none focus:ring-2 focus:ring-[#296341] font-bold"
                   >
                     <option value="Passport">Passport</option>
@@ -1061,13 +1133,13 @@ const uploadImage = async (
               <h3 className="text-[20px] font-bold text-gray-700">Identity Documents</h3>
               <div className="flex flex-col sm:flex-row gap-4 items-start">
                 <div className="flex sm:flex-col gap-4 mt-2 w-full sm:w-auto justify-center">
-                  <button 
+                  <button
                     onClick={() => userDocumentRef.current?.click()}
                     className="w-12 h-12 flex items-center justify-center bg-[#eef6f2] rounded-lg hover:bg-[#d1e5da] transition-colors"
                   >
                     <Camera className="w-6 h-6 text-[#296341]" />
                   </button>
-                  <button 
+                  <button
                     onClick={() => userDocumentRef.current?.click()}
                     className="w-12 h-12 flex items-center justify-center bg-[#eef6f2] rounded-lg hover:bg-[#d1e5da] transition-colors"
                   >
@@ -1077,7 +1149,7 @@ const uploadImage = async (
 
                 <div className="flex flex-wrap gap-4 flex-1 w-full">
                   {userDocuments.length === 0 ? (
-                    <div 
+                    <div
                       onClick={() => userDocumentRef.current?.click()}
                       className="w-full h-[200px] border-2 border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center cursor-pointer hover:border-[#296341] transition-colors"
                     >
@@ -1087,8 +1159,8 @@ const uploadImage = async (
                   ) : (
                     userDocuments.map((doc, index) => (
                       <div key={doc.id} className="relative w-[150px] h-[200px] rounded-lg overflow-hidden border border-gray-200 shadow-sm group">
-                        <img 
-                          src={doc.preview || doc.url || imgPassport.src} 
+                        <img
+                          src={doc.preview || doc.url || imgPassport.src}
                           alt={`${idType} ${index + 1}`}
                           className="w-full h-full object-cover"
                         />
@@ -1105,7 +1177,7 @@ const uploadImage = async (
                     ))
                   )}
                   {userDocuments.length > 0 && userDocuments.length < 4 && (
-                    <div 
+                    <div
                       onClick={() => userDocumentRef.current?.click()}
                       className="w-[150px] h-[200px] border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center cursor-pointer hover:border-[#296341] transition-colors"
                     >
@@ -1140,13 +1212,13 @@ const uploadImage = async (
                     ${item.total.toLocaleString()}
                   </div>
                   <div className="flex gap-6 sm:gap-4">
-                    <Edit2 
+                    <Edit2
                       onClick={() => handleEditItem(item)}
-                      className="w-6 h-6 text-gray-400 group-hover:text-[#296341] cursor-pointer transition-colors" 
+                      className="w-6 h-6 text-gray-400 group-hover:text-[#296341] cursor-pointer transition-colors"
                     />
-                    <Trash2 
+                    <Trash2
                       onClick={() => handleDeleteItem(item.id)}
-                      className="w-6 h-6 text-gray-400 group-hover:text-red-500 cursor-pointer transition-colors" 
+                      className="w-6 h-6 text-gray-400 group-hover:text-red-500 cursor-pointer transition-colors"
                     />
                   </div>
                 </div>
@@ -1236,13 +1308,13 @@ const uploadImage = async (
 
         {/* Action Buttons */}
         <div className="mt-16 flex flex-col sm:flex-row justify-center gap-4 md:gap-8">
-          <button 
+          <button
             onClick={resetForm}
             className="bg-gray-500 text-white px-12 md:px-16 py-3 rounded-lg text-lg md:text-[20px] font-bold tracking-widest hover:bg-gray-600 transition-all shadow-lg active:scale-95"
           >
             Reset
           </button>
-          <button 
+          <button
             onClick={() => setShowPreviewModal(true)}
             className="bg-[#1e4a2e] text-white px-12 md:px-16 py-3 rounded-lg text-lg md:text-[20px] font-bold tracking-widest hover:bg-emerald-800 transition-all shadow-lg active:scale-95 flex items-center justify-center gap-2"
           >
@@ -1280,7 +1352,7 @@ const uploadImage = async (
               <h3 className="text-[24px] font-bold text-[#296341]">
                 {editingItem ? 'Edit Item' : 'Add New Item'}
               </h3>
-              <button 
+              <button
                 onClick={() => {
                   setShowAddItemModal(false);
                   setEditingItem(null);
@@ -1295,8 +1367,8 @@ const uploadImage = async (
               <div className="space-y-2">
                 <label className="text-[14px] font-bold text-gray-500">Item Type</label>
                 <div className="relative">
-                  <select 
-                    value={newItemType} 
+                  <select
+                    value={newItemType}
                     onChange={(e) => setNewItemType(e.target.value)}
                     className="w-full h-[50px] border border-gray-200 rounded-lg px-4 text-[18px] font-bold appearance-none outline-none focus:ring-2 focus:ring-[#296341]"
                   >
@@ -1311,7 +1383,7 @@ const uploadImage = async (
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className="text-[14px] font-bold text-gray-500">Unit Price ($)</label>
-                  <input 
+                  <input
                     type="number"
                     value={newItemUnitPrice}
                     onChange={(e) => setNewItemUnitPrice(e.target.value)}
@@ -1323,7 +1395,7 @@ const uploadImage = async (
                 </div>
                 <div className="space-y-2">
                   <label className="text-[14px] font-bold text-gray-500">Quantity</label>
-                  <input 
+                  <input
                     type="number"
                     value={newItemQuantity}
                     onChange={(e) => setNewItemQuantity(e.target.value)}
@@ -1335,7 +1407,7 @@ const uploadImage = async (
               </div>
 
               <div className="flex items-center gap-3">
-                <input 
+                <input
                   type="checkbox"
                   id="isPaid"
                   checked={newItemIsPaid}
@@ -1357,7 +1429,7 @@ const uploadImage = async (
               )}
 
               <div className="flex gap-4 pt-4">
-                <button 
+                <button
                   onClick={() => {
                     setShowAddItemModal(false);
                     setEditingItem(null);
@@ -1366,7 +1438,7 @@ const uploadImage = async (
                 >
                   Cancel
                 </button>
-                <button 
+                <button
                   onClick={handleAddItem}
                   className="flex-1 py-3 rounded-lg bg-[#296341] text-white font-bold hover:bg-emerald-800 transition-colors"
                 >
@@ -1384,7 +1456,7 @@ const uploadImage = async (
           <div className="bg-white rounded-2xl p-6 md:p-8 w-full max-w-[800px] shadow-2xl max-h-[90vh] overflow-auto">
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-[24px] font-bold text-[#296341]">Booking Preview</h3>
-              <button 
+              <button
                 onClick={() => setShowPreviewModal(false)}
                 className="text-gray-400 hover:text-gray-600"
               >
@@ -1453,13 +1525,13 @@ const uploadImage = async (
               )}
 
               <div className="flex gap-4 pt-4">
-                <button 
+                <button
                   onClick={() => setShowPreviewModal(false)}
                   className="flex-1 py-3 rounded-lg border border-gray-300 text-gray-600 font-bold hover:bg-gray-50 transition-colors"
                 >
                   Close
                 </button>
-                <button 
+                <button
                   onClick={() => {
                     setShowPreviewModal(false);
                     handleSubmit();
