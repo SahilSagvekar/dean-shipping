@@ -5,7 +5,8 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth";
-import { uploadFile } from "@/lib/supabase";
+import { uploadToCloudinary } from "@/lib/cloudinary";
+
 import prisma from "@/lib/prisma";
 
 export async function POST(request: NextRequest) {
@@ -43,14 +44,16 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // Generate storage path
-        const ext = file.name.split(".").pop() || "jpg";
+        // Generate storage path/folder structure for Cloudinary
         const timestamp = Date.now();
-        const path = `${bookingType || "general"}/${bookingId}/${imageType}-${timestamp}.${ext}`;
+        const folder = `${bookingType || "general"}/${bookingId}`;
+        const filename = `${imageType}-${timestamp}`;
+        const path = `${folder}/${filename}`;
 
-        // Upload to Supabase Storage
+        // Upload to Cloudinary
         const buffer = Buffer.from(await file.arrayBuffer());
-        const publicUrl = await uploadFile(buffer, path, file.type);
+        const publicUrl = await uploadToCloudinary(buffer, path);
+
 
         // Save reference in database
         const imageData: any = {

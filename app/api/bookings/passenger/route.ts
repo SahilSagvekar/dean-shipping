@@ -7,9 +7,7 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { requireAuth, createAuditLog, getClientIp } from "@/lib/auth";
 
-function generateInvoiceNo(): string {
-    return Math.floor(10000000 + Math.random() * 90000000).toString();
-}
+import { getNextInvoiceNumber } from "@/lib/invoice";
 
 export async function GET(request: NextRequest) {
     const result = await requireAuth(request);
@@ -62,7 +60,8 @@ export async function POST(request: NextRequest) {
 
     try {
         const body = await request.json();
-        const invoiceNo = generateInvoiceNo();
+        const invoiceNo = await getNextInvoiceNumber();
+
 
         const {
             infantCount,
@@ -130,7 +129,8 @@ export async function POST(request: NextRequest) {
                     fromLocation,
                     toLocation,
                     idType: idType || "Passport",
-                    paymentStatus: paymentStatus || "UNPAID",
+                    paymentStatus: (paymentStatus || "UNPAID") as any,
+
                     totalAmount: grandTotal,
                     remark: remark || null,
                     // Create luggage items if provided
@@ -161,7 +161,8 @@ export async function POST(request: NextRequest) {
                     subtotal: amount,
                     vatAmount,
                     totalAmount: grandTotal,
-                    paymentStatus: paymentStatus || "UNPAID",
+                    paymentStatus: (paymentStatus || "UNPAID") as any,
+
                 },
             });
 

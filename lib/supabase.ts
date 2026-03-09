@@ -8,8 +8,22 @@ import { createClient } from "@supabase/supabase-js";
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
+// Helper to check if a key looks like a JWT (very basic check)
+function isJWT(key: string) {
+    if (!key) return false;
+    const parts = key.split(".");
+    return parts.length === 3;
+}
+
+if (!supabaseUrl || !supabaseServiceKey) {
+    console.error("CRITICAL: Supabase environment variables are missing.");
+} else if (!isJWT(supabaseServiceKey)) {
+    console.error("CRITICAL: SUPABASE_SERVICE_ROLE_KEY is not a valid JWT (Invalid Compact JWS).");
+}
+
 // Use service role key for server-side operations
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
 
 const BUCKET_NAME = "uploads";
 

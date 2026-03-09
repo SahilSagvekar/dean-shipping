@@ -27,13 +27,13 @@ export async function GET(request: NextRequest) {
     }
 
     const where: any = {};
-    
+
     if (voyageId) {
         where.voyageId = voyageId;
     } else if (voyageNo) {
         where.voyage = { voyageNo: parseInt(voyageNo) };
     }
-    
+
     if (status) where.status = status;
 
     const [items, total, voyage] = await Promise.all([
@@ -75,21 +75,21 @@ export async function GET(request: NextRequest) {
         prisma.manifestItem.count({ where }),
         voyageId
             ? prisma.voyage.findUnique({
-                  where: { id: voyageId },
-                  include: {
-                      from: { select: { code: true, name: true } },
-                      to: { select: { code: true, name: true } },
-                  },
-              })
+                where: { id: voyageId },
+                include: {
+                    from: { select: { code: true, name: true } },
+                    to: { select: { code: true, name: true } },
+                },
+            })
             : voyageNo
-            ? prisma.voyage.findUnique({
-                  where: { voyageNo: parseInt(voyageNo) },
-                  include: {
-                      from: { select: { code: true, name: true } },
-                      to: { select: { code: true, name: true } },
-                  },
-              })
-            : null,
+                ? prisma.voyage.findUnique({
+                    where: { voyageNo: parseInt(voyageNo) },
+                    include: {
+                        from: { select: { code: true, name: true } },
+                        to: { select: { code: true, name: true } },
+                    },
+                })
+                : null,
     ]);
 
     // Calculate summary
@@ -129,7 +129,19 @@ export async function POST(request: NextRequest) {
             notes,
         } = body;
 
-        if (!voyageId || !invoiceNo || !senderName || !itemDetails) {
+        // If invoiceNo is missing, try to fetch it from the linked booking
+        let finalInvoiceNo = invoiceNo;
+        if (!finalInvoiceNo && (cargoBookingId || passengerBookingId)) {
+            if (cargoBookingId) {
+                const booking = await prisma.cargoBooking.findUnique({ where: { id: cargoBookingId }, select: { invoiceNo: true } });
+                finalInvoiceNo = booking?.invoiceNo;
+            } else if (passengerBookingId) {
+                const booking = await prisma.passengerBooking.findUnique({ where: { id: passengerBookingId }, select: { invoiceNo: true } });
+                finalInvoiceNo = booking?.invoiceNo;
+            }
+        }
+
+        if (!voyageId || !finalInvoiceNo || !senderName || !itemDetails) {
             return NextResponse.json(
                 { error: "Missing required fields: voyageId, invoiceNo, senderName, itemDetails" },
                 { status: 400 }
@@ -147,7 +159,7 @@ export async function POST(request: NextRequest) {
                 voyageId,
                 cargoBookingId,
                 passengerBookingId,
-                invoiceNo,
+                invoiceNo: finalInvoiceNo,
                 senderName,
                 receiverName,
                 itemDetails,
@@ -159,6 +171,7 @@ export async function POST(request: NextRequest) {
                 voyage: { select: { voyageNo: true } },
             },
         });
+
 
         await createAuditLog({
             userId: result.user.id,

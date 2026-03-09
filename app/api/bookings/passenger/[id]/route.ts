@@ -8,6 +8,8 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { requireAuth, createAuditLog, getClientIp } from "@/lib/auth";
 
+import { syncInvoiceNumberEverywhere } from "@/lib/invoice";
+
 export async function GET(
     request: NextRequest,
     { params }: { params: Promise<{ id: string }> }
@@ -84,7 +86,14 @@ export async function PATCH(
                     paymentMode: body.paymentMode || undefined,
                 },
             });
+
+            // "Update Everywhere": Ensure all linked records have correct invoice number
+            await syncInvoiceNumberEverywhere({
+                passengerBookingId: id,
+                newInvoiceNo: existing.invoiceNo
+            });
         }
+
 
         await createAuditLog({
             userId: result.user.id,

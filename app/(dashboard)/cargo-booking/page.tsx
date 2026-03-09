@@ -17,7 +17,14 @@ import {
   X,
   Eye,
   Upload,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Snowflake,
+  Wind,
+  Package,
+  Briefcase,
+  Mail,
+  Layers,
+  MoreHorizontal
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { toast } from 'sonner';
@@ -26,6 +33,14 @@ import imgContainer from "@/app/assets/5edceaf79f7be705450710aa82c190c67fbcaf62.
 import imgPassport from "@/app/assets/bbad37ee24906289e97d640c601d7cafe55963b5.png";
 import imgIdCard from "@/app/assets/10ad04e365367f2edb1a23ad5021caa2d9bfde6f.png";
 import imgLogo from "@/app/assets/0630bc807bbd9122cb449e66c33d18d13536d121.png";
+
+// ============================================================================
+// TYPES & INTERFACES
+// ============================================================================
+
+type ServiceType = 'CONTAINER' | 'PALLET' | 'LUGGAGE' | 'BOX' | 'ENVELOPE' | 'BUNDLE' | 'OTHER';
+type BoxSubType = 'DRY' | 'FROZEN' | 'COOLER';
+type CargoSizeType = 'Small' | 'Medium' | 'Large';
 
 interface CargoItem {
   id: number;
@@ -51,6 +66,769 @@ interface UploadedImage {
   preview?: string;
 }
 
+interface ServiceConfig {
+  label: string;
+  icon: React.ReactNode;
+  headerBg: string;
+  accentColor: string;
+}
+
+// ============================================================================
+// SERVICE CONFIGURATIONS
+// ============================================================================
+
+const SERVICE_CONFIGS: Record<ServiceType, ServiceConfig> = {
+  CONTAINER: {
+    label: 'Container Entry',
+    icon: <Container className="w-8 h-8" />,
+    headerBg: 'from-emerald-600 to-emerald-800',
+    accentColor: '#296341'
+  },
+  PALLET: {
+    label: 'Pallet Entry',
+    icon: <Layers className="w-8 h-8" />,
+    headerBg: 'from-emerald-600 to-emerald-800',
+    accentColor: '#296341'
+  },
+  LUGGAGE: {
+    label: 'Luggage Entry',
+    icon: <Briefcase className="w-8 h-8" />,
+    headerBg: 'from-emerald-600 to-emerald-800',
+    accentColor: '#296341'
+  },
+  BOX: {
+    label: 'Box Entry',
+    icon: <Box className="w-8 h-8" />,
+    headerBg: 'from-emerald-600 to-emerald-800',
+    accentColor: '#296341'
+  },
+  ENVELOPE: {
+    label: 'Envelope',
+    icon: <Mail className="w-8 h-8" />,
+    headerBg: 'from-emerald-600 to-emerald-800',
+    accentColor: '#296341'
+  },
+  BUNDLE: {
+    label: 'Bundle Entry',
+    icon: <Package className="w-8 h-8" />,
+    headerBg: 'from-emerald-600 to-emerald-800',
+    accentColor: '#296341'
+  },
+  OTHER: {
+    label: 'Other',
+    icon: <MoreHorizontal className="w-8 h-8" />,
+    headerBg: 'from-emerald-600 to-emerald-800',
+    accentColor: '#296341'
+  }
+};
+
+const BOX_SUBTYPE_CONFIGS: Record<BoxSubType, { label: string; icon: React.ReactNode; bgColor: string }> = {
+  DRY: { label: 'Dry', icon: <Box className="w-6 h-6" />, bgColor: 'bg-gray-100' },
+  FROZEN: { label: 'Frozen', icon: <Snowflake className="w-6 h-6 text-cyan-500" />, bgColor: 'bg-cyan-50' },
+  COOLER: { label: 'Cooler', icon: <Wind className="w-6 h-6 text-blue-400" />, bgColor: 'bg-blue-50' }
+};
+
+const DAMAGE_TYPES = [
+  { value: '', label: 'None' },
+  { value: 'BROKEN', label: 'Broken' },
+  { value: 'IMPROPERLY_PACKAGED', label: 'Improperly Packaged' },
+  { value: 'ITEM_MISSING', label: 'Item Missing' },
+  { value: 'BENT', label: 'Bent' },
+  { value: 'SCRATCHED', label: 'Scratched' },
+  { value: 'DAMAGED', label: 'Damaged' },
+  { value: 'WET', label: 'Wet' },
+  { value: 'TORN', label: 'Torn' },
+  { value: 'OTHER', label: 'Other' }
+];
+
+const DAMAGE_LOCATIONS = [
+  { value: '', label: 'Select location' },
+  { value: 'LEFT_UPPER_CORNER', label: 'Left Upper Corner' },
+  { value: 'RIGHT_UPPER_CORNER', label: 'Right Upper Corner' },
+  { value: 'LEFT_LOWER_CORNER', label: 'Left Lower Corner' },
+  { value: 'RIGHT_LOWER_CORNER', label: 'Right Lower Corner' },
+  { value: 'TOP', label: 'Top' },
+  { value: 'BOTTOM', label: 'Bottom' },
+  { value: 'LEFT', label: 'Left' },
+  { value: 'RIGHT', label: 'Right' },
+  { value: 'LEFT_CENTER', label: 'Left Center' },
+  { value: 'RIGHT_CENTER', label: 'Right Center' },
+  { value: 'FRONT', label: 'Front' },
+  { value: 'BACK', label: 'Back' },
+  { value: 'MULTIPLE', label: 'Multiple Areas' }
+];
+
+// ============================================================================
+// REUSABLE FORM COMPONENTS
+// ============================================================================
+
+interface InputFieldProps {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+  type?: string;
+  required?: boolean;
+  className?: string;
+}
+
+const InputField = ({ label, value, onChange, placeholder, type = 'text', required, className = '' }: InputFieldProps) => (
+  <div className={`space-y-2 ${className}`}>
+    <label className="text-[14px] font-bold text-gray-500 uppercase tracking-wide">
+      {label} {required && <span className="text-red-500">*</span>}
+    </label>
+    <input
+      type={type}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      placeholder={placeholder}
+      className="w-full h-[48px] border-b-2 border-gray-200 outline-none focus:border-[#296341] text-[16px] font-medium transition-colors bg-transparent"
+    />
+  </div>
+);
+
+interface SelectFieldProps {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  options: { value: string; label: string }[];
+  required?: boolean;
+  className?: string;
+}
+
+const SelectField = ({ label, value, onChange, options, required, className = '' }: SelectFieldProps) => (
+  <div className={`space-y-2 ${className}`}>
+    <label className="text-[14px] font-bold text-gray-500 uppercase tracking-wide">
+      {label} {required && <span className="text-red-500">*</span>}
+    </label>
+    <div className="relative">
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full h-[48px] border-b-2 border-gray-200 outline-none focus:border-[#296341] text-[16px] font-bold appearance-none bg-transparent cursor-pointer transition-colors"
+      >
+        {options.map(opt => (
+          <option key={opt.value} value={opt.value}>{opt.label}</option>
+        ))}
+      </select>
+      <ChevronDown className="absolute right-0 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
+    </div>
+  </div>
+);
+
+interface BoxedInputFieldProps extends InputFieldProps {
+  icon?: React.ReactNode;
+}
+
+const BoxedInputField = ({ label, value, onChange, placeholder, type = 'text', required, icon, className = '' }: BoxedInputFieldProps) => (
+  <div className={`space-y-2 ${className}`}>
+    <label className="text-[14px] font-bold text-gray-500 uppercase tracking-wide">
+      {label} {required && <span className="text-red-500">*</span>}
+    </label>
+    <div className="relative">
+      {icon && (
+        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[#296341]">
+          {icon}
+        </div>
+      )}
+      <input
+        type={type}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        className={`w-full h-[48px] bg-white border border-gray-200 rounded-lg shadow-sm outline-none focus:ring-2 focus:ring-[#296341] text-[16px] font-medium transition-all ${icon ? 'pl-10 pr-4' : 'px-4'}`}
+      />
+    </div>
+  </div>
+);
+
+interface BoxedSelectFieldProps extends SelectFieldProps {
+  icon?: React.ReactNode;
+  disabled?: boolean;
+}
+
+const BoxedSelectField = ({ label, value, onChange, options, required, icon, disabled, className = '' }: BoxedSelectFieldProps) => (
+  <div className={`space-y-2 ${className}`}>
+    <label className="text-[14px] font-bold text-gray-500 uppercase tracking-wide flex items-center gap-2">
+      {icon && <span className="text-[#296341]">{icon}</span>}
+      {label} {required && <span className="text-red-500">*</span>}
+    </label>
+    <div className="relative">
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        disabled={disabled}
+        className="w-full h-[48px] bg-white border border-gray-200 rounded-lg shadow-sm outline-none focus:ring-2 focus:ring-[#296341] text-[16px] font-bold appearance-none px-4 cursor-pointer transition-all disabled:bg-gray-100 disabled:cursor-not-allowed"
+      >
+        {options.map(opt => (
+          <option key={opt.value} value={opt.value}>{opt.label}</option>
+        ))}
+      </select>
+      <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-[#296341] w-5 h-5 pointer-events-none" />
+    </div>
+  </div>
+);
+
+// Size & Flag Radio Group Component
+interface SizeFlagsProps {
+  size: CargoSizeType;
+  onSizeChange: (size: CargoSizeType) => void;
+  flags: { fragile: boolean; hazardous: boolean; live: boolean };
+  onFlagChange: (flag: 'fragile' | 'hazardous' | 'live', value: boolean) => void;
+}
+
+const SizeFlagsSection = ({ size, onSizeChange, flags, onFlagChange }: SizeFlagsProps) => {
+  const sizes: CargoSizeType[] = ['Small', 'Medium', 'Large'];
+  const flagOptions: { key: 'fragile' | 'hazardous' | 'live'; label: string }[] = [
+    { key: 'fragile', label: 'Fragile' },
+    { key: 'hazardous', label: 'Hazardous' },
+    { key: 'live', label: 'Live' }
+  ];
+
+  return (
+    <div className="grid grid-cols-2 md:grid-cols-3 gap-y-4 gap-x-8">
+      {/* Size options */}
+      {sizes.map((s) => (
+        <label key={s} className="flex items-center gap-3 cursor-pointer group">
+          <div
+            className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${size === s ? 'border-[#296341]' : 'border-gray-300 group-hover:border-gray-400'}`}
+            onClick={() => onSizeChange(s)}
+          >
+            {size === s && <div className="w-3 h-3 rounded-full bg-[#296341]" />}
+          </div>
+          <span className="text-[16px] font-medium text-gray-700 group-hover:text-black transition-colors">{s}</span>
+        </label>
+      ))}
+      {/* Flag options */}
+      {flagOptions.map(({ key, label }) => (
+        <label key={key} className="flex items-center gap-3 cursor-pointer group">
+          <div
+            className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${flags[key] ? 'border-[#296341]' : 'border-gray-300 group-hover:border-gray-400'}`}
+            onClick={() => onFlagChange(key, !flags[key])}
+          >
+            {flags[key] && <div className="w-3 h-3 rounded-full bg-[#296341]" />}
+          </div>
+          <span className="text-[16px] font-medium text-gray-700 group-hover:text-black transition-colors">{label}</span>
+        </label>
+      ))}
+    </div>
+  );
+};
+
+// Deficiency Section Component
+interface DeficiencySectionProps {
+  damageFound: string;
+  onDamageFoundChange: (value: string) => void;
+  damageLocation: string;
+  onDamageLocationChange: (value: string) => void;
+  comment: string;
+  onCommentChange: (value: string) => void;
+  showDamageLocation?: boolean;
+}
+
+const DeficiencySection = ({
+  damageFound,
+  onDamageFoundChange,
+  damageLocation,
+  onDamageLocationChange,
+  comment,
+  onCommentChange,
+  showDamageLocation = true
+}: DeficiencySectionProps) => (
+  <div className="bg-[#f0f7f3] rounded-2xl p-6 space-y-6">
+    <h3 className="text-[20px] font-bold text-[#296341] border-b-2 border-[#296341] pb-2 inline-block">
+      DEFICIENCY
+    </h3>
+    <div className="space-y-4">
+      <SelectField
+        label="Damages Found"
+        value={damageFound}
+        onChange={onDamageFoundChange}
+        options={DAMAGE_TYPES}
+      />
+      {damageFound && (
+        <p className="text-sm text-gray-500 italic">
+          {DAMAGE_TYPES.filter(d => d.value && d.value !== damageFound).map(d => d.label).join(', ')}
+        </p>
+      )}
+      {showDamageLocation && (
+        <SelectField
+          label="Damage Location"
+          value={damageLocation}
+          onChange={onDamageLocationChange}
+          options={DAMAGE_LOCATIONS}
+        />
+      )}
+    </div>
+  </div>
+);
+
+// ============================================================================
+// SERVICE-SPECIFIC FORM SECTIONS
+// ============================================================================
+
+interface ContainerFormProps {
+  containerNo: string;
+  setContainerNo: (v: string) => void;
+  chassisNo: string;
+  setChassisNo: (v: string) => void;
+  temperature: string;
+  setTemperature: (v: string) => void;
+  size: string;
+  setSize: (v: string) => void;
+  containerType: string;
+  setContainerType: (v: string) => void;
+  value: string;
+  setValue: (v: string) => void;
+  price: string;
+  setPrice: (v: string) => void;
+  contents: string;
+  setContents: (v: string) => void;
+}
+
+const ContainerFormFields = ({
+  containerNo, setContainerNo,
+  chassisNo, setChassisNo,
+  temperature, setTemperature,
+  size, setSize,
+  containerType, setContainerType,
+  value, setValue,
+  price, setPrice,
+  contents, setContents
+}: ContainerFormProps) => (
+  <div className="space-y-8">
+    <h3 className="text-[20px] font-bold text-gray-800 uppercase tracking-wide">Container Inspection</h3>
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <InputField label="Container#" value={containerNo} onChange={setContainerNo} placeholder="e.g., 134" />
+      <InputField label="Chassis#" value={chassisNo} onChange={setChassisNo} placeholder="e.g., 2" />
+      <InputField label="Temperature" value={temperature} onChange={setTemperature} placeholder="e.g., 70°" />
+    </div>
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <InputField label="Value" value={value} onChange={setValue} placeholder="$5,000" />
+      <SelectField
+        label="Size"
+        value={size}
+        onChange={setSize}
+        options={[
+          { value: '', label: 'Select size' },
+          { value: '20FT', label: '20 FT' },
+          { value: '40FT', label: '40 FT' },
+          { value: '40FT_HC', label: '40 FT HC' },
+          { value: '45FT', label: '45 FT' }
+        ]}
+      />
+      <SelectField
+        label="Type"
+        value={containerType}
+        onChange={setContainerType}
+        options={[
+          { value: '', label: 'Select type' },
+          { value: 'DRY', label: 'Dry' },
+          { value: 'REEFER', label: 'Reefer' },
+          { value: 'OPEN_TOP', label: 'Open Top' },
+          { value: 'FLAT_RACK', label: 'Flat Rack' }
+        ]}
+      />
+    </div>
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <InputField label="Price" value={price} onChange={setPrice} placeholder="$500" />
+    </div>
+    <InputField label="Contents" value={contents} onChange={setContents} placeholder="Describe container contents..." />
+  </div>
+);
+
+interface PalletFormProps {
+  palletNo: string;
+  setPalletNo: (v: string) => void;
+  reeferNo: string;
+  setReeferNo: (v: string) => void;
+  containerNo: string;
+  setContainerNo: (v: string) => void;
+  height: string;
+  setHeight: (v: string) => void;
+  palletType: string;
+  setPalletType: (v: string) => void;
+  deckNo: string;
+  setDeckNo: (v: string) => void;
+  cargoSize: CargoSizeType;
+  setCargoSize: (v: CargoSizeType) => void;
+  flags: { fragile: boolean; hazardous: boolean; live: boolean };
+  setFlags: (flags: { fragile: boolean; hazardous: boolean; live: boolean }) => void;
+  value: string;
+  setValue: (v: string) => void;
+  price: string;
+  setPrice: (v: string) => void;
+}
+
+const PalletFormFields = ({
+  palletNo, setPalletNo,
+  reeferNo, setReeferNo,
+  containerNo, setContainerNo,
+  height, setHeight,
+  palletType, setPalletType,
+  deckNo, setDeckNo,
+  cargoSize, setCargoSize,
+  flags, setFlags,
+  value, setValue,
+  price, setPrice
+}: PalletFormProps) => (
+  <div className="space-y-8">
+    <h3 className="text-[20px] font-bold text-gray-800 uppercase tracking-wide">Pallet Inspection</h3>
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <InputField label="Pallet#" value={palletNo} onChange={setPalletNo} placeholder="Enter pallet number" />
+      <InputField label="Reefer#" value={reeferNo} onChange={setReeferNo} placeholder="e.g., 2" />
+      <InputField label="Container#" value={containerNo} onChange={setContainerNo} placeholder="e.g., 2" />
+    </div>
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <SelectField
+        label="Height"
+        value={height}
+        onChange={setHeight}
+        options={[
+          { value: '', label: 'Select height' },
+          { value: '4ft', label: '4 ft' },
+          { value: '5ft', label: '5 ft' },
+          { value: '6ft', label: '6 ft' }
+        ]}
+      />
+      <SelectField
+        label="Type"
+        value={palletType}
+        onChange={setPalletType}
+        options={[
+          { value: 'DRY', label: 'Dry' },
+          { value: 'FROZEN', label: 'Frozen' },
+          { value: 'REFRIGERATED', label: 'Refrigerated' }
+        ]}
+      />
+      <InputField label="Deck#" value={deckNo} onChange={setDeckNo} placeholder="e.g., 2" />
+    </div>
+    
+    <SizeFlagsSection
+      size={cargoSize}
+      onSizeChange={setCargoSize}
+      flags={flags}
+      onFlagChange={(flag, val) => setFlags({ ...flags, [flag]: val })}
+    />
+
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <InputField label="Value" value={value} onChange={setValue} placeholder="Enter value" />
+      <InputField label="Price" value={price} onChange={setPrice} placeholder="Enter price" />
+    </div>
+  </div>
+);
+
+interface LuggageFormProps {
+  material: string;
+  setMaterial: (v: string) => void;
+  color: string;
+  setColor: (v: string) => void;
+  luggageType: string;
+  setLuggageType: (v: string) => void;
+  cargoSize: CargoSizeType;
+  setCargoSize: (v: CargoSizeType) => void;
+  flags: { fragile: boolean; hazardous: boolean; live: boolean };
+  setFlags: (flags: { fragile: boolean; hazardous: boolean; live: boolean }) => void;
+  value: string;
+  setValue: (v: string) => void;
+  price: string;
+  setPrice: (v: string) => void;
+}
+
+const LuggageFormFields = ({
+  material, setMaterial,
+  color, setColor,
+  luggageType, setLuggageType,
+  cargoSize, setCargoSize,
+  flags, setFlags,
+  value, setValue,
+  price, setPrice
+}: LuggageFormProps) => (
+  <div className="space-y-8">
+    <h3 className="text-[20px] font-bold text-gray-800 uppercase tracking-wide">Luggage Inspection</h3>
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <InputField label="Material" value={material} onChange={setMaterial} placeholder="e.g., Leather, Fabric" />
+      <SelectField
+        label="Color"
+        value={color}
+        onChange={setColor}
+        options={[
+          { value: '', label: 'Select color' },
+          { value: 'BLACK', label: 'Black' },
+          { value: 'BROWN', label: 'Brown' },
+          { value: 'BLUE', label: 'Blue' },
+          { value: 'RED', label: 'Red' },
+          { value: 'GREEN', label: 'Green' },
+          { value: 'GRAY', label: 'Gray' },
+          { value: 'WHITE', label: 'White' },
+          { value: 'OTHER', label: 'Other' }
+        ]}
+      />
+      <InputField label="Type" value={luggageType} onChange={setLuggageType} placeholder="e.g., Suitcase, Duffel" />
+    </div>
+
+    <SizeFlagsSection
+      size={cargoSize}
+      onSizeChange={setCargoSize}
+      flags={flags}
+      onFlagChange={(flag, val) => setFlags({ ...flags, [flag]: val })}
+    />
+
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <InputField label="Value" value={value} onChange={setValue} placeholder="Enter value" />
+      <InputField label="Price" value={price} onChange={setPrice} placeholder="Enter price" />
+    </div>
+  </div>
+);
+
+interface BoxFormProps {
+  boxSubType: BoxSubType;
+  setBoxSubType: (v: BoxSubType) => void;
+  cargoSize: CargoSizeType;
+  setCargoSize: (v: CargoSizeType) => void;
+  flags: { fragile: boolean; hazardous: boolean; live: boolean };
+  setFlags: (flags: { fragile: boolean; hazardous: boolean; live: boolean }) => void;
+  value: string;
+  setValue: (v: string) => void;
+  price: string;
+  setPrice: (v: string) => void;
+  palletNo: string;
+  setPalletNo: (v: string) => void;
+}
+
+const BoxFormFields = ({
+  boxSubType, setBoxSubType,
+  cargoSize, setCargoSize,
+  flags, setFlags,
+  value, setValue,
+  price, setPrice,
+  palletNo, setPalletNo
+}: BoxFormProps) => (
+  <div className="space-y-8">
+    {/* Box Sub-Type Selector */}
+    <div className="space-y-4">
+      <h3 className="text-[20px] font-bold text-gray-800 uppercase tracking-wide">Select Box Type</h3>
+      <div className="grid grid-cols-3 gap-4">
+        {(Object.keys(BOX_SUBTYPE_CONFIGS) as BoxSubType[]).map((subType) => {
+          const config = BOX_SUBTYPE_CONFIGS[subType];
+          const isSelected = boxSubType === subType;
+          return (
+            <button
+              key={subType}
+              onClick={() => setBoxSubType(subType)}
+              className={`relative p-4 rounded-xl border-2 transition-all flex items-center gap-3 ${
+                isSelected
+                  ? 'border-[#296341] bg-[#eef6f2] shadow-md'
+                  : 'border-gray-200 bg-white hover:border-gray-300'
+              }`}
+            >
+              <div className={`p-2 rounded-lg ${config.bgColor}`}>
+                {config.icon}
+              </div>
+              <span className="font-bold text-gray-700">{config.label}</span>
+              {isSelected && (
+                <div className="absolute top-2 right-2 w-3 h-3 rounded-full bg-[#296341]" />
+              )}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+
+    <h3 className="text-[20px] font-bold text-gray-800 uppercase tracking-wide">Item Inspection</h3>
+
+    <SizeFlagsSection
+      size={cargoSize}
+      onSizeChange={setCargoSize}
+      flags={flags}
+      onFlagChange={(flag, val) => setFlags({ ...flags, [flag]: val })}
+    />
+
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <InputField label="Value" value={value} onChange={setValue} placeholder="Enter value" />
+      <InputField label="Price" value={price} onChange={setPrice} placeholder="Enter price" />
+      <InputField label="Pallet#" value={palletNo} onChange={setPalletNo} placeholder="Enter pallet number" />
+    </div>
+  </div>
+);
+
+interface EnvelopeFormProps {
+  envelopeType: string;
+  setEnvelopeType: (v: string) => void;
+  value: string;
+  setValue: (v: string) => void;
+  price: string;
+  setPrice: (v: string) => void;
+}
+
+const EnvelopeFormFields = ({
+  envelopeType, setEnvelopeType,
+  value, setValue,
+  price, setPrice
+}: EnvelopeFormProps) => {
+  const envelopeTypes = ['Small Box', 'Envelope', 'Parcel'];
+
+  return (
+    <div className="space-y-8">
+      <h3 className="text-[20px] font-bold text-gray-800 uppercase tracking-wide">Item Inspection</h3>
+      
+      {/* Envelope Type Radio Selection */}
+      <div className="flex gap-8">
+        {envelopeTypes.map((type) => (
+          <label key={type} className="flex items-center gap-3 cursor-pointer group">
+            <div
+              className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
+                envelopeType === type ? 'border-[#296341]' : 'border-gray-300 group-hover:border-gray-400'
+              }`}
+              onClick={() => setEnvelopeType(type)}
+            >
+              {envelopeType === type && <div className="w-3 h-3 rounded-full bg-[#296341]" />}
+            </div>
+            <span className="text-[16px] font-medium text-gray-700 group-hover:text-black transition-colors">
+              {type}
+            </span>
+          </label>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <InputField label="Value" value={value} onChange={setValue} placeholder="Enter value" />
+        <InputField label="Price" value={price} onChange={setPrice} placeholder="Enter price" />
+      </div>
+    </div>
+  );
+};
+
+interface BundleFormProps {
+  material: string;
+  setMaterial: (v: string) => void;
+  quantity: string;
+  setQuantity: (v: string) => void;
+  length: string;
+  setLength: (v: string) => void;
+  bundleSize: string;
+  setBundleSize: (v: string) => void;
+  deckNo: string;
+  setDeckNo: (v: string) => void;
+  flags: { fragile: boolean; hazardous: boolean; live: boolean };
+  setFlags: (flags: { fragile: boolean; hazardous: boolean; live: boolean }) => void;
+  value: string;
+  setValue: (v: string) => void;
+  price: string;
+  setPrice: (v: string) => void;
+  itemLocation: string;
+  setItemLocation: (v: string) => void;
+  itemNumber: string;
+  setItemNumber: (v: string) => void;
+}
+
+const BundleFormFields = ({
+  material, setMaterial,
+  quantity, setQuantity,
+  length, setLength,
+  bundleSize, setBundleSize,
+  deckNo, setDeckNo,
+  flags, setFlags,
+  value, setValue,
+  price, setPrice,
+  itemLocation, setItemLocation,
+  itemNumber, setItemNumber
+}: BundleFormProps) => (
+  <div className="space-y-8">
+    <h3 className="text-[20px] font-bold text-gray-800 uppercase tracking-wide">Bundle Inspection</h3>
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <InputField label="Material" value={material} onChange={setMaterial} placeholder="e.g., Wood, Metal" />
+      <InputField label="Quantity" value={quantity} onChange={setQuantity} placeholder="Enter quantity" type="number" />
+      <InputField label="Length" value={length} onChange={setLength} placeholder="e.g., 4'" />
+    </div>
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <InputField label="Size" value={bundleSize} onChange={setBundleSize} placeholder={'e.g., 1" x 4"'} />
+      <InputField label="Deck#" value={deckNo} onChange={setDeckNo} placeholder="Enter deck number" />
+    </div>
+
+    <div className="flex gap-8">
+      {['Fragile', 'Hazardous', 'Live'].map((flag) => {
+        const key = flag.toLowerCase() as 'fragile' | 'hazardous' | 'live';
+        return (
+          <label key={flag} className="flex items-center gap-3 cursor-pointer group">
+            <div
+              className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
+                flags[key] ? 'border-[#296341]' : 'border-gray-300 group-hover:border-gray-400'
+              }`}
+              onClick={() => setFlags({ ...flags, [key]: !flags[key] })}
+            >
+              {flags[key] && <div className="w-3 h-3 rounded-full bg-[#296341]" />}
+            </div>
+            <span className="text-[16px] font-medium text-gray-700 group-hover:text-black transition-colors">{flag}</span>
+          </label>
+        );
+      })}
+    </div>
+
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <InputField label="Value" value={value} onChange={setValue} placeholder="Enter value" />
+      <InputField label="Price" value={price} onChange={setPrice} placeholder="Enter price" />
+    </div>
+
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <SelectField
+        label="Item Location"
+        value={itemLocation}
+        onChange={setItemLocation}
+        options={[
+          { value: '', label: 'Select location' },
+          { value: 'PALLET', label: 'Pallet' },
+          { value: 'CONTAINER', label: 'Container' },
+          { value: 'DECK', label: 'Deck' }
+        ]}
+      />
+      <InputField label="Item Number" value={itemNumber} onChange={setItemNumber} placeholder="e.g., 14" />
+    </div>
+  </div>
+);
+
+interface OtherFormProps {
+  itemName: string;
+  setItemName: (v: string) => void;
+  cargoSize: CargoSizeType;
+  setCargoSize: (v: CargoSizeType) => void;
+  flags: { fragile: boolean; hazardous: boolean; live: boolean };
+  setFlags: (flags: { fragile: boolean; hazardous: boolean; live: boolean }) => void;
+  value: string;
+  setValue: (v: string) => void;
+  price: string;
+  setPrice: (v: string) => void;
+}
+
+const OtherFormFields = ({
+  itemName, setItemName,
+  cargoSize, setCargoSize,
+  flags, setFlags,
+  value, setValue,
+  price, setPrice
+}: OtherFormProps) => (
+  <div className="space-y-8">
+    <h3 className="text-[20px] font-bold text-gray-800 uppercase tracking-wide">Item Inspection</h3>
+    <InputField label="Item" value={itemName} onChange={setItemName} placeholder="Identify Item" />
+
+    <SizeFlagsSection
+      size={cargoSize}
+      onSizeChange={setCargoSize}
+      flags={flags}
+      onFlagChange={(flag, val) => setFlags({ ...flags, [flag]: val })}
+    />
+
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <InputField label="Value" value={value} onChange={setValue} placeholder="Enter value" />
+      <InputField label="Price" value={price} onChange={setPrice} placeholder="Enter price" />
+    </div>
+  </div>
+);
+
+// ============================================================================
+// MAIN COMPONENT
+// ============================================================================
+
 export default function CargoBooking() {
   const { apiFetch, user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -60,50 +838,79 @@ export default function CargoBooking() {
   const [selectedVoyageId, setSelectedVoyageId] = useState("");
   const [isLoadingVoyages, setIsLoadingVoyages] = useState(false);
 
-  // Form State
-  const [service, setService] = useState('CONTAINER');
-  const [cargoSize, setCargoSize] = useState('Medium');
-  const [quantity, setQuantity] = useState("");
-  const [pallets, setPallets] = useState("");
-  const [type, setType] = useState("DRY");
-  const [containerNo, setContainerNo] = useState("");
-  const [size, setSize] = useState("");
-  const [height, setHeight] = useState("");
-  const [reefer, setReefer] = useState("");
-  const [material, setMaterial] = useState("");
-  const [color, setColor] = useState("");
-  const [chassisNo, setChassisNo] = useState("");
-  const [temperature, setTemperature] = useState("");
-  const [decksNo, setDecksNo] = useState("");
-  const [boxContains, setBoxContains] = useState("");
-  const [voyageNo, setVoyageNo] = useState("");
+  // =========== SERVICE TYPE STATE ===========
+  const [service, setService] = useState<ServiceType>('CONTAINER');
+  const [boxSubType, setBoxSubType] = useState<BoxSubType>('DRY');
 
-  const [bookingDate, setBookingDate] = useState(new Date().toISOString().split('T')[0]);
+  // =========== COMMON FORM STATE ===========
+  const [cargoSize, setCargoSize] = useState<CargoSizeType>('Medium');
+  const [flags, setFlags] = useState({ fragile: false, hazardous: false, live: false });
+  const [value, setValue] = useState("");
+  const [price, setPrice] = useState("");
   const [fromLocation, setFromLocation] = useState("");
   const [toLocation, setToLocation] = useState("");
+  const [bookingDate, setBookingDate] = useState(new Date().toISOString().split('T')[0]);
+  const [voyageNo, setVoyageNo] = useState("");
 
+  // =========== CONTAINER SPECIFIC ===========
+  const [containerNo, setContainerNo] = useState("");
+  const [chassisNo, setChassisNo] = useState("");
+  const [temperature, setTemperature] = useState("");
+  const [containerSize, setContainerSize] = useState("");
+  const [containerType, setContainerType] = useState("");
+  const [contents, setContents] = useState("");
+
+  // =========== PALLET SPECIFIC ===========
+  const [palletNo, setPalletNo] = useState("");
+  const [reeferNo, setReeferNo] = useState("");
+  const [palletHeight, setPalletHeight] = useState("");
+  const [palletType, setPalletType] = useState("DRY");
+  const [deckNo, setDeckNo] = useState("");
+
+  // =========== LUGGAGE SPECIFIC ===========
+  const [material, setMaterial] = useState("");
+  const [color, setColor] = useState("");
+  const [luggageType, setLuggageType] = useState("");
+
+  // =========== ENVELOPE SPECIFIC ===========
+  const [envelopeType, setEnvelopeType] = useState("Envelope");
+
+  // =========== BUNDLE SPECIFIC ===========
+  const [bundleQuantity, setBundleQuantity] = useState("");
+  const [bundleLength, setBundleLength] = useState("");
+  const [bundleSize, setBundleSize] = useState("");
+  const [itemLocation, setItemLocation] = useState("");
+  const [itemNumber, setItemNumber] = useState("");
+
+  // =========== OTHER SPECIFIC ===========
+  const [itemName, setItemName] = useState("");
+
+  // =========== DEFICIENCY STATE ===========
+  const [damageFound, setDamageFound] = useState("");
+  const [damageLocation, setDamageLocation] = useState("");
+  const [comment, setComment] = useState("");
+
+  // =========== USER DETAILS STATE ===========
   const [contactName, setContactName] = useState("");
   const [contactEmail, setContactEmail] = useState("");
   const [contactPhone, setContactPhone] = useState("");
   const [address, setAddress] = useState("");
   const [idType, setIdType] = useState("Passport");
 
-  const [damageFound, setDamageFound] = useState("");
-  const [damageLocation, setDamageLocation] = useState("");
-  const [comment, setComment] = useState("");
+  // =========== PAYMENT & REMARKS ===========
   const [paymentStatus, setPaymentStatus] = useState("UNPAID");
   const [remark, setRemark] = useState("");
 
-  // Items state
+  // =========== ITEMS STATE ===========
   const [items, setItems] = useState<CargoItem[]>([]);
 
-  // Image upload state
+  // =========== IMAGE UPLOAD STATE ===========
   const [containerImages, setContainerImages] = useState<UploadedImage[]>([]);
   const [userDocuments, setUserDocuments] = useState<UploadedImage[]>([]);
   const containerImageRef = useRef<HTMLInputElement>(null);
   const userDocumentRef = useRef<HTMLInputElement>(null);
 
-  // Modal states
+  // =========== MODAL STATES ===========
   const [showAddItemModal, setShowAddItemModal] = useState(false);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [editingItem, setEditingItem] = useState<CargoItem | null>(null);
@@ -112,7 +919,7 @@ export default function CargoBooking() {
   const [newItemQuantity, setNewItemQuantity] = useState("");
   const [newItemIsPaid, setNewItemIsPaid] = useState(false);
 
-  // Created booking state
+  // =========== CREATED BOOKING STATE ===========
   const [createdBooking, setCreatedBooking] = useState<any>(null);
 
   // Set user details when user loads
@@ -171,6 +978,9 @@ export default function CargoBooking() {
     fetchVoyages();
   }, [apiFetch]);
 
+  // Get current service config
+  const currentServiceConfig = SERVICE_CONFIGS[service];
+
   // Calculate totals
   const calculateTotals = () => {
     const subtotal = items.reduce((sum, item) => sum + item.total, 0);
@@ -190,7 +1000,7 @@ export default function CargoBooking() {
         const preview = URL.createObjectURL(file);
         newImages.push({
           id: `img-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-          url: '', // Will be set after upload
+          url: '',
           file,
           preview,
         });
@@ -200,7 +1010,6 @@ export default function CargoBooking() {
     setContainerImages([...containerImages, ...newImages]);
     toast.success(`${newImages.length} image(s) added`);
 
-    // Reset input
     if (containerImageRef.current) {
       containerImageRef.current.value = '';
     }
@@ -241,30 +1050,6 @@ export default function CargoBooking() {
     setUserDocuments(userDocuments.filter(doc => doc.id !== id));
     toast.success("Document removed");
   };
-
-  // Upload image to server (you'll need to implement this endpoint)
-  // const uploadImage = async (file: File): Promise<string> => {
-  //   const formData = new FormData();
-  //   formData.append('file', file);
-  //   formData.append('folder', 'cargo-bookings');
-
-  //   try {
-  //     const res = await apiFetch('/api/upload', {
-  //       method: 'POST',
-  //       body: formData,
-  //       // Don't set Content-Type header - browser will set it with boundary
-  //     });
-
-  //     if (res.ok) {
-  //       const data = await res.json();
-  //       return data.url;
-  //     }
-  //     throw new Error('Upload failed');
-  //   } catch (error) {
-  //     console.error('Upload error:', error);
-  //     throw error;
-  //   }
-  // };
 
   // Add/Edit Item Handler
   const handleAddItem = () => {
@@ -309,7 +1094,6 @@ export default function CargoBooking() {
       toast.success("Item added successfully");
     }
 
-    // Reset modal
     setShowAddItemModal(false);
     setEditingItem(null);
     setNewItemType("DRY BOX(S)");
@@ -332,9 +1116,44 @@ export default function CargoBooking() {
     toast.success("Item removed");
   };
 
-  // Reset Form
+  // Reset Form - resets service-specific fields based on current service
+  const resetServiceFields = () => {
+    // Reset common fields
+    setCargoSize('Medium');
+    setFlags({ fragile: false, hazardous: false, live: false });
+    setValue("");
+    setPrice("");
+    setDamageFound("");
+    setDamageLocation("");
+    setComment("");
+    
+    // Reset service-specific fields
+    setContainerNo("");
+    setChassisNo("");
+    setTemperature("");
+    setContainerSize("");
+    setContainerType("");
+    setContents("");
+    setPalletNo("");
+    setReeferNo("");
+    setPalletHeight("");
+    setPalletType("DRY");
+    setDeckNo("");
+    setMaterial("");
+    setColor("");
+    setLuggageType("");
+    setEnvelopeType("Envelope");
+    setBundleQuantity("");
+    setBundleLength("");
+    setBundleSize("");
+    setItemLocation("");
+    setItemNumber("");
+    setItemName("");
+    setBoxSubType('DRY');
+  };
+
+  // Reset entire form
   const resetForm = () => {
-    // Show confirmation
     if (items.length > 0 || containerImages.length > 0 || userDocuments.length > 0) {
       if (!confirm("Are you sure you want to reset the form? All data will be lost.")) {
         return;
@@ -342,25 +1161,10 @@ export default function CargoBooking() {
     }
 
     setService('CONTAINER');
-    setCargoSize('Medium');
-    setQuantity("");
-    setPallets("");
-    setType("DRY");
-    setContainerNo("");
-    setSize("");
-    setHeight("");
-    setReefer("");
-    setMaterial("");
-    setColor("");
-    setChassisNo("");
-    setTemperature("");
-    setDecksNo("");
-    setBoxContains("");
-    setVoyageNo("");
+    resetServiceFields();
     setBookingDate(new Date().toISOString().split('T')[0]);
-    setDamageFound("");
-    setDamageLocation("");
-    setComment("");
+    setVoyageNo("");
+    setSelectedVoyageId("");
     setPaymentStatus("UNPAID");
     setRemark("");
     setItems([]);
@@ -378,7 +1182,7 @@ export default function CargoBooking() {
     toast.success("Form has been reset");
   };
 
-  // Form Validation with toast messages
+  // Form Validation
   const validateForm = (): boolean => {
     const errors: string[] = [];
 
@@ -402,30 +1206,54 @@ export default function CargoBooking() {
   // Handle Form Submission
   const handleSubmit = async () => {
     if (!validateForm()) {
-      console.log("Validation failed");
       return;
     }
 
     setIsSubmitting(true);
 
     try {
-      // First, create the booking WITHOUT images
       const payload = {
         service,
+        boxSubType: service === 'BOX' ? boxSubType : null,
         cargoSize: cargoSize.toUpperCase(),
-        quantity: quantity ? parseInt(quantity) : null,
-        pallets: pallets ? parseInt(pallets) : null,
-        type,
-        containerNo: containerNo || null,
-        size: size || null,
-        height: height || null,
-        reeferNo: reefer || null,
-        material: material || null,
-        color: color || null,
-        chassisNo: chassisNo || null,
-        temperature: temperature || null,
-        decksNo: decksNo || null,
-        boxContains: boxContains || null,
+        flags,
+        value: value || null,
+        price: price || null,
+        
+        // Container specific
+        containerNo: service === 'CONTAINER' || service === 'PALLET' ? containerNo || null : null,
+        chassisNo: service === 'CONTAINER' ? chassisNo || null : null,
+        temperature: service === 'CONTAINER' ? temperature || null : null,
+        size: service === 'CONTAINER' ? containerSize || null : null,
+        containerType: service === 'CONTAINER' ? containerType || null : null,
+        contents: service === 'CONTAINER' ? contents || null : null,
+        
+        // Pallet specific
+        palletNo: ['PALLET', 'BOX'].includes(service) ? palletNo || null : null,
+        reeferNo: service === 'PALLET' ? reeferNo || null : null,
+        height: service === 'PALLET' ? palletHeight || null : null,
+        palletType: service === 'PALLET' ? palletType || null : null,
+        decksNo: ['PALLET', 'BUNDLE'].includes(service) ? deckNo || null : null,
+        
+        // Luggage specific
+        material: ['LUGGAGE', 'BUNDLE'].includes(service) ? material || null : null,
+        color: service === 'LUGGAGE' ? color || null : null,
+        luggageType: service === 'LUGGAGE' ? luggageType || null : null,
+        
+        // Envelope specific
+        envelopeType: service === 'ENVELOPE' ? envelopeType || null : null,
+        
+        // Bundle specific
+        bundleQuantity: service === 'BUNDLE' ? bundleQuantity || null : null,
+        bundleLength: service === 'BUNDLE' ? bundleLength || null : null,
+        bundleSize: service === 'BUNDLE' ? bundleSize || null : null,
+        itemLocation: service === 'BUNDLE' ? itemLocation || null : null,
+        itemNumber: service === 'BUNDLE' ? itemNumber || null : null,
+        
+        // Other specific
+        itemName: service === 'OTHER' ? itemName || null : null,
+        
+        // Common fields
         voyageId: selectedVoyageId || null,
         voyageNo: voyageNo || null,
         bookingDate,
@@ -448,7 +1276,6 @@ export default function CargoBooking() {
           total: item.total,
           isPaid: item.isPaid
         })),
-        // Don't send images here initially
         containerImages: [],
         userDocuments: [],
       };
@@ -464,7 +1291,6 @@ export default function CargoBooking() {
       });
 
       const data = await res.json();
-      console.log("Response:", data);
 
       if (!res.ok) {
         if (data.errors && Array.isArray(data.errors)) {
@@ -475,11 +1301,10 @@ export default function CargoBooking() {
         return;
       }
 
-      // Booking created successfully, now upload images
+      // Upload images after booking creation
       const bookingId = data.booking.id;
       let uploadErrors = 0;
 
-      // Upload container images
       for (const img of containerImages) {
         if (img.file) {
           try {
@@ -491,7 +1316,6 @@ export default function CargoBooking() {
         }
       }
 
-      // Upload user documents
       for (const doc of userDocuments) {
         if (doc.file) {
           try {
@@ -520,7 +1344,6 @@ export default function CargoBooking() {
     }
   };
 
-  // Updated upload function with required parameters
   const uploadImage = async (
     file: File,
     bookingId: string,
@@ -550,18 +1373,175 @@ export default function CargoBooking() {
     throw new Error(errorData.error || 'Upload failed');
   };
 
-  const cargoRadioTypes = ['Small', 'Medium', 'Large', 'Fragile', 'Hazardous', 'Live'];
-  const itemTypes = ['DRY BOX(S)', 'FROZEN BOX(S)', 'CONTAINER', 'PALLET', 'CRATE', 'OTHER'];
+  const itemTypes = ['DRY BOX(S)', 'FROZEN BOX(S)', 'COOLER BOX(S)', 'CONTAINER (20FT)', 'CONTAINER (40FT)', 'PALLET', 'LUGGAGE', 'BUNDLE', 'PARCEL', 'ENVELOPE', 'OTHER'];
   const { subtotal, vatAmount, grandTotal } = calculateTotals();
 
-  // Get location name by code
   const getLocationName = (code: string) => {
     const loc = locations.find(l => l.code === code);
     return loc ? `${loc.code} - ${loc.name}` : code;
   };
 
+  // Get the title for the current service
+  const getServiceTitle = () => {
+    if (service === 'BOX') {
+      return `${BOX_SUBTYPE_CONFIGS[boxSubType].label.toUpperCase()} ENTRY`;
+    }
+    return currentServiceConfig.label.toUpperCase();
+  };
+
+  // Render service-specific form fields
+  const renderServiceFields = () => {
+    switch (service) {
+      case 'CONTAINER':
+        return (
+          <ContainerFormFields
+            containerNo={containerNo}
+            setContainerNo={setContainerNo}
+            chassisNo={chassisNo}
+            setChassisNo={setChassisNo}
+            temperature={temperature}
+            setTemperature={setTemperature}
+            size={containerSize}
+            setSize={setContainerSize}
+            containerType={containerType}
+            setContainerType={setContainerType}
+            value={value}
+            setValue={setValue}
+            price={price}
+            setPrice={setPrice}
+            contents={contents}
+            setContents={setContents}
+          />
+        );
+
+      case 'PALLET':
+        return (
+          <PalletFormFields
+            palletNo={palletNo}
+            setPalletNo={setPalletNo}
+            reeferNo={reeferNo}
+            setReeferNo={setReeferNo}
+            containerNo={containerNo}
+            setContainerNo={setContainerNo}
+            height={palletHeight}
+            setHeight={setPalletHeight}
+            palletType={palletType}
+            setPalletType={setPalletType}
+            deckNo={deckNo}
+            setDeckNo={setDeckNo}
+            cargoSize={cargoSize}
+            setCargoSize={setCargoSize}
+            flags={flags}
+            setFlags={setFlags}
+            value={value}
+            setValue={setValue}
+            price={price}
+            setPrice={setPrice}
+          />
+        );
+
+      case 'LUGGAGE':
+        return (
+          <LuggageFormFields
+            material={material}
+            setMaterial={setMaterial}
+            color={color}
+            setColor={setColor}
+            luggageType={luggageType}
+            setLuggageType={setLuggageType}
+            cargoSize={cargoSize}
+            setCargoSize={setCargoSize}
+            flags={flags}
+            setFlags={setFlags}
+            value={value}
+            setValue={setValue}
+            price={price}
+            setPrice={setPrice}
+          />
+        );
+
+      case 'BOX':
+        return (
+          <BoxFormFields
+            boxSubType={boxSubType}
+            setBoxSubType={setBoxSubType}
+            cargoSize={cargoSize}
+            setCargoSize={setCargoSize}
+            flags={flags}
+            setFlags={setFlags}
+            value={value}
+            setValue={setValue}
+            price={price}
+            setPrice={setPrice}
+            palletNo={palletNo}
+            setPalletNo={setPalletNo}
+          />
+        );
+
+      case 'ENVELOPE':
+        return (
+          <EnvelopeFormFields
+            envelopeType={envelopeType}
+            setEnvelopeType={setEnvelopeType}
+            value={value}
+            setValue={setValue}
+            price={price}
+            setPrice={setPrice}
+          />
+        );
+
+      case 'BUNDLE':
+        return (
+          <BundleFormFields
+            material={material}
+            setMaterial={setMaterial}
+            quantity={bundleQuantity}
+            setQuantity={setBundleQuantity}
+            length={bundleLength}
+            setLength={setBundleLength}
+            bundleSize={bundleSize}
+            setBundleSize={setBundleSize}
+            deckNo={deckNo}
+            setDeckNo={setDeckNo}
+            flags={flags}
+            setFlags={setFlags}
+            value={value}
+            setValue={setValue}
+            price={price}
+            setPrice={setPrice}
+            itemLocation={itemLocation}
+            setItemLocation={setItemLocation}
+            itemNumber={itemNumber}
+            setItemNumber={setItemNumber}
+          />
+        );
+
+      case 'OTHER':
+        return (
+          <OtherFormFields
+            itemName={itemName}
+            setItemName={setItemName}
+            cargoSize={cargoSize}
+            setCargoSize={setCargoSize}
+            flags={flags}
+            setFlags={setFlags}
+            value={value}
+            setValue={setValue}
+            price={price}
+            setPrice={setPrice}
+          />
+        );
+
+      default:
+        return null;
+    }
+  };
+
+  // Check if deficiency section should show damage location (Container has more detailed damage locations)
+  const shouldShowDamageLocation = ['CONTAINER', 'PALLET', 'BUNDLE'].includes(service);
+
   return (
-    <div>
+    <div className="min-h-screen bg-gray-50">
       {/* Hidden file inputs */}
       <input
         type="file"
@@ -580,766 +1560,436 @@ export default function CargoBooking() {
         className="hidden"
       />
 
-      {/* Hero Illustration */}
-      <div className="flex justify-center mb-6 px-4 sm:px-8">
-        <img
-          src={imgCargoShip.src}
-          alt="Cargo Booking Illustration"
-          className="w-full max-w-[800px] h-auto object-contain"
-        />
+      {/* Hero Section with Service Title */}
+      <div className={`bg-gradient-to-r ${currentServiceConfig.headerBg} text-white py-8 px-4 sm:px-8`}>
+        <div className="max-w-[1400px] mx-auto">
+          <div className="flex items-center gap-4 mb-4">
+            <button className="p-2 hover:bg-white/10 rounded-lg transition-colors">
+              <ChevronDown className="w-6 h-6 rotate-90" />
+            </button>
+            <span className="text-sm font-medium uppercase tracking-wider opacity-80">ENTRY</span>
+          </div>
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-white/20 rounded-xl">
+              {service === 'BOX' ? BOX_SUBTYPE_CONFIGS[boxSubType].icon : currentServiceConfig.icon}
+            </div>
+            <h1 className="text-3xl md:text-4xl font-black tracking-wide">
+              {getServiceTitle()}
+            </h1>
+          </div>
+        </div>
       </div>
 
-      <main className="max-w-[1400px] mx-auto px-4 sm:px-8 pb-32 flex-1 w-full relative">
-        {/* Title Section */}
-        <div className="mb-6 md:mb-10 text-center md:text-left">
-          <h1 className="text-2xl md:text-[32px] font-bold text-black tracking-wide">
-            <span className="border-b-4 border-black pb-1">CARGO</span> BOOKING
-          </h1>
-        </div>
-
-        {/* Form Section */}
-        <div className="space-y-10 max-w-[1100px]">
-          {/* Service Dropdown */}
+      <main className="max-w-[1400px] mx-auto px-4 sm:px-8 py-8 pb-32">
+        {/* Service Type Selector */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-8">
           <div className="flex flex-col md:flex-row md:items-center gap-4 md:gap-6">
-            <label className="text-lg md:text-[20px] font-bold text-gray-800 md:min-w-[80px]">
-              Service <span className="text-red-500">*</span>
+            <label className="text-lg font-bold text-gray-800 md:min-w-[120px]">
+              Service Type <span className="text-red-500">*</span>
             </label>
-            <div className="relative w-full max-w-[500px]">
-              <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-2 text-[#296341]">
-                <Container className="w-5 h-5" />
+            <div className="relative w-full max-w-[400px]">
+              <div className="absolute left-4 top-1/2 -translate-y-1/2 text-[#296341]">
+                {currentServiceConfig.icon}
               </div>
               <select
                 value={service}
-                onChange={(e) => setService(e.target.value)}
-                className="w-full h-12 md:h-[54px] bg-[#eef6f2] border border-[#d1e5da] rounded-md pl-14 pr-10 text-base md:text-[18px] font-bold text-[#244234] appearance-none outline-none focus:ring-2 focus:ring-[#296341]"
+                onChange={(e) => {
+                  setService(e.target.value as ServiceType);
+                  resetServiceFields();
+                }}
+                className="w-full h-14 bg-[#eef6f2] border border-[#d1e5da] rounded-xl pl-14 pr-12 text-lg font-bold text-[#244234] appearance-none outline-none focus:ring-2 focus:ring-[#296341] cursor-pointer transition-all"
               >
-                <option value="CONTAINER">CONTAINER</option>
-                <option value="PALLET">PALLET</option>
-                <option value="BOX">BOX</option>
+                <option value="CONTAINER">Container</option>
+                <option value="PALLET">Pallet</option>
+                <option value="LUGGAGE">Luggage</option>
+                <option value="BOX">Box</option>
+                <option value="ENVELOPE">Envelope</option>
+                <option value="BUNDLE">Bundle</option>
+                <option value="OTHER">Other</option>
               </select>
-              <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-[#296341]" />
+              <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-[#296341] w-5 h-5 pointer-events-none" />
             </div>
           </div>
+        </div>
 
-          {/* Radio Grid (2x3) */}
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-y-4 gap-x-12 max-w-[900px]">
-            {cargoRadioTypes.map((sizeType) => (
-              <label key={sizeType} className="flex items-center gap-4 cursor-pointer group">
-                <div
-                  className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${cargoSize === sizeType ? 'border-[#296341]' : 'border-gray-300'}`}
-                  onClick={() => setCargoSize(sizeType)}
-                >
-                  {cargoSize === sizeType && <div className="w-3 h-3 rounded-full bg-[#296341]" />}
-                </div>
-                <span className="text-[18px] font-medium text-gray-700 group-hover:text-black">{sizeType}</span>
-              </label>
-            ))}
+        {/* Dynamic Form Section */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8 mb-8">
+          {renderServiceFields()}
+        </div>
+
+        {/* Deficiency Section */}
+        {['CONTAINER', 'PALLET', 'LUGGAGE', 'BUNDLE'].includes(service) && (
+          <div className="mb-8">
+            <DeficiencySection
+              damageFound={damageFound}
+              onDamageFoundChange={setDamageFound}
+              damageLocation={damageLocation}
+              onDamageLocationChange={setDamageLocation}
+              comment={comment}
+              onCommentChange={setComment}
+              showDamageLocation={shouldShowDamageLocation}
+            />
           </div>
+        )}
 
-          <div className="h-px bg-gray-200 w-full" />
-
-          {/* Detailed Form Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        {/* From / To / Date Section */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <BoxedSelectField
+              label="From"
+              value={fromLocation}
+              onChange={setFromLocation}
+              icon={<MapPin className="w-5 h-5 fill-[#296341]/10" />}
+              disabled={isLoadingLocations}
+              required
+              options={
+                isLoadingLocations
+                  ? [{ value: '', label: 'Loading...' }]
+                  : locations.length === 0
+                    ? [{ value: '', label: 'No locations available' }]
+                    : (selectedVoyageId
+                      ? upcomingVoyages.find(v => v.id === selectedVoyageId)?.stops.map((s: any) => ({
+                        value: s.location.code,
+                        label: `${s.location.code} - ${s.location.name}`
+                      })) || locations.map(loc => ({ value: loc.code, label: `${loc.code} - ${loc.name}` }))
+                      : locations.map(loc => ({ value: loc.code, label: `${loc.code} - ${loc.name}` }))
+                    )
+              }
+            />
+            <BoxedSelectField
+              label="To"
+              value={toLocation}
+              onChange={setToLocation}
+              icon={<MapPin className="w-5 h-5 fill-[#296341]/10" />}
+              disabled={isLoadingLocations}
+              required
+              options={
+                isLoadingLocations
+                  ? [{ value: '', label: 'Loading...' }]
+                  : locations.length === 0
+                    ? [{ value: '', label: 'No locations available' }]
+                    : (selectedVoyageId
+                      ? upcomingVoyages.find(v => v.id === selectedVoyageId)?.stops.map((s: any) => ({
+                        value: s.location.code,
+                        label: `${s.location.code} - ${s.location.name}`
+                      })) || locations.map(loc => ({ value: loc.code, label: `${loc.code} - ${loc.name}` }))
+                      : locations.map(loc => ({ value: loc.code, label: `${loc.code} - ${loc.name}` }))
+                    )
+              }
+            />
             <div className="space-y-2">
-              <label className="text-[16px] font-bold text-gray-500">Quantity</label>
-              <input
-                type="number"
-                value={quantity}
-                onChange={(e) => setQuantity(e.target.value)}
-                placeholder="Enter quantity"
-                className="w-full h-[45px] border-b border-gray-300 outline-none focus:border-[#296341] text-[18px] py-2"
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-[16px] font-bold text-gray-500">Pallets#</label>
-              <input
-                type="number"
-                value={pallets}
-                onChange={(e) => setPallets(e.target.value)}
-                placeholder="Number of pallets"
-                className="w-full h-[45px] border-b border-gray-300 outline-none focus:border-[#296341] text-[18px] py-2"
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-[16px] font-bold text-gray-500">Type</label>
-              <div className="relative">
-                <select
-                  value={type}
-                  onChange={(e) => setType(e.target.value)}
-                  className="w-full h-[45px] border-b border-gray-300 outline-none focus:border-[#296341] text-[18px] py-2 appearance-none font-bold"
-                >
-                  <option value="DRY">DRY</option>
-                  <option value="FROZEN">FROZEN</option>
-                  <option value="REFRIGERATED">REFRIGERATED</option>
-                  <option value="HAZARDOUS">HAZARDOUS</option>
-                </select>
-                <ChevronDown className="absolute right-0 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-[16px] font-bold text-gray-500">Container#</label>
-              <input
-                value={containerNo}
-                onChange={(e) => setContainerNo(e.target.value)}
-                placeholder="Container number"
-                className="w-full h-[45px] border-b border-gray-300 outline-none focus:border-[#296341] text-[18px] py-2 font-bold"
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-[16px] font-bold text-gray-500">Size</label>
-              <div className="relative">
-                <select
-                  value={size}
-                  onChange={(e) => setSize(e.target.value)}
-                  className="w-full h-[45px] border-b border-gray-300 outline-none focus:border-[#296341] text-[18px] py-2 appearance-none font-bold"
-                >
-                  <option value="">Select size</option>
-                  <option value="20FT">20 FT</option>
-                  <option value="40FT">40 FT</option>
-                  <option value="40FT_HC">40 FT HC</option>
-                  <option value="45FT">45 FT</option>
-                </select>
-                <ChevronDown className="absolute right-0 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <label className="text-[16px] font-bold text-gray-500">Height</label>
-              <div className="relative">
-                <select
-                  value={height}
-                  onChange={(e) => setHeight(e.target.value)}
-                  className="w-full h-[45px] border-b border-gray-300 outline-none focus:border-[#296341] text-[18px] py-2 appearance-none font-bold"
-                >
-                  <option value="">Select height</option>
-                  <option value="STANDARD">Standard (8'6")</option>
-                  <option value="HIGH_CUBE">High Cube (9'6")</option>
-                </select>
-                <ChevronDown className="absolute right-0 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-[16px] font-bold text-gray-500">Reefer#</label>
-              <input
-                value={reefer}
-                onChange={(e) => setReefer(e.target.value)}
-                placeholder="Reefer number"
-                className="w-full h-[45px] border-b border-gray-300 outline-none focus:border-[#296341] text-[18px] py-2"
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-[16px] font-bold text-gray-500">Material</label>
-              <input
-                value={material}
-                onChange={(e) => setMaterial(e.target.value)}
-                placeholder="Material type"
-                className="w-full h-[45px] border-b border-gray-300 outline-none focus:border-[#296341] text-[18px] py-2"
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-[16px] font-bold text-gray-500">Color</label>
-              <div className="relative">
-                <select
-                  value={color}
-                  onChange={(e) => setColor(e.target.value)}
-                  className="w-full h-[45px] border-b border-gray-300 outline-none focus:border-[#296341] text-[18px] py-2 appearance-none font-bold"
-                >
-                  <option value="">Select color</option>
-                  <option value="WHITE">White</option>
-                  <option value="BLUE">Blue</option>
-                  <option value="GREEN">Green</option>
-                  <option value="RED">Red</option>
-                  <option value="GRAY">Gray</option>
-                </select>
-                <ChevronDown className="absolute right-0 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-[16px] font-bold text-gray-500">Chassis#</label>
-              <input
-                value={chassisNo}
-                onChange={(e) => setChassisNo(e.target.value)}
-                placeholder="Chassis number"
-                className="w-full h-[45px] border border-gray-200 rounded-md px-4 shadow-sm outline-none focus:ring-2 focus:ring-[#296341] text-[18px]"
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-[16px] font-bold text-gray-500">Temperature</label>
-              <input
-                value={temperature}
-                onChange={(e) => setTemperature(e.target.value)}
-                placeholder="e.g., -18°C"
-                className="w-full h-[45px] border border-gray-200 rounded-md px-4 shadow-sm outline-none focus:ring-2 focus:ring-[#296341] text-[18px]"
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-[16px] font-bold text-gray-500">Decks#</label>
-              <input
-                value={decksNo}
-                onChange={(e) => setDecksNo(e.target.value)}
-                placeholder="Number of decks"
-                className="w-full h-[45px] border border-gray-200 rounded-md px-4 shadow-sm outline-none focus:ring-2 focus:ring-[#296341] text-[18px]"
-              />
-            </div>
-          </div>
-
-          <div className="h-px bg-gray-200 w-full" />
-
-          {/* Date / Location row */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="space-y-2">
-              <label className="text-[18px] font-bold text-gray-700">
+              <label className="text-[14px] font-bold text-gray-500 uppercase tracking-wide flex items-center gap-2">
+                <Calendar className="w-5 h-5 text-[#296341]" />
                 Date <span className="text-red-500">*</span>
               </label>
-              <div className="relative">
-                <input
-                  type="date"
-                  value={bookingDate}
-                  onChange={(e) => setBookingDate(e.target.value)}
-                  min={new Date().toISOString().split('T')[0]}
-                  className="w-full h-[50px] bg-white border border-gray-200 rounded-md px-4 shadow-sm outline-none focus:ring-2 focus:ring-[#296341] text-[18px]"
-                />
-                <Calendar className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <label className="text-[18px] font-bold text-gray-700 flex items-center gap-2">
-                <MapPin className="text-[#296341] w-5 h-5 fill-[#296341]/10" />
-                From <span className="text-red-500">*</span>
-              </label>
-              <div className="relative">
-                <select
-                  value={fromLocation}
-                  onChange={(e) => setFromLocation(e.target.value)}
-                  disabled={isLoadingLocations}
-                  className="w-full h-[50px] bg-white border border-gray-200 rounded-md px-4 shadow-sm appearance-none outline-none focus:ring-2 focus:ring-[#296341] text-[18px] font-bold disabled:bg-gray-100"
-                >
-                  {isLoadingLocations ? (
-                    <option>Loading...</option>
-                  ) : locations.length === 0 ? (
-                    <option>No locations available</option>
-                  ) : (
-                    // If a voyage is selected, only show locations from its stops
-                    (selectedVoyageId
-                      ? upcomingVoyages.find(v => v.id === selectedVoyageId)?.stops.map((s: any) => ({
-                        code: s.location.code,
-                        name: s.location.name,
-                        id: s.location.id
-                      })) || locations
-                      : locations
-                    ).map((loc: any) => (
-                      <option key={loc.id} value={loc.code}>{loc.code} - {loc.name}</option>
-                    ))
-                  )}
-                </select>
-                <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-[#296341]" />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <label className="text-[18px] font-bold text-gray-700 flex items-center gap-2">
-                <MapPin className="text-[#296341] w-5 h-5 fill-[#296341]/10" />
-                To <span className="text-red-500">*</span>
-              </label>
-              <div className="relative">
-                <select
-                  value={toLocation}
-                  onChange={(e) => setToLocation(e.target.value)}
-                  disabled={isLoadingLocations}
-                  className="w-full h-[50px] bg-white border border-gray-200 rounded-md px-4 shadow-sm appearance-none outline-none focus:ring-2 focus:ring-[#296341] text-[18px] font-bold disabled:bg-gray-100"
-                >
-                  {isLoadingLocations ? (
-                    <option>Loading...</option>
-                  ) : locations.length === 0 ? (
-                    <option>No locations available</option>
-                  ) : (
-                    // If a voyage is selected, only show locations from its stops
-                    (selectedVoyageId
-                      ? upcomingVoyages.find(v => v.id === selectedVoyageId)?.stops.map((s: any) => ({
-                        code: s.location.code,
-                        name: s.location.name,
-                        id: s.location.id
-                      })) || locations
-                      : locations
-                    ).map((loc: any) => (
-                      <option key={loc.id} value={loc.code}>{loc.code} - {loc.name}</option>
-                    ))
-                  )}
-                </select>
-                <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-[#296341]" />
-              </div>
-            </div>
-          </div>
-
-          {/* Voyage Picker */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="md:col-span-2 space-y-2">
-              <label className="text-[18px] font-bold text-gray-700">Select Voyage <span className="text-red-500">*</span></label>
-              <div className="relative">
-                <select
-                  value={selectedVoyageId}
-                  onChange={(e) => {
-                    const vid = e.target.value;
-                    setSelectedVoyageId(vid);
-                    const v = upcomingVoyages.find(voy => voy.id === vid);
-                    if (v) {
-                      setVoyageNo(String(v.voyageNo));
-                      setBookingDate(new Date(v.date).toISOString().split('T')[0]);
-                      if (v.stops && v.stops.length >= 2) {
-                        setFromLocation(v.stops[0].location.code);
-                        setToLocation(v.stops[v.stops.length - 1].location.code);
-                      }
-                    }
-                  }}
-                  disabled={isLoadingVoyages}
-                  className="w-full h-[50px] bg-white border border-gray-200 rounded-md px-4 shadow-sm appearance-none outline-none focus:ring-2 focus:ring-[#296341] text-[18px] font-bold disabled:bg-gray-100"
-                >
-                  <option value="">-- Select an upcoming voyage --</option>
-                  {upcomingVoyages.map(v => (
-                    <option key={v.id} value={v.id}>
-                      Voyage #{v.voyageNo} - {v.shipName} ({new Date(v.date).toLocaleDateString()}) - {v.from.code} to {v.to.code}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-[#296341]" />
-              </div>
-              {isLoadingVoyages && <p className="text-sm text-gray-500">Loading voyages...</p>}
-            </div>
-            <div className="space-y-2">
-              <label className="text-[18px] font-bold text-gray-700">Voyage Number</label>
               <input
-                value={voyageNo}
-                onChange={(e) => setVoyageNo(e.target.value)}
-                placeholder="e.g., 209"
-                className="w-full h-[50px] bg-white border border-gray-200 rounded-md px-4 shadow-sm outline-none focus:ring-2 focus:ring-[#296341] text-[18px]"
+                type="date"
+                value={bookingDate}
+                onChange={(e) => setBookingDate(e.target.value)}
+                min={new Date().toISOString().split('T')[0]}
+                className="w-full h-[48px] bg-white border border-gray-200 rounded-lg px-4 shadow-sm outline-none focus:ring-2 focus:ring-[#296341] text-[16px] font-medium"
               />
             </div>
           </div>
+        </div>
 
-          {/* Container Image Gallery */}
-          <div className="space-y-4 pt-6">
-            <h3 className="text-[20px] font-bold text-gray-700">Container Images</h3>
-            <div className="flex flex-col sm:flex-row gap-4 items-start">
-              <div className="flex sm:flex-col gap-4 mt-2 w-full sm:w-auto justify-center">
-                <button
-                  onClick={() => containerImageRef.current?.click()}
-                  className="w-12 h-12 flex items-center justify-center bg-[#eef6f2] rounded-lg hover:bg-[#d1e5da] transition-colors"
-                >
-                  <Camera className="w-6 h-6 text-[#296341]" />
-                </button>
-                <button
-                  onClick={() => containerImageRef.current?.click()}
-                  className="w-12 h-12 flex items-center justify-center bg-[#eef6f2] rounded-lg hover:bg-[#d1e5da] transition-colors"
-                >
-                  <Paperclip className="w-6 h-6 text-[#296341]" />
-                </button>
-              </div>
+        {/* Image Upload Section */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8 mb-8">
+          <h3 className="text-[20px] font-bold text-gray-800 mb-6">Photos</h3>
+          <div className="flex flex-col sm:flex-row gap-4 items-start">
+            <div className="flex sm:flex-col gap-4">
+              <button
+                onClick={() => containerImageRef.current?.click()}
+                className="w-14 h-14 flex items-center justify-center bg-[#eef6f2] rounded-xl hover:bg-[#d1e5da] transition-colors border-2 border-dashed border-[#296341]/30"
+              >
+                <Camera className="w-6 h-6 text-[#296341]" />
+              </button>
+              <button
+                onClick={() => containerImageRef.current?.click()}
+                className="w-14 h-14 flex items-center justify-center bg-[#eef6f2] rounded-xl hover:bg-[#d1e5da] transition-colors border-2 border-dashed border-[#296341]/30"
+              >
+                <Paperclip className="w-6 h-6 text-[#296341]" />
+              </button>
+            </div>
 
-              <div className="flex flex-wrap gap-4 flex-1 w-full">
-                {containerImages.length === 0 ? (
-                  <div
-                    onClick={() => containerImageRef.current?.click()}
-                    className="w-full h-[200px] border-2 border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center cursor-pointer hover:border-[#296341] transition-colors"
-                  >
-                    <Upload className="w-12 h-12 text-gray-400 mb-2" />
-                    <p className="text-gray-500">Click to upload container images</p>
-                  </div>
-                ) : (
-                  containerImages.map((img, index) => (
-                    <div key={img.id} className="relative w-[150px] h-[150px] rounded-lg overflow-hidden border border-gray-200 shadow-sm group">
+            <div className="flex flex-wrap gap-4 flex-1 w-full">
+              {containerImages.length === 0 ? (
+                <div
+                  onClick={() => containerImageRef.current?.click()}
+                  className="w-full h-[180px] border-2 border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center cursor-pointer hover:border-[#296341] transition-colors bg-gray-50"
+                >
+                  <Upload className="w-10 h-10 text-gray-400 mb-2" />
+                  <p className="text-gray-500 font-medium">Click to upload images</p>
+                </div>
+              ) : (
+                <>
+                  {containerImages.map((img, index) => (
+                    <div key={img.id} className="relative w-[140px] h-[140px] rounded-xl overflow-hidden border border-gray-200 shadow-sm group">
                       <img
                         src={img.preview || img.url || imgContainer.src}
-                        alt={`Container ${index + 1}`}
+                        alt={`Upload ${index + 1}`}
                         className="w-full h-full object-cover"
                       />
                       <button
                         onClick={() => removeContainerImage(img.id)}
-                        className="absolute top-2 right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="absolute top-2 right-2 w-7 h-7 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
                       >
                         <X className="w-4 h-4" />
                       </button>
-                      {index === 0 && (
-                        <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs text-center py-1">
-                          Main Image
+                      {containerImages.length > 4 && index === 3 && (
+                        <div className="absolute inset-0 bg-black/60 flex items-center justify-center text-white font-bold text-xl">
+                          +{containerImages.length - 4}
                         </div>
                       )}
                     </div>
-                  ))
-                )}
-                {containerImages.length > 0 && (
-                  <div
-                    onClick={() => containerImageRef.current?.click()}
-                    className="w-[150px] h-[150px] border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center cursor-pointer hover:border-[#296341] transition-colors"
-                  >
-                    <Plus className="w-8 h-8 text-gray-400" />
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Box Contains row */}
-          <div className="space-y-2 pt-4 border-b border-gray-100 pb-4">
-            <label className="text-[18px] font-bold text-gray-500">Box Contains</label>
-            <input
-              value={boxContains}
-              onChange={(e) => setBoxContains(e.target.value)}
-              placeholder="e.g., clothing, shoes, non-perishables"
-              className="w-full h-[45px] border-b border-gray-300 outline-none focus:border-[#296341] text-[18px] py-2"
-            />
-          </div>
-
-          {/* Deficiency Section */}
-          <div className="space-y-6 pt-6">
-            <h2 className="text-[26px] font-bold text-[#296341]">DEFICIENCY</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              <div className="space-y-1">
-                <label className="text-[14px] font-bold text-gray-500">Damage Found</label>
-                <div className="relative">
-                  <select
-                    value={damageFound}
-                    onChange={(e) => setDamageFound(e.target.value)}
-                    className="w-full h-[45px] border-b border-gray-300 outline-none focus:border-[#296341] text-[18px] font-bold appearance-none bg-transparent"
-                  >
-                    <option value="">None</option>
-                    <option value="BROKEN">Broken</option>
-                    <option value="SCRATCHED">Scratched</option>
-                    <option value="DENTED">Dented</option>
-                    <option value="WET">Wet</option>
-                    <option value="TORN">Torn</option>
-                    <option value="OTHER">Other</option>
-                  </select>
-                  <ChevronDown className="absolute right-0 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-                </div>
-              </div>
-              <div className="space-y-1">
-                <label className="text-[14px] font-bold text-gray-500">Damage Location</label>
-                <div className="relative">
-                  <select
-                    value={damageLocation}
-                    onChange={(e) => setDamageLocation(e.target.value)}
-                    className="w-full h-[45px] border-b border-gray-300 outline-none focus:border-[#296341] text-[18px] font-bold appearance-none bg-transparent"
-                  >
-                    <option value="">Select location</option>
-                    <option value="TOP">Top</option>
-                    <option value="BOTTOM">Bottom</option>
-                    <option value="LEFT">Left</option>
-                    <option value="RIGHT">Right</option>
-                    <option value="LEFT_CENTER">Left Center</option>
-                    <option value="RIGHT_CENTER">Right Center</option>
-                    <option value="FRONT">Front</option>
-                    <option value="BACK">Back</option>
-                    <option value="MULTIPLE">Multiple Areas</option>
-                  </select>
-                  <ChevronDown className="absolute right-0 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-                </div>
-              </div>
-              <div className="space-y-1">
-                <label className="text-[14px] font-bold text-gray-500">Comment</label>
-                <input
-                  value={comment}
-                  onChange={(e) => setComment(e.target.value)}
-                  placeholder="Describe the deficiency..."
-                  className="w-full h-[45px] border-b border-gray-300 outline-none focus:border-[#296341] text-[18px]"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Add Item Button */}
-          <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 py-6">
-            <button
-              onClick={() => {
-                setEditingItem(null);
-                setNewItemType("DRY BOX(S)");
-                setNewItemUnitPrice("");
-                setNewItemQuantity("");
-                setNewItemIsPaid(false);
-                setShowAddItemModal(true);
-              }}
-              className="bg-[#132540] text-white px-8 md:px-12 py-3 rounded-lg text-lg md:text-[22px] font-bold hover:bg-[#1a3254] transition-all shadow-md active:scale-95 flex items-center justify-center gap-3"
-            >
-              <Plus className="w-6 h-6" /> ADD ITEM <span className="text-red-300">*</span>
-            </button>
-          </div>
-
-          <div className="h-0.5 bg-gray-200 w-full" />
-
-          {/* User Details */}
-          <div className="space-y-8">
-            <h2 className="text-[26px] font-bold text-[#296341]">USER DETAILS</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
-              <div className="space-y-2 border-l-4 border-gray-100 pl-4">
-                <label className="text-[14px] font-bold text-gray-500">
-                  Full Name <span className="text-red-500">*</span>
-                </label>
-                <input
-                  value={contactName}
-                  onChange={(e) => setContactName(e.target.value)}
-                  placeholder="Enter full name"
-                  className="w-full h-[45px] text-[18px] font-bold uppercase outline-none border-b border-transparent focus:border-[#296341]"
-                />
-              </div>
-              <div className="space-y-2 border-l-4 border-gray-100 pl-4">
-                <label className="text-[14px] font-bold text-gray-500">Address</label>
-                <input
-                  value={address}
-                  onChange={(e) => setAddress(e.target.value)}
-                  placeholder="Enter address"
-                  className="w-full h-[45px] text-[18px] font-bold outline-none border-b border-transparent focus:border-[#296341]"
-                />
-              </div>
-              <div className="space-y-2 border-l-4 border-gray-100 pl-4">
-                <label className="text-[14px] font-bold text-gray-500">Email Address</label>
-                <input
-                  type="email"
-                  value={contactEmail}
-                  onChange={(e) => setContactEmail(e.target.value)}
-                  placeholder="Enter email"
-                  className="w-full h-[45px] bg-[#f9fafb] border border-gray-100 rounded-md px-4 shadow-sm outline-none focus:ring-2 focus:ring-[#296341]"
-                />
-              </div>
-              <div className="space-y-2 border-l-4 border-gray-100 pl-4">
-                <label className="text-[14px] font-bold text-gray-500">Contact Number</label>
-                <input
-                  type="tel"
-                  value={contactPhone}
-                  onChange={(e) => setContactPhone(e.target.value)}
-                  placeholder="Enter phone number"
-                  className="w-full h-[45px] bg-[#f9fafb] border border-gray-100 rounded-md px-4 shadow-sm outline-none focus:ring-2 focus:ring-[#296341]"
-                />
-              </div>
-              <div className="flex items-center gap-4">
-                <span className="text-[16px] font-bold text-gray-600">ID Type :</span>
-                <div className="relative flex-1">
-                  <select
-                    value={idType}
-                    onChange={(e) => setIdType(e.target.value)}
-                    className="w-full h-[45px] bg-white border border-gray-100 rounded-md px-4 shadow-sm appearance-none outline-none focus:ring-2 focus:ring-[#296341] font-bold"
-                  >
-                    <option value="Passport">Passport</option>
-                    <option value="Driver License">Driver License</option>
-                    <option value="National ID">National ID</option>
-                    <option value="Other">Other</option>
-                  </select>
-                  <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-[#296341]" />
-                </div>
-              </div>
-            </div>
-
-            {/* User Document Upload */}
-            <div className="space-y-4 pt-6">
-              <h3 className="text-[20px] font-bold text-gray-700">Identity Documents</h3>
-              <div className="flex flex-col sm:flex-row gap-4 items-start">
-                <div className="flex sm:flex-col gap-4 mt-2 w-full sm:w-auto justify-center">
-                  <button
-                    onClick={() => userDocumentRef.current?.click()}
-                    className="w-12 h-12 flex items-center justify-center bg-[#eef6f2] rounded-lg hover:bg-[#d1e5da] transition-colors"
-                  >
-                    <Camera className="w-6 h-6 text-[#296341]" />
-                  </button>
-                  <button
-                    onClick={() => userDocumentRef.current?.click()}
-                    className="w-12 h-12 flex items-center justify-center bg-[#eef6f2] rounded-lg hover:bg-[#d1e5da] transition-colors"
-                  >
-                    <Paperclip className="w-6 h-6 text-[#296341]" />
-                  </button>
-                </div>
-
-                <div className="flex flex-wrap gap-4 flex-1 w-full">
-                  {userDocuments.length === 0 ? (
+                  ))}
+                  {containerImages.length > 0 && (
                     <div
-                      onClick={() => userDocumentRef.current?.click()}
-                      className="w-full h-[200px] border-2 border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center cursor-pointer hover:border-[#296341] transition-colors"
-                    >
-                      <ImageIcon className="w-12 h-12 text-gray-400 mb-2" />
-                      <p className="text-gray-500">Click to upload {idType} images</p>
-                    </div>
-                  ) : (
-                    userDocuments.map((doc, index) => (
-                      <div key={doc.id} className="relative w-[150px] h-[200px] rounded-lg overflow-hidden border border-gray-200 shadow-sm group">
-                        <img
-                          src={doc.preview || doc.url || imgPassport.src}
-                          alt={`${idType} ${index + 1}`}
-                          className="w-full h-full object-cover"
-                        />
-                        <button
-                          onClick={() => removeUserDocument(doc.id)}
-                          className="absolute top-2 right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                        >
-                          <X className="w-4 h-4" />
-                        </button>
-                        <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs text-center py-1">
-                          {idType}
-                        </div>
-                      </div>
-                    ))
-                  )}
-                  {userDocuments.length > 0 && userDocuments.length < 4 && (
-                    <div
-                      onClick={() => userDocumentRef.current?.click()}
-                      className="w-[150px] h-[200px] border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center cursor-pointer hover:border-[#296341] transition-colors"
+                      onClick={() => containerImageRef.current?.click()}
+                      className="w-[140px] h-[140px] border-2 border-dashed border-gray-300 rounded-xl flex items-center justify-center cursor-pointer hover:border-[#296341] transition-colors"
                     >
                       <Plus className="w-8 h-8 text-gray-400" />
                     </div>
                   )}
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Notes / Comments */}
+          <div className="mt-6">
+            <label className="text-[14px] font-bold text-gray-500 uppercase tracking-wide mb-2 block">
+              Comments / Details
+            </label>
+            <textarea
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
+              placeholder="Add any additional notes or details..."
+              className="w-full h-[100px] bg-[#f5f5f5] border border-gray-200 rounded-xl p-4 outline-none focus:ring-2 focus:ring-[#296341] resize-none text-[16px]"
+            />
+          </div>
+        </div>
+
+        {/* Add Item Button */}
+        <div className="mb-8">
+          <button
+            onClick={() => {
+              setEditingItem(null);
+              setNewItemType("DRY BOX(S)");
+              setNewItemUnitPrice("");
+              setNewItemQuantity("");
+              setNewItemIsPaid(false);
+              setShowAddItemModal(true);
+            }}
+            className="w-full bg-[#132540] text-white py-4 rounded-xl text-lg font-bold hover:bg-[#1a3254] transition-all shadow-md active:scale-[0.99] flex items-center justify-center gap-3"
+          >
+            ADD ITEM <span className="text-red-300">*</span>
+          </button>
+        </div>
+
+        {/* Items List */}
+        {items.length > 0 && (
+          <div className="bg-[#f0f7f3] rounded-2xl p-6 mb-8 space-y-3">
+            {items.map((item) => (
+              <div key={item.id} className="bg-white rounded-xl py-4 px-6 flex items-center shadow-sm group">
+                <div className="w-10 h-10 flex items-center justify-center text-[#296341] bg-[#eef6f2] rounded-lg mr-4">
+                  {item.icon === 'box' || item.type.includes('BOX') ? <Box className="w-5 h-5" /> : <Container className="w-5 h-5" />}
+                </div>
+                <div className="flex-1">
+                  <p className="font-bold text-gray-800">{item.type}</p>
+                  <p className="text-sm text-gray-500">${item.unitPrice.toFixed(2)} × {item.quantity}</p>
+                </div>
+                <div className="text-lg font-black text-[#296341] mr-6">
+                  ${item.total.toFixed(2)}
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => handleEditItem(item)}
+                    className="p-2 text-gray-400 hover:text-[#296341] transition-colors"
+                  >
+                    <Edit2 className="w-5 h-5" />
+                  </button>
+                  <button
+                    onClick={() => handleDeleteItem(item.id)}
+                    className="p-2 text-gray-400 hover:text-red-500 transition-colors"
+                  >
+                    <Trash2 className="w-5 h-5" />
+                  </button>
                 </div>
               </div>
+            ))}
+          </div>
+        )}
+
+        {/* Additional Services Button */}
+        <div className="mb-8">
+          <button className="w-full bg-[#132540] text-white py-4 rounded-xl text-lg font-bold hover:bg-[#1a3254] transition-all shadow-md">
+            ADDITIONAL SERVICES
+          </button>
+        </div>
+
+        {/* Summary Section */}
+        <div className="bg-[#c2dccf] rounded-3xl p-8 mb-8">
+          <h3 className="text-[14px] font-bold text-gray-600 uppercase tracking-wider mb-6">Total Amount</h3>
+          
+          <div className="grid grid-cols-3 gap-4 mb-6">
+            <div>
+              <p className="text-[12px] text-gray-500 uppercase">Quantity</p>
+              <p className="text-2xl font-black">{items.reduce((sum, i) => sum + i.quantity, 0)}</p>
+            </div>
+            <div>
+              <p className="text-[12px] text-gray-500 uppercase">Value</p>
+              <p className="text-2xl font-black">${subtotal.toFixed(2)}</p>
+            </div>
+            <div>
+              <p className="text-[12px] text-gray-500 uppercase">
+                {service === 'PALLET' ? 'Pallet#' : service === 'LUGGAGE' ? 'Luggage#' : 'Item#'}
+              </p>
+              <p className="text-2xl font-black">{items.length > 0 ? items.map((_, i) => 134 + i).join(', ') : '-'}</p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-4 mb-6">
+            <div className="flex items-center gap-2">
+              <MapPin className="w-5 h-5 text-[#296341]" />
+              <span className="font-bold">{fromLocation || 'NAS'}</span>
+            </div>
+            <ArrowRight className="w-5 h-5 text-gray-400" />
+            <div className="flex items-center gap-2">
+              <MapPin className="w-5 h-5 text-[#296341]" />
+              <span className="font-bold">{toLocation || 'MAH'}</span>
+            </div>
+            <div className="ml-auto">
+              <p className="text-[12px] text-gray-500 uppercase">Price</p>
+              <p className="text-2xl font-black">${grandTotal.toFixed(2)}</p>
             </div>
           </div>
         </div>
 
-        {/* Cargo Summary Section */}
-        <div className="mt-16 bg-[#c2dccf] rounded-[40px] p-8 lg:p-12 shadow-inner border-b-8 border-emerald-800/20">
-          {/* Cargo Items */}
-          <div className="space-y-4 mb-10 max-w-[1000px]">
-            {items.length === 0 ? (
-              <div className="bg-white rounded-xl py-8 px-4 text-center text-gray-500">
-                No items added yet. Click "ADD ITEM" to add cargo items.
-              </div>
-            ) : (
-              items.map((item) => (
-                <div key={item.id} className="bg-white rounded-xl py-4 px-4 sm:px-8 flex flex-col sm:flex-row items-center shadow-sm group gap-4 sm:gap-0">
-                  <div className="w-12 h-12 flex items-center justify-center text-[#296341]">
-                    {item.icon === 'box' || item.type.includes('BOX') ? <Box /> : <Container />}
-                  </div>
-                  <div className="flex-1 text-lg md:text-[20px] font-bold text-gray-700 sm:ml-4 text-center sm:text-left">
-                    {item.type} (${item.unitPrice}) x {item.quantity}
-                    {item.isPaid && <span className="ml-2 text-green-600 text-sm">(Paid)</span>}
-                  </div>
-                  <div className="text-[20px] font-black text-black sm:mr-12">
-                    ${item.total.toLocaleString()}
-                  </div>
-                  <div className="flex gap-6 sm:gap-4">
-                    <Edit2
-                      onClick={() => handleEditItem(item)}
-                      className="w-6 h-6 text-gray-400 group-hover:text-[#296341] cursor-pointer transition-colors"
-                    />
-                    <Trash2
-                      onClick={() => handleDeleteItem(item.id)}
-                      className="w-6 h-6 text-gray-400 group-hover:text-red-500 cursor-pointer transition-colors"
-                    />
-                  </div>
+        {/* User Details Section */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8 mb-8">
+          <h2 className="text-[20px] font-bold text-[#296341] mb-6">USER DETAILS</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <InputField
+              label="Full Name"
+              value={contactName}
+              onChange={setContactName}
+              placeholder="Enter full name"
+              required
+            />
+            <InputField
+              label="Address"
+              value={address}
+              onChange={setAddress}
+              placeholder="Enter address"
+            />
+            <BoxedInputField
+              label="Email Address"
+              value={contactEmail}
+              onChange={setContactEmail}
+              placeholder="Enter email"
+              type="email"
+            />
+            <BoxedInputField
+              label="Contact Number"
+              value={contactPhone}
+              onChange={setContactPhone}
+              placeholder="Enter phone number"
+              type="tel"
+            />
+            <BoxedSelectField
+              label="ID Type"
+              value={idType}
+              onChange={setIdType}
+              options={[
+                { value: 'Passport', label: 'Passport' },
+                { value: 'Driver License', label: 'Driver License' },
+                { value: 'National ID', label: 'National ID' },
+                { value: 'Other', label: 'Other' }
+              ]}
+            />
+          </div>
+
+          {/* User Document Upload */}
+          <div className="mt-8">
+            <h3 className="text-[16px] font-bold text-gray-700 mb-4">Identity Documents</h3>
+            <div className="flex flex-wrap gap-4">
+              {userDocuments.length === 0 ? (
+                <div
+                  onClick={() => userDocumentRef.current?.click()}
+                  className="w-[150px] h-[200px] border-2 border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center cursor-pointer hover:border-[#296341] transition-colors"
+                >
+                  <ImageIcon className="w-10 h-10 text-gray-400 mb-2" />
+                  <p className="text-sm text-gray-500 text-center px-2">Upload {idType}</p>
                 </div>
-              ))
-            )}
-          </div>
-
-          {/* Summary Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-y-12 gap-x-12 mb-20">
-            <div className="space-y-6">
-              <div>
-                <p className="text-[14px] font-bold text-gray-500 uppercase">Name</p>
-                <p className="text-[20px] font-black">{contactName || '-'}</p>
-              </div>
-              <div>
-                <p className="text-[14px] font-bold text-gray-500 uppercase">Invoice Date</p>
-                <p className="text-[20px] font-black">
-                  {new Date().toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, ' / ')}
-                </p>
-              </div>
-              <div>
-                <p className="text-[14px] font-bold text-gray-500 uppercase">Voyage {voyageNo || '-'}</p>
-              </div>
+              ) : (
+                <>
+                  {userDocuments.map((doc, index) => (
+                    <div key={doc.id} className="relative w-[150px] h-[200px] rounded-xl overflow-hidden border border-gray-200 shadow-sm group">
+                      <img
+                        src={doc.preview || doc.url || imgPassport.src}
+                        alt={`${idType} ${index + 1}`}
+                        className="w-full h-full object-cover"
+                      />
+                      <button
+                        onClick={() => removeUserDocument(doc.id)}
+                        className="absolute top-2 right-2 w-7 h-7 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                      <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-xs text-center py-2 font-medium">
+                        {idType}
+                      </div>
+                    </div>
+                  ))}
+                  {userDocuments.length < 4 && (
+                    <div
+                      onClick={() => userDocumentRef.current?.click()}
+                      className="w-[150px] h-[200px] border-2 border-dashed border-gray-300 rounded-xl flex items-center justify-center cursor-pointer hover:border-[#296341] transition-colors"
+                    >
+                      <Plus className="w-8 h-8 text-gray-400" />
+                    </div>
+                  )}
+                </>
+              )}
             </div>
-
-            <div className="space-y-6">
-              <div>
-                <p className="text-[14px] font-bold text-gray-500 uppercase">Contact no.</p>
-                <p className="text-[20px] font-black">{contactPhone || '-'}</p>
-              </div>
-              <div>
-                <p className="text-[14px] font-bold text-gray-500 uppercase">Location</p>
-                <p className="text-[22px] font-black flex items-center gap-2">
-                  {fromLocation || '-'} <ArrowRight className="w-5 h-5" /> {toLocation || '-'}
-                </p>
-              </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setPaymentStatus("PAID")}
-                  className={`flex-1 py-1 rounded-full font-bold transition-all shadow-sm ${paymentStatus === 'PAID' ? 'bg-[#296341] text-white' : 'bg-white text-gray-400'}`}
-                >
-                  PAID
-                </button>
-                <button
-                  onClick={() => setPaymentStatus("UNPAID")}
-                  className={`flex-1 py-1 rounded-full font-bold transition-all ${paymentStatus === 'UNPAID' ? 'bg-[#ff4b4b] text-white' : 'bg-white text-gray-400'}`}
-                >
-                  UNPAID
-                </button>
-              </div>
-            </div>
-
-            <div className="space-y-6">
-              <div>
-                <p className="text-[14px] font-bold text-gray-500 uppercase">Booking Date</p>
-                <p className="text-[20px] font-black">
-                  {bookingDate ? new Date(bookingDate).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, ' / ') : '-'}
-                </p>
-              </div>
-              <div>
-                <p className="text-[14px] font-bold text-gray-500 uppercase">Invoice No.</p>
-                <p className="text-[22px] font-black">{createdBooking?.invoiceNo ? `#${createdBooking.invoiceNo}` : 'Pending'}</p>
-              </div>
-              <input
-                placeholder="Remark"
-                value={remark}
-                onChange={(e) => setRemark(e.target.value)}
-                className="w-full h-[45px] bg-[#e1ece6] rounded-lg px-4 shadow-inner outline-none font-bold text-[#244234]"
-              />
-            </div>
-          </div>
-
-          {/* Total Card */}
-          <div className="bg-white rounded-3xl p-6 md:p-8 shadow-2xl border-2 border-gray-50 flex flex-col items-center w-full max-w-[320px] mx-auto">
-            <p className="text-[16px] md:text-[18px] font-bold text-gray-400 tracking-widest uppercase">Total Amount</p>
-            <p className="text-[36px] md:text-[48px] font-black text-black leading-tight">
-              ${grandTotal.toFixed(2)}
-            </p>
-            <p className="text-[12px] text-gray-400 font-bold uppercase tracking-tight">(Including 12% VAT)</p>
-            {subtotal > 0 && (
-              <p className="text-[14px] text-gray-500 mt-2">
-                Subtotal: ${subtotal.toFixed(2)} + VAT: ${vatAmount.toFixed(2)}
-              </p>
-            )}
           </div>
         </div>
 
         {/* Action Buttons */}
-        <div className="mt-16 flex flex-col sm:flex-row justify-center gap-4 md:gap-8">
+        <div className="space-y-4">
           <button
-            onClick={resetForm}
-            className="bg-gray-500 text-white px-12 md:px-16 py-3 rounded-lg text-lg md:text-[20px] font-bold tracking-widest hover:bg-gray-600 transition-all shadow-lg active:scale-95"
+            onClick={() => {
+              setEditingItem(null);
+              setNewItemType("DRY BOX(S)");
+              setNewItemUnitPrice("");
+              setNewItemQuantity("");
+              setNewItemIsPaid(false);
+              setShowAddItemModal(true);
+            }}
+            className="w-full bg-[#132540] text-white py-4 rounded-xl text-lg font-bold hover:bg-[#1a3254] transition-all flex items-center justify-center gap-2"
           >
-            Reset
-          </button>
-          <button
-            onClick={() => setShowPreviewModal(true)}
-            className="bg-[#1e4a2e] text-white px-12 md:px-16 py-3 rounded-lg text-lg md:text-[20px] font-bold tracking-widest hover:bg-emerald-800 transition-all shadow-lg active:scale-95 flex items-center justify-center gap-2"
-          >
-            <Eye className="w-5 h-5" /> Preview
+            <Plus className="w-5 h-5" /> NEW ITEM
           </button>
           <button
             onClick={handleSubmit}
-            // onClick={() => console.log("Submitting booking...")}
             disabled={isSubmitting}
-            className="bg-[#1e4a2e] text-white px-12 md:px-16 py-3 rounded-lg text-lg md:text-[20px] font-bold tracking-widest hover:bg-emerald-800 transition-all shadow-lg active:scale-95 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full bg-[#132540] text-white py-4 rounded-xl text-lg font-bold hover:bg-[#1a3254] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             {isSubmitting && <Loader2 className="w-5 h-5 animate-spin" />}
-            {isSubmitting ? 'Saving...' : 'Save & Send'}
+            {isSubmitting ? 'SUBMITTING...' : 'SUBMIT'}
           </button>
         </div>
       </main>
 
       {/* Footer */}
-      <footer className="bg-[#296341] py-6 md:py-8 mt-12">
-        <div className="max-w-[1400px] mx-auto px-4 md:px-8 flex flex-col md:flex-row items-center justify-between gap-6 md:gap-0">
+      <footer className="bg-[#296341] py-6 mt-12">
+        <div className="max-w-[1400px] mx-auto px-4 md:px-8 flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <img src={imgLogo.src} alt="Dean's Shipping Ltd." className="h-12 md:h-[75px]" />
+            <img src={imgLogo.src} alt="Dean's Shipping Ltd." className="h-12 md:h-16" />
           </div>
-          <div className="text-white text-xl md:text-[28px] font-semibold text-center md:text-left">
-            Freight Agent | <span className="font-normal">Smith Frank</span>
+          <div className="text-white text-lg font-semibold">
+            Dock Manager | <span className="font-normal">{contactName || 'Myron Dean'}</span>
           </div>
         </div>
       </footer>
@@ -1364,46 +2014,28 @@ export default function CargoBooking() {
             </div>
 
             <div className="space-y-6">
-              <div className="space-y-2">
-                <label className="text-[14px] font-bold text-gray-500">Item Type</label>
-                <div className="relative">
-                  <select
-                    value={newItemType}
-                    onChange={(e) => setNewItemType(e.target.value)}
-                    className="w-full h-[50px] border border-gray-200 rounded-lg px-4 text-[18px] font-bold appearance-none outline-none focus:ring-2 focus:ring-[#296341]"
-                  >
-                    {itemTypes.map(t => (
-                      <option key={t} value={t}>{t}</option>
-                    ))}
-                  </select>
-                  <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400" />
-                </div>
-              </div>
+              <BoxedSelectField
+                label="Item Type"
+                value={newItemType}
+                onChange={setNewItemType}
+                options={itemTypes.map(t => ({ value: t, label: t }))}
+              />
 
               <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-[14px] font-bold text-gray-500">Unit Price ($)</label>
-                  <input
-                    type="number"
-                    value={newItemUnitPrice}
-                    onChange={(e) => setNewItemUnitPrice(e.target.value)}
-                    placeholder="0.00"
-                    min="0"
-                    step="0.01"
-                    className="w-full h-[50px] border border-gray-200 rounded-lg px-4 text-[18px] outline-none focus:ring-2 focus:ring-[#296341]"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[14px] font-bold text-gray-500">Quantity</label>
-                  <input
-                    type="number"
-                    value={newItemQuantity}
-                    onChange={(e) => setNewItemQuantity(e.target.value)}
-                    placeholder="0"
-                    min="1"
-                    className="w-full h-[50px] border border-gray-200 rounded-lg px-4 text-[18px] outline-none focus:ring-2 focus:ring-[#296341]"
-                  />
-                </div>
+                <BoxedInputField
+                  label="Unit Price ($)"
+                  value={newItemUnitPrice}
+                  onChange={setNewItemUnitPrice}
+                  placeholder="0.00"
+                  type="number"
+                />
+                <BoxedInputField
+                  label="Quantity"
+                  value={newItemQuantity}
+                  onChange={setNewItemQuantity}
+                  placeholder="0"
+                  type="number"
+                />
               </div>
 
               <div className="flex items-center gap-3">
@@ -1412,7 +2044,7 @@ export default function CargoBooking() {
                   id="isPaid"
                   checked={newItemIsPaid}
                   onChange={(e) => setNewItemIsPaid(e.target.checked)}
-                  className="w-5 h-5 accent-[#296341]"
+                  className="w-5 h-5 accent-[#296341] rounded"
                 />
                 <label htmlFor="isPaid" className="text-[16px] font-medium text-gray-700">
                   Mark as Paid
@@ -1420,9 +2052,9 @@ export default function CargoBooking() {
               </div>
 
               {newItemUnitPrice && newItemQuantity && (
-                <div className="bg-[#eef6f2] rounded-lg p-4 text-center">
-                  <p className="text-[14px] text-gray-500">Total</p>
-                  <p className="text-[28px] font-black text-[#296341]">
+                <div className="bg-[#eef6f2] rounded-xl p-4 text-center">
+                  <p className="text-[12px] text-gray-500 uppercase tracking-wide">Total</p>
+                  <p className="text-[32px] font-black text-[#296341]">
                     ${(parseFloat(newItemUnitPrice || '0') * parseInt(newItemQuantity || '0')).toFixed(2)}
                   </p>
                 </div>
@@ -1434,15 +2066,15 @@ export default function CargoBooking() {
                     setShowAddItemModal(false);
                     setEditingItem(null);
                   }}
-                  className="flex-1 py-3 rounded-lg border border-gray-300 text-gray-600 font-bold hover:bg-gray-50 transition-colors"
+                  className="flex-1 py-3 rounded-xl border-2 border-gray-300 text-gray-600 font-bold hover:bg-gray-50 transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleAddItem}
-                  className="flex-1 py-3 rounded-lg bg-[#296341] text-white font-bold hover:bg-emerald-800 transition-colors"
+                  className="flex-1 py-3 rounded-xl bg-[#296341] text-white font-bold hover:bg-emerald-800 transition-colors"
                 >
-                  {editingItem ? 'Update Item' : 'Add Item'}
+                  {editingItem ? 'Update' : 'Add'}
                 </button>
               </div>
             </div>
@@ -1470,10 +2102,8 @@ export default function CargoBooking() {
                 <h4 className="font-bold text-gray-700 mb-2">Service Details</h4>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
                   <div><span className="text-gray-500">Service:</span> <strong>{service}</strong></div>
+                  {service === 'BOX' && <div><span className="text-gray-500">Box Type:</span> <strong>{boxSubType}</strong></div>}
                   <div><span className="text-gray-500">Size:</span> <strong>{cargoSize}</strong></div>
-                  <div><span className="text-gray-500">Type:</span> <strong>{type}</strong></div>
-                  {containerNo && <div><span className="text-gray-500">Container#:</span> <strong>{containerNo}</strong></div>}
-                  {quantity && <div><span className="text-gray-500">Quantity:</span> <strong>{quantity}</strong></div>}
                 </div>
               </div>
 
@@ -1519,7 +2149,7 @@ export default function CargoBooking() {
                 <div>
                   <h4 className="font-bold text-gray-700 mb-2">Attachments</h4>
                   <p className="text-sm text-gray-500">
-                    {containerImages.length} container image(s), {userDocuments.length} document(s)
+                    {containerImages.length} image(s), {userDocuments.length} document(s)
                   </p>
                 </div>
               )}
@@ -1527,7 +2157,7 @@ export default function CargoBooking() {
               <div className="flex gap-4 pt-4">
                 <button
                   onClick={() => setShowPreviewModal(false)}
-                  className="flex-1 py-3 rounded-lg border border-gray-300 text-gray-600 font-bold hover:bg-gray-50 transition-colors"
+                  className="flex-1 py-3 rounded-xl border-2 border-gray-300 text-gray-600 font-bold hover:bg-gray-50 transition-colors"
                 >
                   Close
                 </button>
@@ -1537,7 +2167,7 @@ export default function CargoBooking() {
                     handleSubmit();
                   }}
                   disabled={isSubmitting}
-                  className="flex-1 py-3 rounded-lg bg-[#296341] text-white font-bold hover:bg-emerald-800 transition-colors disabled:opacity-50"
+                  className="flex-1 py-3 rounded-xl bg-[#296341] text-white font-bold hover:bg-emerald-800 transition-colors disabled:opacity-50"
                 >
                   {isSubmitting ? 'Saving...' : 'Confirm & Submit'}
                 </button>

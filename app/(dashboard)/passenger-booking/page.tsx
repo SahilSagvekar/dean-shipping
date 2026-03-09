@@ -368,7 +368,7 @@ function PassengerBookingContent() {
       for (const img of idImages) {
         if (img.file) {
           try {
-            await uploadImage(img.file, bookingId, 'ID_DOCUMENT');
+            await uploadImage(img.file, bookingId, 'USER_DOCUMENT');
           } catch (error) {
             console.error('Failed to upload ID image:', error);
             uploadErrors++;

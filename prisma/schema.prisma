@@ -41,10 +41,22 @@ enum ContainerType {
   COOLER
 }
 
+// Updated: Now includes all service types from the UI
 enum CargoServiceType {
   CONTAINER
   PALLET
+  LUGGAGE
   BOX
+  ENVELOPE
+  BUNDLE
+  OTHER
+}
+
+// Box sub-types (when service = BOX)
+enum BoxSubType {
+  DRY
+  FROZEN
+  COOLER
 }
 
 enum CargoSizeCategory {
@@ -69,7 +81,6 @@ enum EquipmentType {
   CONTAINER
   FLAT_RACK
 }
-
 
 enum EquipmentStatus {
   AVAILABLE
@@ -120,6 +131,50 @@ enum ReminderFrequency {
   EVERY_2_DAYS
   EVERY_5_DAYS
   EVERY_7_DAYS
+}
+
+// Damage types for deficiency tracking
+enum DamageType {
+  BROKEN
+  IMPROPERLY_PACKAGED
+  ITEM_MISSING
+  BENT
+  SCRATCHED
+  DAMAGED
+  WET
+  TORN
+  OTHER
+}
+
+// Damage location options
+enum DamageLocationEnum {
+  LEFT_UPPER_CORNER
+  RIGHT_UPPER_CORNER
+  LEFT_LOWER_CORNER
+  RIGHT_LOWER_CORNER
+  TOP
+  BOTTOM
+  LEFT
+  RIGHT
+  LEFT_CENTER
+  RIGHT_CENTER
+  FRONT
+  BACK
+  MULTIPLE
+}
+
+// Envelope types
+enum EnvelopeType {
+  SMALL_BOX
+  ENVELOPE
+  PARCEL
+}
+
+// Item location for bundles
+enum ItemLocationType {
+  PALLET
+  CONTAINER
+  DECK
 }
 
 // ============================================
@@ -361,7 +416,7 @@ model ScheduleEvent {
 }
 
 // ============================================
-// CARGO BOOKING
+// CARGO BOOKING (Updated with all service-specific fields)
 // ============================================
 
 model CargoBooking {
@@ -374,44 +429,103 @@ model CargoBooking {
   voyageId String?
   voyage   Voyage? @relation(fields: [voyageId], references: [id])
 
-  // Service details
-  service   CargoServiceType
-  cargoSize CargoSizeCategory @default(MEDIUM)
+  // =========================================
+  // SERVICE TYPE & COMMON FIELDS
+  // =========================================
+  service     CargoServiceType
+  boxSubType  BoxSubType?        // Only when service = BOX (DRY, FROZEN, COOLER)
+  cargoSize   CargoSizeCategory  @default(MEDIUM)
+  
+  // Cargo flags (can have multiple)
+  isFragile   Boolean @default(false)
+  isHazardous Boolean @default(false)
+  isLive      Boolean @default(false)
 
-  // Container details
+  // Common value/price fields
+  value       String?  // Declared value
+  price       String?  // Shipping price
+
+  // =========================================
+  // CONTAINER-SPECIFIC FIELDS
+  // =========================================
+  containerNo     String?   // Container number (e.g., "134")
+  chassisNo       String?   // Chassis number
+  temperature     String?   // Temperature setting (e.g., "70°")
+  containerSize   String?   // 20FT, 40FT, 40FT_HC, 45FT
+  containerType   String?   // DRY, REEFER, OPEN_TOP, FLAT_RACK
+  contents        String?   // What's inside the container
+
+  // =========================================
+  // PALLET-SPECIFIC FIELDS
+  // =========================================
+  palletNo    String?   // Pallet number
+  reeferNo    String?   // Reefer number
+  palletHeight String?  // 4ft, 5ft, 6ft
+  palletType  String?   // DRY, FROZEN, REFRIGERATED
+  deckNo      String?   // Deck number
+
+  // Legacy fields (keeping for backwards compatibility)
   quantity    Int?
   pallets     Int?
   type        ContainerType @default(DRY)
-  containerNo String?
   size        String?
   height      String?
-  reeferNo    String?
-  material    String?
-  color       String?
-  chassisNo   String?
-  temperature String?
-  decksNo     String?
   boxContains String?
 
-  // Dates & Locations
+  // =========================================
+  // LUGGAGE-SPECIFIC FIELDS
+  // =========================================
+  material    String?   // Material type (e.g., Leather, Fabric)
+  color       String?   // Color of luggage
+  luggageType String?   // Type of luggage (e.g., Suitcase, Duffel)
+
+  // =========================================
+  // ENVELOPE-SPECIFIC FIELDS
+  // =========================================
+  envelopeType EnvelopeType?  // SMALL_BOX, ENVELOPE, PARCEL
+
+  // =========================================
+  // BUNDLE-SPECIFIC FIELDS
+  // =========================================
+  bundleMaterial String?   // Material (e.g., Wood, Metal)
+  bundleQuantity String?   // Quantity in bundle
+  bundleLength   String?   // Length (e.g., "4'")
+  bundleSize     String?   // Size (e.g., "1\" x 4\"")
+  itemLocation   ItemLocationType?  // PALLET, CONTAINER, DECK
+  itemNumber     String?   // Item number reference
+
+  // =========================================
+  // OTHER-SPECIFIC FIELDS
+  // =========================================
+  itemName    String?   // Custom item name/description
+
+  // =========================================
+  // DATES & LOCATIONS
+  // =========================================
   bookingDate  DateTime
   fromLocation String
   toLocation   String
   voyageNo     String?
 
-  // Contact details (snapshot at booking time)
+  // =========================================
+  // CONTACT DETAILS (snapshot at booking time)
+  // =========================================
   contactName  String
   contactEmail String
   contactPhone String
   address      String
   idType       String
 
-  // Deficiency
-  damageFound       String?
-  damageLocation    String?
-  deficiencyComment String?
+  // =========================================
+  // DEFICIENCY / DAMAGE TRACKING
+  // =========================================
+  damageFound       DamageType?        // Type of damage found
+  damageLocation    DamageLocationEnum? // Where damage is located
+  deficiencyComment String?            // Additional notes about damage
 
-  // Payment
+  // =========================================
+  // PAYMENT & TOTALS
+  // =========================================
   paymentStatus PaymentStatus @default(UNPAID)
   totalAmount   Float         @default(0)
   vatPercent    Float         @default(12)
@@ -419,7 +533,9 @@ model CargoBooking {
   subtotal      Float         @default(0)
   remark        String?
 
-  // Relations
+  // =========================================
+  // RELATIONS
+  // =========================================
   items         CargoItem[]
   images        BookingImage[]
   invoice       Invoice?
@@ -428,6 +544,7 @@ model CargoBooking {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  @@index([service])
   @@index([paymentStatus])
   @@index([bookingDate])
   @@index([userId])
@@ -530,7 +647,7 @@ model BookingImage {
   passengerBooking   PassengerBooking? @relation(fields: [passengerBookingId], references: [id], onDelete: Cascade)
 
   imageUrl  String // Supabase Storage URL
-  imageType String // "cargo", "id_document", "deficiency"
+  imageType String // "CONTAINER", "USER_DOCUMENT", "DEFICIENCY"
   caption   String?
   sortOrder Int @default(0)
 

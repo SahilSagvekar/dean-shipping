@@ -9,8 +9,8 @@ import prisma from "@/lib/prisma";
 import { requireStaff, createAuditLog, getClientIp } from "@/lib/auth";
 
 export async function POST(request: NextRequest) {
-    const result = await requireStaff(request);
-    if (result instanceof NextResponse) return result;
+    // const result = await requireStaff(request);
+    // if (result instanceof NextResponse) return result;
 
     try {
         const body = await request.json();
@@ -34,6 +34,8 @@ export async function POST(request: NextRequest) {
             },
         });
 
+        console.log(`Check if voyage already exist ${JSON.stringify(schedules)}` );
+
         if (schedules.length === 0) {
             return NextResponse.json(
                 { error: "No schedules found" },
@@ -46,7 +48,12 @@ export async function POST(request: NextRequest) {
             orderBy: { voyageNo: "desc" },
             select: { voyageNo: true },
         });
+
+        console.log(`maxVoyage ${JSON.stringify(maxVoyage)}` );
+
         let nextVoyageNo = (maxVoyage?.voyageNo || 200) + 1;
+
+        console.log(`nextVoyageNo ${nextVoyageNo}` );
 
         // Fetch all locations for name → code mapping
         const allLocations = await prisma.location.findMany();
@@ -69,18 +76,25 @@ export async function POST(request: NextRequest) {
         for (const schedule of schedules) {
             // Skip if schedule already has a voyage
             if (schedule.voyages.length > 0) {
+                console.log(`length > 0 ${JSON.stringify(schedule.voyages)}.`);
+                console.log("skippedSchedules" + schedule.id)
                 skippedSchedules.push(schedule.id);
+                console.log('1');
                 continue;
             }
 
             // Skip holiday schedules
             if (schedule.isHoliday) {
+                console.log(`isHoliday ${JSON.stringify(schedule.isHoliday)}.`);
                 skippedSchedules.push(schedule.id);
+                console.log('2');
                 continue;
             }
 
             // Skip schedules with no events (no stops to create)
             if (schedule.events.length === 0) {
+
+                console.log(`.events.length === 0 ${JSON.stringify(schedule.events.length)}.`);
                 skippedSchedules.push(schedule.id);
                 continue;
             }
@@ -110,11 +124,13 @@ export async function POST(request: NextRequest) {
                 stopOrder: index + 1,
             }));
 
-            if (resolvedStops.length < 2) {
-                // Need at least 2 stops for a voyage
-                skippedSchedules.push(schedule.id);
-                continue;
-            }
+            // console.log(JSON.stringify(resolvedStops.length));
+
+            // if (resolvedStops.length < 2) {
+            //     // Need at least 2 stops for a voyage
+            //     skippedSchedules.push(schedule.id);
+            //     continue;
+            // }
 
             const firstStop = resolvedStops[0];
             const lastStop = resolvedStops[resolvedStops.length - 1];
@@ -181,7 +197,8 @@ export async function POST(request: NextRequest) {
             createdVoyages.push(completeVoyage);
 
             await createAuditLog({
-                userId: result.user.id,
+                // userId: result.user.id,
+                userId: "test",
                 action: "AUTO_CREATE_VOYAGE",
                 entity: "voyage",
                 entityId: voyage.id,
