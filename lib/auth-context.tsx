@@ -32,6 +32,7 @@ export interface AuthUser {
     role: UserRole;
     agentCode?: string | null;
     avatarUrl?: string | null;
+    designation?: string | null;
 }
 
 interface AuthContextType {

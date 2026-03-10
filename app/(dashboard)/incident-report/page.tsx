@@ -1,173 +1,404 @@
-import svgPaths from "../../imports/svg-jbxpmfjl42";
-import imgRectangle232 from "@/app/assets/69b1e3415411ea5c537fac4a66b5a1a0a162de7b.png";
+"use client";
+import { useState, useEffect, useRef } from "react";
+import { useAuth } from "@/lib/auth-context";
+import { toast } from "sonner";
+import {
+  Camera,
+  FileText,
+  Loader2,
+  Check,
+  X,
+  ShieldCheck,
+  MapPin,
+  Calendar,
+  Clock,
+  User,
+  Building,
+  Phone,
+  Hash
+} from "lucide-react";
 import imgPngClipartOccupationalSafetyRemovebgPreview1 from "@/app/assets/b44f74b3456b5fbbf83fdac0d10a96c2051e7d69.png";
 
-function SolarCameraBold() {
-  return (
-    <div className="absolute left-[155px] size-[73px] top-[1758px]" data-name="solar:camera-bold">
-      <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 73 73">
-        <g id="solar:camera-bold">
-          <path clipRule="evenodd" d={svgPaths.p20f93880} fill="var(--fill-0, #296341)" fillRule="evenodd" id="Vector" />
-        </g>
-      </svg>
-    </div>
-  );
-}
-
-function CodexFile() {
-  return (
-    <div className="absolute left-[155px] size-[73px] top-[1866px]" data-name="codex:file">
-      <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 73 73">
-        <g id="codex:file">
-          <path d={svgPaths.p23d8a300} id="Vector" stroke="var(--stroke-0, #296341)" strokeLinecap="round" strokeLinejoin="round" strokeWidth="3.33333" />
-        </g>
-      </svg>
-    </div>
-  );
-}
-
-// Burger menu is now handled by (dashboard)/layout.tsx
-
-
 export default function IncidentReport() {
-  return (
-    <div className="bg-white relative size-full" data-name="incident report">
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[152px] not-italic text-[40px] text-black top-[551px] whitespace-nowrap">
-        <p className="leading-[normal]">INCIDENT REPORT</p>
-      </div>
-      <div className="absolute h-0 left-[154px] top-[588px] w-[202px]">
-        <div className="absolute inset-[-5px_0_0_0]">
-          <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 202 5">
-            <line id="Line 29" stroke="var(--stroke-0, black)" strokeLinecap="round" strokeWidth="5" x1="2.5" x2="199.5" y1="2.5" y2="2.5" />
-          </svg>
-        </div>
-      </div>
-      <div className="absolute bg-white border border-[#296341] border-solid h-[49px] left-[152px] top-[675px] w-[982px]" />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[181px] not-italic text-[30px] text-black top-[700px] whitespace-nowrap">
-        <p className="leading-[normal]">{`Name               :`}</p>
-      </div>
-      <div className="absolute bg-white border border-[#296341] border-solid h-[49px] left-[152px] top-[730px] w-[982px]" />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[181px] not-italic text-[30px] text-black top-[755px] whitespace-nowrap">
-        <p className="leading-[normal]">{`Department    :`}</p>
-      </div>
-      <div className="absolute bg-white border border-[#296341] border-solid h-[49px] left-[152px] top-[785px] w-[982px]" />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[181px] not-italic text-[30px] text-black top-[810px] whitespace-nowrap">
-        <p className="leading-[normal]">{`Phone No.       :`}</p>
-      </div>
-      <div className="absolute bg-white border border-[#296341] border-solid h-[49px] left-[152px] top-[1253px] w-[481px]" />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[181px] not-italic text-[30px] text-black top-[1278px] whitespace-nowrap">
-        <p className="leading-[normal]">{`Location     :`}</p>
-      </div>
-      <div className="absolute bg-white border border-[#296341] border-solid h-[49px] left-[152px] top-[1308px] w-[385px]" />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[181px] not-italic text-[30px] text-black top-[1333px] whitespace-nowrap">
-        <p className="leading-[normal]">{`Date    :`}</p>
-      </div>
-      <div className="absolute bg-white border border-[#296341] border-solid h-[49px] left-[152px] top-[1363px] w-[385px]" />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[181px] not-italic text-[30px] text-black top-[1388px] whitespace-nowrap">
-        <p className="leading-[normal]">{`Time    :`}</p>
-      </div>
-      <div className="absolute bg-white border border-[#296341] border-solid h-[155px] left-[152px] top-[1418px] w-[385px]" />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[181px] not-italic text-[30px] text-black top-[1443px] whitespace-nowrap">
-        <p className="leading-[normal]">Insurance Taken</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[152px] not-italic text-[30px] text-black top-[913px] whitespace-nowrap">
-        <p className="leading-[normal]">Description of INCIDENT</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[299px] not-italic text-[30px] text-black top-[1487px] whitespace-nowrap">
-        <p className="leading-[normal]">YES</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[307px] not-italic text-[30px] text-black top-[1542px] whitespace-nowrap">
-        <p className="leading-[normal]">NO</p>
-      </div>
-      <div className="absolute h-[25px] left-[251px] top-[1529px] w-[27px]">
-        <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 27 25">
-          <path d={svgPaths.p244c1800} id="Ellipse 1" stroke="var(--stroke-0, #296341)" />
-        </svg>
-      </div>
-      <div className="absolute h-[10px] left-[259px] top-[1537px] w-[11px]">
-        <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 11 10">
-          <ellipse cx="5.5" cy="5" fill="var(--fill-0, #296341)" id="Ellipse 2" rx="5.5" ry="5" />
-        </svg>
-      </div>
-      <div className="absolute h-[25px] left-[251px] top-[1474px] w-[27px]">
-        <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 27 25">
-          <path d={svgPaths.p244c1800} id="Ellipse 1" stroke="var(--stroke-0, #296341)" />
-        </svg>
-      </div>
-      <div className="absolute border border-[#296341] border-solid h-[265px] left-[542px] top-[1308px] w-[592px]" />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[562px] not-italic text-[30px] text-black top-[1333px] whitespace-nowrap">
-        <p className="leading-[normal]">Incident Details</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Light',sans-serif] font-light justify-center leading-[0] left-[562px] not-italic text-[16px] text-black top-[1370px] w-[557px]">
-        <p className="leading-[normal] whitespace-pre-wrap">(How the incident happened, factors leading to the event, and what took place. Be as specific as possible)</p>
-      </div>
-      <SolarCameraBold />
-      <CodexFile />
-      <div className="absolute h-[254px] left-[275px] pointer-events-none rounded-[10px] top-[1722px] w-[465px]">
-        <img alt="" className="absolute inset-0 max-w-none object-cover rounded-[10px] size-full" src={imgRectangle232.src} />
-        <div aria-hidden="true" className="absolute border border-[#296341] border-solid inset-0 rounded-[10px]" />
-      </div>
-      <div className="absolute h-[115px] left-[780px] pointer-events-none rounded-[10px] top-[1722px] w-[158px]">
-        <img alt="" className="absolute inset-0 max-w-none object-cover rounded-[10px] size-full" src={imgRectangle232.src} />
-        <div aria-hidden="true" className="absolute border border-[#296341] border-solid inset-0 rounded-[10px]" />
-      </div>
-      <div className="absolute h-[115px] left-[780px] pointer-events-none rounded-[10px] top-[1861px] w-[158px]">
-        <img alt="" className="absolute inset-0 max-w-none object-cover rounded-[10px] size-full" src={imgRectangle232.src} />
-        <div aria-hidden="true" className="absolute border border-[#296341] border-solid inset-0 rounded-[10px]" />
-      </div>
-      <div className="absolute h-[115px] left-[974px] pointer-events-none rounded-[10px] top-[1722px] w-[157px]">
-        <img alt="" className="absolute inset-0 max-w-none object-cover rounded-[10px] size-full" src={imgRectangle232.src} />
-        <div aria-hidden="true" className="absolute border border-[#296341] border-solid inset-0 rounded-[10px]" />
-      </div>
-      <div className="absolute h-[115px] left-[974px] pointer-events-none rounded-[10px] top-[1861px] w-[157px]">
-        <img alt="" className="absolute inset-0 max-w-none object-cover rounded-[10px] size-full" src={imgRectangle232.src} />
-        <div aria-hidden="true" className="absolute border border-[#296341] border-solid inset-0 rounded-[10px]" />
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Extra_Bold',sans-serif] font-extrabold h-[64px] justify-center leading-[0] left-[1019px] not-italic text-[50px] text-white top-[1927px] w-[66px]">
-        <p className="leading-[normal] whitespace-pre-wrap">+2</p>
-      </div>
-      <div className="absolute border border-black border-solid h-[33px] left-[162px] top-[955px] w-[39px]" />
-      <div className="absolute border border-black border-solid h-[58px] left-[218px] top-[944px] w-[324px]" />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[231px] not-italic text-[30px] text-black top-[970px] whitespace-nowrap">
-        <p className="leading-[normal]">Container Damaged</p>
-      </div>
-      <div className="absolute border border-black border-solid h-[33px] left-[162px] top-[1025px] w-[39px]" />
-      <div className="absolute border border-black border-solid h-[58px] left-[218px] top-[1014px] w-[324px]" />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[231px] not-italic text-[30px] text-black top-[1043px] whitespace-nowrap">
-        <p className="leading-[normal]">Cargo Damaged</p>
-      </div>
-      <div className="absolute border border-black border-solid h-[33px] left-[163px] top-[1095px] w-[39px]" />
-      <div className="absolute border border-black border-solid h-[58px] left-[219px] top-[1084px] w-[324px]" />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[232px] not-italic text-[30px] text-black top-[1113px] whitespace-nowrap">
-        <p className="leading-[normal]">Other</p>
-      </div>
-      <div className="absolute bg-[#132540] border border-[#296341] border-solid h-[57px] left-[531px] rounded-[5px] top-[2033px] w-[238px]" />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[590px] not-italic text-[30px] text-white top-[2062px] w-[131px]">
-        <p className="leading-[normal] whitespace-pre-wrap">SUBMIT</p>
-      </div>
-      <div className="absolute border border-black border-solid h-[58px] left-[218px] rounded-[5px] top-[1156px] w-[913px]" />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[443px] not-italic text-[30px] text-black top-[700px] whitespace-nowrap">
-        <p className="leading-[normal]">Jhon Doe</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[443px] not-italic text-[30px] text-black top-[755px] whitespace-nowrap">
-        <p className="leading-[normal]">Freight Supervisor</p>
-      </div>
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[439px] not-italic text-[30px] text-black top-[807px] whitespace-nowrap">
-        <p className="leading-[normal]">+1 1234 1234</p>
-      </div>
-      <div className="absolute border border-[#296341] border-solid h-[94px] left-[152px] top-[1579px] w-[982px]" />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[172px] not-italic text-[30px] text-black top-[1604px] whitespace-nowrap">
-        <p className="leading-[normal]">{`Shipment  Details :`}</p>
-      </div>
-      <div className="absolute bg-white border border-[#296341] border-solid h-[49px] left-[642px] top-[1253px] w-[489px]" />
-      <div className="-translate-y-1/2 absolute flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] left-[667px] not-italic text-[30px] text-black top-[1278px] whitespace-nowrap">
-        <p className="leading-[normal]">Invoice Number :</p>
-      </div>
-      <div className="absolute h-[459px] left-[361px] top-[31px] w-[544px]" data-name="png-clipart-occupational-safety-removebg-preview 1">
-        <img alt="" className="absolute inset-0 max-w-none object-cover pointer-events-none size-full" src={imgPngClipartOccupationalSafetyRemovebgPreview1.src} />
-      </div>
-      {/* Burger menu is now handled by (dashboard)/layout.tsx */}
+  const { apiFetch, user } = useAuth();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const [isLoading, setIsLoading] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+
+  const [formData, setFormData] = useState({
+    title: "",
+    incidentType: "Cargo Damaged",
+    description: "",
+    location: "",
+    invoiceNo: "",
+    date: new Date().toISOString().split('T')[0],
+    time: new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }),
+    insuranceTaken: false,
+    shipmentDetails: "",
+    severity: "MEDIUM" as "LOW" | "MEDIUM" | "HIGH" | "CRITICAL",
+  });
+
+  const [images, setImages] = useState<string[]>([]);
+
+  // Pre-fill user details
+  const name = user ? `${user.firstName} ${user.lastName}` : "Loading...";
+  const department = user?.designation || "Freight Supervisor";
+  const mobileNumber = user?.mobileNumber || "N/A";
+
+  const handleInputChange = (field: string, value: any) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    setIsUploading(true);
+    const uploadedUrls: string[] = [];
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      const uploadData = new FormData();
+      uploadData.append("file", file);
+      uploadData.append("imageType", "incident");
+
+      try {
+        const res = await apiFetch("/api/upload", {
+          method: "POST",
+          body: uploadData,
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          uploadedUrls.push(data.url);
+        } else {
+          toast.error(`Failed to upload ${file.name}`);
+        }
+      } catch (error) {
+        console.error("Upload error:", error);
+        toast.error("An error occurred during upload.");
+      }
+    }
+
+    setImages(prev => [...prev, ...uploadedUrls]);
+    setIsUploading(false);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    // Basic validation
+    if (!formData.description) {
+      toast.error("Please provide an incident description.");
+      return;
+    }
+    if (!formData.location) {
+      toast.error("Please specify at least the incident location.");
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const payload = {
+        ...formData,
+        title: formData.title || `Incident: ${formData.incidentType} - ${formData.location}`,
+        images,
+      };
+
+      const res = await apiFetch("/api/incidents", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+
+      if (res.ok) {
+        toast.success("Incident report submitted successfully!");
+        // Reset form
+        setFormData({
+          title: "",
+          incidentType: "Cargo Damaged",
+          description: "",
+          location: "",
+          invoiceNo: "",
+          date: new Date().toISOString().split('T')[0],
+          time: new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }),
+          insuranceTaken: false,
+          shipmentDetails: "",
+          severity: "MEDIUM",
+        });
+        setImages([]);
+      } else {
+        const data = await res.json();
+        toast.error(data.error || "Failed to submit report.");
+      }
+    } catch (error) {
+      console.error("Submission error:", error);
+      toast.error("An error occurred while submitting.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-white pb-20">
+      {/* Header Image Section */}
+      <div className="flex justify-center pt-8 pb-4">
+        <img
+          src={imgPngClipartOccupationalSafetyRemovebgPreview1.src}
+          alt="Safety"
+          className="h-48 md:h-64 object-contain"
+        />
+      </div>
+
+      <div className="max-w-5xl mx-auto px-6">
+        {/* Title */}
+        <div className="mb-10">
+          <h1 className="text-4xl font-bold tracking-tight text-gray-900 mb-2 uppercase">
+            Incident Report
+          </h1>
+          <div className="h-1.5 w-48 bg-black rounded-full" />
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-8">
+
+          {/* Section 1: Reporter Info */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-gray-50/50 p-6 rounded-xl border border-gray-100">
+            <div className="relative">
+              <label className="text-sm font-semibold text-gray-500 mb-1 flex items-center gap-2 uppercase tracking-wide">
+                <User className="size-4 text-[#296341]" /> Reported By
+              </label>
+              <div className="w-full bg-white border border-[#296341]/30 rounded-lg px-4 py-3 text-xl font-medium text-gray-800 shadow-sm">
+                {name}
+              </div>
+            </div>
+
+            <div className="relative">
+              <label className="text-sm font-semibold text-gray-500 mb-1 flex items-center gap-2 uppercase tracking-wide">
+                <Building className="size-4 text-[#296341]" /> Department
+              </label>
+              <div className="w-full bg-white border border-[#296341]/30 rounded-lg px-4 py-3 text-xl font-medium text-gray-800 shadow-sm">
+                {department}
+              </div>
+            </div>
+
+            <div className="relative md:col-span-2">
+              <label className="text-sm font-semibold text-gray-500 mb-1 flex items-center gap-2 uppercase tracking-wide">
+                <Phone className="size-4 text-[#296341]" /> Contact Phone
+              </label>
+              <div className="max-w-md w-full bg-white border border-[#296341]/30 rounded-lg px-4 py-3 text-xl font-medium text-gray-800 shadow-sm">
+                {mobileNumber}
+              </div>
+            </div>
+          </div>
+
+          <hr className="border-gray-100" />
+
+          {/* Section 2: Incident Type Selection */}
+          <div className="space-y-4">
+            <h2 className="text-2xl font-bold tracking-tight text-gray-900 uppercase">
+              Description of Incident
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {["Container Damaged", "Cargo Damaged", "Other"].map((type) => (
+                <button
+                  key={type}
+                  type="button"
+                  onClick={() => handleInputChange("incidentType", type)}
+                  className={`flex items-center gap-3 px-6 py-4 rounded-xl border-2 transition-all ${formData.incidentType === type
+                      ? "bg-[#296341] border-[#296341] text-white shadow-lg scale-[1.02]"
+                      : "bg-white border-gray-200 text-gray-700 hover:border-[#296341]/40"
+                    }`}
+                >
+                  <div className={`size-6 rounded-full border-2 flex items-center justify-center ${formData.incidentType === type ? "border-white" : "border-gray-300"
+                    }`}>
+                    {formData.incidentType === type && <div className="size-3 bg-white rounded-full" />}
+                  </div>
+                  <span className="text-lg font-bold">{type}</span>
+                </button>
+              ))}
+            </div>
+
+            {formData.incidentType === "Other" && (
+              <input
+                type="text"
+                placeholder="Please specify incident title..."
+                className="w-full border-b-2 border-gray-100 py-2 text-xl focus:border-[#296341] outline-none transition-colors"
+                value={formData.title}
+                onChange={(e) => handleInputChange("title", e.target.value)}
+              />
+            )}
+          </div>
+
+          {/* Section 3: Details grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="space-y-6">
+              <div>
+                <label className="text-sm font-semibold text-gray-500 mb-1 flex items-center gap-2 uppercase tracking-wide">
+                  <MapPin className="size-4 text-[#296341]" /> Location
+                </label>
+                <input
+                  type="text"
+                  placeholder="Where did it happen?"
+                  className="w-full bg-white border border-[#296341]/40 rounded-lg px-4 py-3 text-lg font-medium shadow-sm focus:ring-2 focus:ring-[#296341]/20 outline-none"
+                  value={formData.location}
+                  onChange={(e) => handleInputChange("location", e.target.value)}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-semibold text-gray-500 mb-1 flex items-center gap-2 uppercase tracking-wide">
+                    <Calendar className="size-4 text-[#296341]" /> Date
+                  </label>
+                  <input
+                    type="date"
+                    className="w-full bg-white border border-[#296341]/40 rounded-lg px-4 py-3 text-lg font-medium shadow-sm focus:ring-2 focus:ring-[#296341]/20 outline-none"
+                    value={formData.date}
+                    onChange={(e) => handleInputChange("date", e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-semibold text-gray-500 mb-1 flex items-center gap-2 uppercase tracking-wide">
+                    <Clock className="size-4 text-[#296341]" /> Time
+                  </label>
+                  <input
+                    type="time"
+                    className="w-full bg-white border border-[#296341]/40 rounded-lg px-4 py-3 text-lg font-medium shadow-sm focus:ring-2 focus:ring-[#296341]/20 outline-none"
+                    value={formData.time}
+                    onChange={(e) => handleInputChange("time", e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-sm font-semibold text-gray-500 mb-1 flex items-center gap-2 uppercase tracking-wide">
+                  <ShieldCheck className="size-4 text-[#296341]" /> Insurance Taken
+                </label>
+                <div className="flex gap-4">
+                  {[true, false].map((val) => (
+                    <button
+                      key={val ? "yes" : "no"}
+                      type="button"
+                      onClick={() => handleInputChange("insuranceTaken", val)}
+                      className={`flex-1 py-3 px-6 rounded-lg border-2 font-bold text-lg transition-all flex items-center justify-center gap-2 ${formData.insuranceTaken === val
+                          ? "bg-[#296341] border-[#296341] text-white"
+                          : "bg-white border-gray-100 text-gray-400"
+                        }`}
+                    >
+                      <div className={`size-5 rounded-full border-2 flex items-center justify-center ${formData.insuranceTaken === val ? "border-white" : "border-gray-200"
+                        }`}>
+                        {formData.insuranceTaken === val && <div className="size-2.5 bg-white rounded-full" />}
+                      </div>
+                      {val ? "YES" : "NO"}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="text-sm font-semibold text-gray-500 mb-1 flex items-center gap-2 uppercase tracking-wide">
+                  <Hash className="size-4 text-[#296341]" /> Invoice Number (Optional)
+                </label>
+                <input
+                  type="text"
+                  placeholder="#DSL-..."
+                  className="w-full bg-white border border-[#296341]/40 rounded-lg px-4 py-3 text-lg font-medium shadow-sm focus:ring-2 focus:ring-[#296341]/20 outline-none"
+                  value={formData.invoiceNo}
+                  onChange={(e) => handleInputChange("invoiceNo", e.target.value)}
+                />
+              </div>
+            </div>
+
+            {/* Right Column: Descripton Textareas */}
+            <div className="space-y-6">
+              <div className="h-full flex flex-col">
+                <label className="text-sm font-semibold text-gray-500 mb-1 flex items-center gap-2 uppercase tracking-wide">
+                  <FileText className="size-4 text-[#296341]" /> Incident Details
+                </label>
+                <textarea
+                  placeholder="How the incident happened, factors leading to the event, and what took place. Be as specific as possible."
+                  className="flex-1 w-full bg-white border border-[#296341]/40 rounded-lg px-4 py-3 text-lg font-medium shadow-sm min-h-[300px] focus:ring-2 focus:ring-[#296341]/20 outline-none resize-none"
+                  value={formData.description}
+                  onChange={(e) => handleInputChange("description", e.target.value)}
+                />
+              </div>
+            </div>
+          </div>
+
+          <hr className="border-gray-100" />
+
+          {/* Section 4: Shipment Details */}
+          <div>
+            <label className="text-sm font-semibold text-gray-500 mb-1 flex items-center gap-2 uppercase tracking-wide">
+              Shipment Details (Items, IDs, etc)
+            </label>
+            <textarea
+              placeholder="List the shipments affected or add any secondary details here..."
+              className="w-full bg-white border border-[#296341]/40 rounded-lg px-4 py-3 text-lg font-medium shadow-sm min-h-[100px] focus:ring-2 focus:ring-[#296341]/20 outline-none"
+              value={formData.shipmentDetails}
+              onChange={(e) => handleInputChange("shipmentDetails", e.target.value)}
+            />
+          </div>
+
+          {/* Section 5: Image Uploads */}
+          <div className="space-y-4">
+            <h2 className="text-xl font-bold text-gray-800 uppercase flex items-center gap-2">
+              <Camera className="size-6 text-[#296341]" /> Media Upload
+            </h2>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
+              {/* Main Large Slot (Input) */}
+              <div
+                onClick={() => fileInputRef.current?.click()}
+                className="col-span-1 min-h-[140px] border-2 border-dashed border-[#296341]/30 rounded-xl flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50 transition-colors group"
+              >
+                <input
+                  type="file"
+                  multiple
+                  hidden
+                  ref={fileInputRef}
+                  onChange={handleFileUpload}
+                  accept="image/*"
+                />
+                {isUploading ? (
+                  <Loader2 className="size-8 text-[#296341] animate-spin" />
+                ) : (
+                  <>
+                    <Camera className="size-8 text-[#296341] group-hover:scale-110 transition-transform" />
+                    <span className="text-sm font-semibold text-[#296341]">ADD PHOTO</span>
+                  </>
+                )}
+              </div>
+
+              {/* Display Uploaded Images */}
+              {images.map((url, idx) => (
+                <div key={idx} className="relative aspect-square rounded-xl overflow-hidden shadow-md group">
+                  <img src={url} alt={`Upload ${idx}`} className="size-full object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => setImages(images.filter((_, i) => i !== idx))}
+                    className="absolute top-1 right-1 bg-white/80 rounded-full p-1 shadow hover:bg-white text-red-500"
+                  >
+                    <X className="size-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <hr className="border-gray-100" />
+
+          {/* Submit Button */}
+          <div className="flex justify-center pt-8">
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="bg-[#132540] text-white px-20 py-4 rounded-xl text-2xl font-bold shadow-xl hover:bg-[#1a3254] transition-all disabled:opacity-50 flex items-center gap-3"
+            >
+              {isLoading ? <Loader2 className="size-7 animate-spin" /> : "SUBMIT REPORT"}
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }
