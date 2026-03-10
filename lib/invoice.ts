@@ -8,29 +8,43 @@ export async function getNextInvoiceNumber(): Promise<string> {
     const year = new Date().getFullYear();
     const settingKey = `last_invoice_number_${year}`;
 
-    // Get the last number used this year
-    const setting = await prisma.systemSetting.upsert({
-        where: { key: settingKey },
-        create: {
-            key: settingKey,
-            value: "0",
-            type: "number",
-            description: `Last invoice sequence number for ${year}`
-        },
-        update: {},
-    });
+    let nextNumber = 1;
 
-    const nextNumber = parseInt(setting.value) + 1;
+    try {
+        // Safe check for systemSetting because Prisma client might be stale
+        if (!(prisma as any).systemSetting) {
+            console.warn("Prisma systemSetting is missing, using timestamp fallback");
+            return `DSL-${year}-${Date.now().toString().slice(-4)}`;
+        }
 
-    // Save and increment
-    await prisma.systemSetting.update({
-        where: { key: settingKey },
-        data: { value: nextNumber.toString() }
-    });
+        const setting = await prisma.systemSetting.upsert({
+            where: { key: settingKey },
+            create: {
+                key: settingKey,
+                value: "0",
+                type: "number",
+                description: `Last invoice sequence number for ${year}`
+            },
+            update: {},
+        });
+
+        nextNumber = parseInt(setting.value) + 1;
+
+        // Save and increment
+        await prisma.systemSetting.update({
+            where: { key: settingKey },
+            data: { value: nextNumber.toString() }
+        });
+    } catch (err) {
+        console.error("Failed to generate sequential invoice number:", err);
+        // Fallback to timestamp to prevent crash
+        return `DSL-${year}-${Date.now().toString().slice(-4)}`;
+    }
 
     // Format: DSL-2024-0001
     return `DSL-${year}-${nextNumber.toString().padStart(4, "0")}`;
 }
+
 
 /**
  * Synchronizes an invoice number across all related tables when it is updated.

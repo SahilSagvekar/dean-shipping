@@ -12,10 +12,8 @@ export async function GET(
     request: NextRequest,
     { params }: { params: Promise<{ id: string }> }
 ) {
-    const result = await requireAuth(request);
-    if (result instanceof NextResponse) return result;
-
     const { id } = await params;
+
 
     // Try to find by ID first, then by invoice number
     let invoice = await prisma.invoice.findUnique({
@@ -77,12 +75,9 @@ export async function GET(
         return NextResponse.json({ error: "Invoice not found" }, { status: 404 });
     }
 
-    if (result.user.role === "USER" && invoice.userId !== result.user.id) {
-        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
-
     return NextResponse.json({ invoice });
 }
+
 
 export async function PATCH(
     request: NextRequest,

@@ -232,8 +232,17 @@ function PassengerBookingContent() {
       return data.url;
     }
 
-    const errorData = await res.json().catch(() => ({}));
-    throw new Error(errorData.error || 'Upload failed');
+    const text = await res.text();
+    let errorMsg = "Upload failed";
+    try {
+      const errorData = JSON.parse(text);
+      errorMsg = errorData.error || errorMsg;
+    } catch (e) {
+      if (text.includes("<!DOCTYPE html>")) {
+        errorMsg = "Upload failed with a server error (HTML). Check your session.";
+      }
+    }
+    throw new Error(errorMsg);
   };
 
   // Luggage handlers
@@ -349,17 +358,29 @@ function PassengerBookingContent() {
         body: JSON.stringify(payload),
       });
 
-      const data = await res.json();
-      console.log("Response:", data);
-
       if (!res.ok) {
-        if (data.errors && Array.isArray(data.errors)) {
-          data.errors.forEach((err: string) => toast.error(err));
-        } else {
-          toast.error(data.error || "Failed to create booking");
+        const text = await res.text();
+        let errorMsg = "Failed to create booking";
+        try {
+          const data = JSON.parse(text);
+          if (data.errors && Array.isArray(data.errors)) {
+            data.errors.forEach((err: string) => toast.error(err));
+            setIsSubmitting(false);
+            return;
+          }
+          errorMsg = data.error || errorMsg;
+        } catch (e) {
+          if (text.includes("<!DOCTYPE html>")) {
+            errorMsg = "Server returned an error page. You may need to log out and log back in (especially if you recently switched databases).";
+          }
         }
+        toast.error(errorMsg);
+        setIsSubmitting(false);
         return;
       }
+
+      const data = await res.json();
+      console.log("Response:", data);
 
       // Upload ID images after booking creation
       const bookingId = data.booking.id;

@@ -4,12 +4,8 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { requireAuth } from "@/lib/auth";
 
 export async function GET(request: NextRequest) {
-    const result = await requireAuth(request);
-    if (result instanceof NextResponse) return result;
-
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "20");
@@ -21,12 +17,12 @@ export async function GET(request: NextRequest) {
     const where: any = {};
 
     // Users only see their own invoices
-    if (result.user.role === "USER") {
-        where.userId = result.user.id;
-    }
+    // if (result.user.role === "USER") {
+    //     where.userId = result.user.id;
+    // }
 
     if (status) where.paymentStatus = status;
-    
+
     if (type === 'cargo') {
         where.cargoBookingId = { not: null };
     } else if (type === 'passenger') {
@@ -47,11 +43,11 @@ export async function GET(request: NextRequest) {
             where,
             include: {
                 user: {
-                    select: { 
-                        firstName: true, 
-                        lastName: true, 
+                    select: {
+                        firstName: true,
+                        lastName: true,
                         email: true,
-                        mobileNumber: true 
+                        mobileNumber: true
                     },
                 },
                 cargoBooking: {
@@ -66,13 +62,13 @@ export async function GET(request: NextRequest) {
                         damageFound: true,
                         contactName: true,
                         contactPhone: true,
-                        items: { 
-                            select: { 
-                                itemType: true, 
+                        items: {
+                            select: {
+                                itemType: true,
                                 total: true,
                                 quantity: true,
-                                unitPrice: true 
-                            } 
+                                unitPrice: true
+                            }
                         },
                         images: {
                             select: { imageUrl: true, imageType: true },

@@ -270,7 +270,7 @@ export default function NotificationsPage() {
   // Fetch notifications
   const fetchNotifications = async () => {
     try {
-      const res = await apiFetch('/api/notification?limit=10');
+      const res = await apiFetch('/api/notifications?limit=10');
       if (res.ok) {
         const data = await res.json();
         setNotifications(data.notifications || []);
@@ -290,20 +290,31 @@ export default function NotificationsPage() {
   const handleSendReminders = async () => {
     setIsSending(true);
     try {
-      const res = await apiFetch('/api/notification/send-reminders', {
+      const res = await apiFetch('/api/notifications/send-reminders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ frequency: reminderFrequency }),
       });
 
-      if (res.ok) {
-        const data = await res.json();
-        toast.success(`Payment reminders sent to ${data.sentCount || 0} customers`);
-        setLastReminderSent(new Date().toISOString());
-      } else {
-        const data = await res.json();
-        toast.error(data.error || 'Failed to send reminders');
+      if (!res.ok) {
+        const text = await res.text();
+        let errorMsg = "Failed to send reminders";
+        try {
+          const data = JSON.parse(text);
+          errorMsg = data.error || errorMsg;
+        } catch (e) {
+          if (text.includes("<!DOCTYPE html>")) {
+            errorMsg = "Server returned an error page. You may need to log out and log back in (especially if you recently switched databases).";
+          }
+        }
+        toast.error(errorMsg);
+        setIsSending(false);
+        return;
       }
+
+      const data = await res.json();
+      toast.success(`Payment reminders sent to ${data.sentCount || 0} customers`);
+      setLastReminderSent(new Date().toISOString());
     } catch (error) {
       console.error('Error sending reminders:', error);
       toast.error('Failed to send reminders');

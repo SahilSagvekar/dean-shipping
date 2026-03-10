@@ -503,7 +503,7 @@ const PalletFormFields = ({
       />
       <InputField label="Deck#" value={deckNo} onChange={setDeckNo} placeholder="e.g., 2" />
     </div>
-    
+
     <SizeFlagsSection
       size={cargoSize}
       onSizeChange={setCargoSize}
@@ -616,11 +616,10 @@ const BoxFormFields = ({
             <button
               key={subType}
               onClick={() => setBoxSubType(subType)}
-              className={`relative p-4 rounded-xl border-2 transition-all flex items-center gap-3 ${
-                isSelected
+              className={`relative p-4 rounded-xl border-2 transition-all flex items-center gap-3 ${isSelected
                   ? 'border-[#296341] bg-[#eef6f2] shadow-md'
                   : 'border-gray-200 bg-white hover:border-gray-300'
-              }`}
+                }`}
             >
               <div className={`p-2 rounded-lg ${config.bgColor}`}>
                 {config.icon}
@@ -671,15 +670,14 @@ const EnvelopeFormFields = ({
   return (
     <div className="space-y-8">
       <h3 className="text-[20px] font-bold text-gray-800 uppercase tracking-wide">Item Inspection</h3>
-      
+
       {/* Envelope Type Radio Selection */}
       <div className="flex gap-8">
         {envelopeTypes.map((type) => (
           <label key={type} className="flex items-center gap-3 cursor-pointer group">
             <div
-              className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
-                envelopeType === type ? 'border-[#296341]' : 'border-gray-300 group-hover:border-gray-400'
-              }`}
+              className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${envelopeType === type ? 'border-[#296341]' : 'border-gray-300 group-hover:border-gray-400'
+                }`}
               onClick={() => setEnvelopeType(type)}
             >
               {envelopeType === type && <div className="w-3 h-3 rounded-full bg-[#296341]" />}
@@ -752,9 +750,8 @@ const BundleFormFields = ({
         return (
           <label key={flag} className="flex items-center gap-3 cursor-pointer group">
             <div
-              className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
-                flags[key] ? 'border-[#296341]' : 'border-gray-300 group-hover:border-gray-400'
-              }`}
+              className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${flags[key] ? 'border-[#296341]' : 'border-gray-300 group-hover:border-gray-400'
+                }`}
               onClick={() => setFlags({ ...flags, [key]: !flags[key] })}
             >
               {flags[key] && <div className="w-3 h-3 rounded-full bg-[#296341]" />}
@@ -1126,7 +1123,7 @@ export default function CargoBooking() {
     setDamageFound("");
     setDamageLocation("");
     setComment("");
-    
+
     // Reset service-specific fields
     setContainerNo("");
     setChassisNo("");
@@ -1219,7 +1216,7 @@ export default function CargoBooking() {
         flags,
         value: value || null,
         price: price || null,
-        
+
         // Container specific
         containerNo: service === 'CONTAINER' || service === 'PALLET' ? containerNo || null : null,
         chassisNo: service === 'CONTAINER' ? chassisNo || null : null,
@@ -1227,32 +1224,32 @@ export default function CargoBooking() {
         size: service === 'CONTAINER' ? containerSize || null : null,
         containerType: service === 'CONTAINER' ? containerType || null : null,
         contents: service === 'CONTAINER' ? contents || null : null,
-        
+
         // Pallet specific
         palletNo: ['PALLET', 'BOX'].includes(service) ? palletNo || null : null,
         reeferNo: service === 'PALLET' ? reeferNo || null : null,
         height: service === 'PALLET' ? palletHeight || null : null,
         palletType: service === 'PALLET' ? palletType || null : null,
         decksNo: ['PALLET', 'BUNDLE'].includes(service) ? deckNo || null : null,
-        
+
         // Luggage specific
         material: ['LUGGAGE', 'BUNDLE'].includes(service) ? material || null : null,
         color: service === 'LUGGAGE' ? color || null : null,
         luggageType: service === 'LUGGAGE' ? luggageType || null : null,
-        
+
         // Envelope specific
         envelopeType: service === 'ENVELOPE' ? envelopeType || null : null,
-        
+
         // Bundle specific
         bundleQuantity: service === 'BUNDLE' ? bundleQuantity || null : null,
         bundleLength: service === 'BUNDLE' ? bundleLength || null : null,
         bundleSize: service === 'BUNDLE' ? bundleSize || null : null,
         itemLocation: service === 'BUNDLE' ? itemLocation || null : null,
         itemNumber: service === 'BUNDLE' ? itemNumber || null : null,
-        
+
         // Other specific
         itemName: service === 'OTHER' ? itemName || null : null,
-        
+
         // Common fields
         voyageId: selectedVoyageId || null,
         voyageNo: voyageNo || null,
@@ -1290,16 +1287,28 @@ export default function CargoBooking() {
         body: JSON.stringify(payload)
       });
 
-      const data = await res.json();
-
       if (!res.ok) {
-        if (data.errors && Array.isArray(data.errors)) {
-          data.errors.forEach((err: string) => toast.error(err));
-        } else {
-          toast.error(data.error || "Failed to create booking");
+        const text = await res.text();
+        let errorMsg = "Failed to create booking";
+        try {
+          const data = JSON.parse(text);
+          if (data.errors && Array.isArray(data.errors)) {
+            data.errors.forEach((err: string) => toast.error(err));
+            setIsSubmitting(false);
+            return;
+          }
+          errorMsg = data.error || errorMsg;
+        } catch (e) {
+          if (text.includes("<!DOCTYPE html>")) {
+            errorMsg = "Server returned an error page. You may need to log out and log back in (especially if you recently switched databases).";
+          }
         }
+        toast.error(errorMsg);
+        setIsSubmitting(false);
         return;
       }
+
+      const data = await res.json();
 
       // Upload images after booking creation
       const bookingId = data.booking.id;
@@ -1369,8 +1378,17 @@ export default function CargoBooking() {
       return data.url;
     }
 
-    const errorData = await res.json().catch(() => ({}));
-    throw new Error(errorData.error || 'Upload failed');
+    const text = await res.text();
+    let errorMsg = "Upload failed";
+    try {
+      const errorData = JSON.parse(text);
+      errorMsg = errorData.error || errorMsg;
+    } catch (e) {
+      if (text.includes("<!DOCTYPE html>")) {
+        errorMsg = "Upload failed with a server error (HTML). Check your session.";
+      }
+    }
+    throw new Error(errorMsg);
   };
 
   const itemTypes = ['DRY BOX(S)', 'FROZEN BOX(S)', 'COOLER BOX(S)', 'CONTAINER (20FT)', 'CONTAINER (40FT)', 'PALLET', 'LUGGAGE', 'BUNDLE', 'PARCEL', 'ENVELOPE', 'OTHER'];
@@ -1831,7 +1849,7 @@ export default function CargoBooking() {
         {/* Summary Section */}
         <div className="bg-[#c2dccf] rounded-3xl p-8 mb-8">
           <h3 className="text-[14px] font-bold text-gray-600 uppercase tracking-wider mb-6">Total Amount</h3>
-          
+
           <div className="grid grid-cols-3 gap-4 mb-6">
             <div>
               <p className="text-[12px] text-gray-500 uppercase">Quantity</p>
