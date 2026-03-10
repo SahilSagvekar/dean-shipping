@@ -82,7 +82,7 @@ export default function Login() {
         router.push("/admin/dashboard");
         break;
       case "AGENT":
-        router.push("/agent/dashboard");
+        router.push("/schedule-management");
         break;
       default:
         router.push("/admin/dashboard");

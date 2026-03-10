@@ -1,32 +1,163 @@
 "use client"
 
 import { useState } from 'react';
-import { Plus, Grid3x3, RefreshCw, Trash2, Eye, EyeOff } from 'lucide-react';
+import { Plus, Grid3x3, RefreshCw, Trash2, Eye, EyeOff, Loader2 } from 'lucide-react';
 import imgLogo from "@/app/assets/0630bc807bbd9122cb449e66c33d18d13536d121.png";
 import imgAdminIcon from "@/app/assets/502abc0f15e7e21e1f5df5c5bb93c870c70bbf38.png";
 
 // Sidebar is now handled by (dashboard)/layout.tsx
 
 
-const admins = [
-  { id: 1, name: 'Cecily Dean', email: 'Cecilydean@demo.com' },
-  { id: 2, name: 'Ernelia Turnquest', email: 'Erneliaturnquest@demo.com' },
-  { id: 3, name: 'Myron Dean', email: 'Myrondean@demo.com' },
-];
+import { useAuth } from '@/lib/auth-context';
+import { toast } from 'sonner';
+import { useEffect } from 'react';
+
+interface AdminUser {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  mobileNumber?: string;
+  role: string;
+}
 
 function AdminManagementContent() {
+  const { apiFetch, user: currentUser } = useAuth();
   const [activeTab, setActiveTab] = useState<'add' | 'view' | 'change'>('add');
   const [showOldPassword, setShowOldPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [admins, setAdmins] = useState<AdminUser[]>([]);
+
   const [formData, setFormData] = useState({
-    name: '',
+    firstName: '',
+    lastName: '',
     email: '',
+    mobileNumber: '',
     password: '',
+    role: 'ADMIN' as const,
   });
+
   const [passwordData, setPasswordData] = useState({
-    oldPassword: 'Myron%Dean',
-    newPassword: 'MyronDean%',
+    oldPassword: '',
+    newPassword: '',
   });
+
+  // Fetch Admins
+  const fetchAdmins = async () => {
+    setIsLoading(true);
+    try {
+      const res = await apiFetch('/api/users?role=ADMIN');
+      if (res.ok) {
+        const data = await res.json();
+        setAdmins(data.users || []);
+      } else {
+        toast.error('Failed to load admins');
+      }
+    } catch (err) {
+      console.error('Fetch error:', err);
+      toast.error('Error loading administrators');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'view') {
+      fetchAdmins();
+    }
+  }, [activeTab]);
+
+  // Handle Add Admin
+  const handleAddAdmin = async () => {
+    if (!formData.firstName || !formData.email || !formData.mobileNumber || !formData.password) {
+      toast.error('Please fill in all required fields');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const res = await apiFetch('/api/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+
+      if (res.ok) {
+        toast.success('Admin added successfully');
+        setFormData({
+          firstName: '',
+          lastName: '',
+          email: '',
+          mobileNumber: '',
+          password: '',
+          role: 'ADMIN',
+        });
+        setActiveTab('view');
+      } else {
+        const data = await res.json();
+        toast.error(data.error || 'Failed to add admin');
+      }
+    } catch (err) {
+      toast.error('An error occurred');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Handle Delete Admin
+  const handleDeleteAdmin = async (id: string) => {
+    if (id === currentUser?.id) {
+      toast.error('You cannot delete yourself!');
+      return;
+    }
+
+    if (!confirm('Are you sure you want to delete this administrator?')) return;
+
+    try {
+      const res = await apiFetch(`/api/users/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        toast.success('Admin deleted');
+        fetchAdmins();
+      } else {
+        toast.error('Action failed');
+      }
+    } catch (err) {
+      toast.error('An error occurred');
+    }
+  };
+
+  // Handle Change Password (of current logged-in user)
+  const handleChangePassword = async () => {
+    if (!passwordData.newPassword) {
+      toast.error('Please enter a new password');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      // Note: We're using the base user update API. 
+      // If we had a specific "change-password" endpoint that verified old password, we'd use that.
+      // Currently our api/users/[id] PATCH handles password hashing and update.
+      const res = await apiFetch(`/api/users/${currentUser?.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: passwordData.newPassword }),
+      });
+
+      if (res.ok) {
+        toast.success('Password updated successfully');
+        setPasswordData({ oldPassword: '', newPassword: '' });
+      } else {
+        const data = await res.json();
+        toast.error(data.error || 'Failed to update password');
+      }
+    } catch (err) {
+      toast.error('An error occurred');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="bg-white">
@@ -84,13 +215,22 @@ function AdminManagementContent() {
               <h2 className="text-[24px] font-medium text-[#296341]">Add New Admin</h2>
             </div>
 
-            <div className="grid grid-cols-3 gap-12 mb-10">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-12 mb-10">
               <div>
-                <label className="block text-[22px] font-medium mb-2">Name</label>
+                <label className="block text-[22px] font-medium mb-2">First Name</label>
                 <input
                   type="text"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  value={formData.firstName}
+                  onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                  className="w-full border border-[#296341] rounded-[4px] px-4 py-2 text-[18px] bg-white shadow-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-[22px] font-medium mb-2">Last Name</label>
+                <input
+                  type="text"
+                  value={formData.lastName}
+                  onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
                   className="w-full border border-[#296341] rounded-[4px] px-4 py-2 text-[18px] bg-white shadow-sm"
                 />
               </div>
@@ -100,6 +240,15 @@ function AdminManagementContent() {
                   type="email"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  className="w-full border border-[#296341] rounded-[4px] px-4 py-2 text-[18px] bg-white shadow-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-[22px] font-medium mb-2">Mobile Number</label>
+                <input
+                  type="text"
+                  value={formData.mobileNumber}
+                  onChange={(e) => setFormData({ ...formData, mobileNumber: e.target.value })}
                   className="w-full border border-[#296341] rounded-[4px] px-4 py-2 text-[18px] bg-white shadow-sm"
                 />
               </div>
@@ -115,7 +264,12 @@ function AdminManagementContent() {
             </div>
 
             <div className="flex justify-center">
-              <button className="bg-[#132540] text-white px-16 py-2 rounded-[8px] text-[24px] font-medium hover:bg-[#1a3254]">
+              <button
+                onClick={handleAddAdmin}
+                disabled={isLoading}
+                className="bg-[#132540] text-white px-16 py-2 rounded-[8px] text-[24px] font-medium hover:bg-[#1a3254] flex items-center gap-2"
+              >
+                {isLoading && <Loader2 className="w-6 h-6 animate-spin" />}
                 Save
               </button>
             </div>
@@ -131,19 +285,33 @@ function AdminManagementContent() {
             </div>
 
             <div className="space-y-4">
-              {admins.map((admin, index) => (
-                <div
-                  key={admin.id}
-                  className="border border-[#296341] bg-white flex items-center px-6 py-2 rounded-sm shadow-sm"
-                >
-                  <div className="w-[60px] text-[20px] font-bold">{index + 1}.</div>
-                  <div className="w-[380px] text-[18px]">{admin.name}</div>
-                  <div className="flex-1 text-[18px]">{admin.email}</div>
-                  <button className="p-2 hover:bg-red-50 rounded transition-colors group">
-                    <Trash2 className="w-6 h-6 text-[#296341] group-hover:text-red-500" />
-                  </button>
+              {isLoading ? (
+                <div className="flex justify-center py-12">
+                  <Loader2 className="w-10 h-10 animate-spin text-[#296341]" />
                 </div>
-              ))}
+              ) : admins.length === 0 ? (
+                <div className="text-center py-12 text-gray-500 text-xl">
+                  No administrators found.
+                </div>
+              ) : (
+                admins.map((admin, index) => (
+                  <div
+                    key={admin.id}
+                    className="border border-[#296341] bg-white flex items-center px-6 py-2 rounded-sm shadow-sm"
+                  >
+                    <div className="w-[60px] text-[20px] font-bold">{index + 1}.</div>
+                    <div className="w-[380px] text-[18px]">{admin.firstName} {admin.lastName}</div>
+                    <div className="flex-1 text-[18px]">{admin.email}</div>
+                    <button
+                      onClick={() => handleDeleteAdmin(admin.id)}
+                      className="p-2 hover:bg-red-50 rounded transition-colors group"
+                      title="Delete Admin"
+                    >
+                      <Trash2 className="w-6 h-6 text-[#296341] group-hover:text-red-500" />
+                    </button>
+                  </div>
+                ))
+              )}
             </div>
           </div>
         )}
@@ -160,10 +328,10 @@ function AdminManagementContent() {
               {/* User Info Header */}
               <div className="flex items-center justify-between mb-10 border-b border-gray-100 pb-6">
                 <div className="flex items-center gap-16">
-                  <div className="text-[22px] font-medium text-[#296341]">Myron Dean</div>
-                  <div className="text-[22px] font-medium text-[#296341]">Myrondean@demo.com</div>
+                  <div className="text-[22px] font-medium text-[#296341]">{currentUser?.firstName} {currentUser?.lastName}</div>
+                  <div className="text-[22px] font-medium text-[#296341]">{currentUser?.email}</div>
                 </div>
-                <div className="text-[22px] font-medium text-[#296341]">Administration</div>
+                <div className="text-[22px] font-medium text-[#296341]">{currentUser?.role}</div>
               </div>
 
               {/* Password Fields */}
@@ -205,7 +373,12 @@ function AdminManagementContent() {
               </div>
 
               <div className="flex justify-center">
-                <button className="bg-[#132540] text-white px-16 py-2 rounded-[8px] text-[24px] font-medium hover:bg-[#1a3254]">
+                <button
+                  onClick={handleChangePassword}
+                  disabled={isLoading}
+                  className="bg-[#132540] text-white px-16 py-2 rounded-[8px] text-[24px] font-medium hover:bg-[#1a3254] flex items-center gap-2"
+                >
+                  {isLoading && <Loader2 className="w-6 h-6 animate-spin" />}
                   Save
                 </button>
               </div>

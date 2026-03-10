@@ -166,11 +166,11 @@ export const navigationItems: NavItem[] = [
     href: "/incident-report",
     icon: AlertTriangle,
   },
-  {
-    title: "Setting",
-    href: "/admin/settings",
-    icon: Settings,
-  },
+  // {
+  //   title: "Setting",
+  //   href: "/admin/settings",
+  //   icon: Settings,
+  // },
   {
     title: "Cashier",
     href: "/cashier",
