@@ -9,8 +9,8 @@ import prisma from "@/lib/prisma";
 import { requireStaff, createAuditLog, getClientIp } from "@/lib/auth";
 
 export async function POST(request: NextRequest) {
-    // const result = await requireStaff(request);
-    // if (result instanceof NextResponse) return result;
+    const result = await requireStaff(request);
+    if (result instanceof NextResponse) return result;
 
     try {
         const body = await request.json();
@@ -197,8 +197,8 @@ export async function POST(request: NextRequest) {
             createdVoyages.push(completeVoyage);
 
             await createAuditLog({
-                // userId: result.user.id,
-                userId: "test",
+                userId: result.user.id,
+                // userId: "test",
                 action: "AUTO_CREATE_VOYAGE",
                 entity: "voyage",
                 entityId: voyage.id,

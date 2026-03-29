@@ -8,6 +8,8 @@ import prisma from "@/lib/prisma";
 import { requireAuth, createAuditLog, getClientIp } from "@/lib/auth";
 
 import { getNextInvoiceNumber } from "@/lib/invoice";
+import { sendEmail } from "@/lib/email";
+import { getInvoiceEmailTemplate } from "@/lib/email-templates";
 
 // Valid service types
 
@@ -438,6 +440,41 @@ export async function POST(request: NextRequest) {
             },
             ipAddress: getClientIp(request),
         });
+
+        // Send Invoice Email
+        if (completeBooking) {
+            try {
+                const bookingType = 'Cargo Booking';
+                const invoiceItems = completeBooking.items.map((item: any) => ({
+                    description: item.itemType,
+                    quantity: item.quantity,
+                    total: item.total
+                }));
+
+                const emailData = {
+                    invoiceNo,
+                    customerName: contactName,
+                    totalAmount: grandTotal,
+                    subtotal: totalAmount,
+                    vatAmount,
+                    items: invoiceItems,
+                    fromLocation,
+                    toLocation,
+                    bookingType
+                };
+
+                const { subject, html } = getInvoiceEmailTemplate(emailData);
+                
+                // Send email asynchronously
+                sendEmail({
+                    to: contactEmail || result.user.email,
+                    subject,
+                    html
+                });
+            } catch (emailError) {
+                console.error("Failed to send booking email:", emailError);
+            }
+        }
 
         return NextResponse.json({
             booking: completeBooking,

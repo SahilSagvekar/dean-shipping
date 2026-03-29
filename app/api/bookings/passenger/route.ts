@@ -8,6 +8,8 @@ import prisma from "@/lib/prisma";
 import { requireAuth, createAuditLog, getClientIp } from "@/lib/auth";
 
 import { getNextInvoiceNumber } from "@/lib/invoice";
+import { sendEmail } from "@/lib/email";
+import { getInvoiceEmailTemplate } from "@/lib/email-templates";
 
 export async function GET(request: NextRequest) {
     const result = await requireAuth(request);
@@ -183,6 +185,38 @@ export async function POST(request: NextRequest) {
             },
             ipAddress: getClientIp(request),
         });
+
+        // Send Invoice Email
+        try {
+            const bookingType = 'Passenger Booking';
+            const invoiceItems = [];
+            if (adults > 0) invoiceItems.push({ description: 'Adult Passenger', quantity: adults, total: adults * 65 });
+            if (children > 0) invoiceItems.push({ description: 'Child Passenger', quantity: children, total: children * 45 });
+            if (infants > 0) invoiceItems.push({ description: 'Infant Passenger', quantity: infants, total: 0 });
+
+            const emailData = {
+                invoiceNo,
+                customerName: name,
+                totalAmount: grandTotal,
+                subtotal: amount,
+                vatAmount,
+                items: invoiceItems,
+                fromLocation,
+                toLocation,
+                bookingType
+            };
+
+            const { subject, html } = getInvoiceEmailTemplate(emailData);
+            
+            // Send email asynchronously
+            sendEmail({
+                to: email || result.user.email,
+                subject,
+                html
+            });
+        } catch (emailError) {
+            console.error("Failed to send booking email:", emailError);
+        }
 
         return NextResponse.json(
             {
