@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Trash2, Edit2, ChevronDown, Plus, Loader2, ArrowRight, X } from "lucide-react";
+import { Trash2, Edit2, ChevronDown, Plus, Loader2, ArrowRight, X, Package, Snowflake, Thermometer, Mail, Container, Briefcase, LayoutGrid, Car, Layers, Users } from "lucide-react";
 import imgDesk from "@/app/assets/ab576223d2665babdbfbcf0c2c488ca622b1efd4.png";
 import imgLogo from "@/app/assets/0630bc807bbd9122cb449e66c33d18d13536d121.png";
 import { useAuth } from "@/lib/auth-context";
@@ -49,16 +49,16 @@ function PriceManagementContent() {
   const [editingId, setEditingId] = useState<string | null>(null);
 
   const categories = [
-    { id: "DRY_BOX", label: "DRY BOX" },
-    { id: "FROZEN_BOX", label: "FROZEN BOX" },
-    { id: "COOLER_BOX", label: "COOLER BOX" },
-    { id: "ENVELOPE", label: "ENVELOPE" },
-    { id: "CONTAINER", label: "CONTAINER" },
-    { id: "LUGGAGE", label: "LUGGAGE" },
-    { id: "PALLET", label: "PALLET" },
-    { id: "VEHICLE", label: "VEHICLE" },
-    { id: "BUNDLE", label: "BUNDLE" },
-    { id: "PASSENGER", label: "PASSENGER" },
+    { id: "DRY_BOX", label: "DRY BOX", icon: Package },
+    { id: "FROZEN_BOX", label: "FROZEN BOX", icon: Snowflake },
+    { id: "COOLER_BOX", label: "COOLER BOX", icon: Thermometer },
+    { id: "ENVELOPE", label: "ENVELOPE", icon: Mail },
+    { id: "CONTAINER", label: "CONTAINER", icon: Container },
+    { id: "LUGGAGE", label: "LUGGAGE", icon: Briefcase },
+    { id: "PALLET", label: "PALLET", icon: LayoutGrid },
+    { id: "VEHICLE", label: "VEHICLE", icon: Car },
+    { id: "BUNDLE", label: "BUNDLE", icon: Layers },
+    { id: "PASSENGER", label: "PASSENGER", icon: Users },
   ] as const;
 
   // Check if category needs type field
@@ -268,25 +268,29 @@ function PriceManagementContent() {
         </div>
 
         {/* Category Selection Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mb-16">
-          {categories.map((cat) => (
-            <button
-              key={cat.id}
-              onClick={() => {
-                setSelectedCategory(cat.id as Category);
-                setEditingId(null);
-                setFormSize("");
-                setFormValue("");
-              }}
-              className={`py-3 rounded-[8px] text-[22px] font-semibold border-2 transition-all shadow-sm ${
-                selectedCategory === cat.id
-                  ? "bg-[#296341] text-white border-[#296341]"
-                  : "bg-white text-[#296341] border-gray-100 hover:border-[#296341]/30"
-              }`}
-            >
-              {cat.label}
-            </button>
-          ))}
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 mb-16">
+          {categories.map((cat) => {
+            const Icon = cat.icon;
+            return (
+              <button
+                key={cat.id}
+                onClick={() => {
+                  setSelectedCategory(cat.id as Category);
+                  setEditingId(null);
+                  setFormSize("");
+                  setFormValue("");
+                }}
+                className={`py-4 px-3 rounded-[12px] text-[16px] font-semibold border-2 transition-all shadow-sm flex flex-col items-center gap-2 ${
+                  selectedCategory === cat.id
+                    ? "bg-[#296341] text-white border-[#296341]"
+                    : "bg-white text-[#296341] border-gray-100 hover:border-[#296341]/30 hover:bg-[#296341]/5"
+                }`}
+              >
+                <Icon className={`w-8 h-8 ${selectedCategory === cat.id ? "text-white" : "text-[#296341]"}`} />
+                <span>{cat.label}</span>
+              </button>
+            );
+          })}
         </div>
 
         {/* Dynamic Category Section */}

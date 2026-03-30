@@ -267,12 +267,23 @@ function EditScheduleModal({
   const handleSave = async () => {
     setIsSaving(true);
     try {
+      // Map events to legacy format for database compatibility
+      const mappedEvents = isHoliday ? [] : events.map(event => ({
+        // Legacy fields that the API expects
+        location: event.fromLocation || event.location || "",
+        startTime: event.departureTime || event.startTime || "",
+        endTime: event.arrivalTime || event.endTime || "",
+        type: event.type,
+        notes: event.notes || "",
+      }));
+
       await onSave({
         isHoliday,
-        events: isHoliday ? [] : events,
+        events: mappedEvents as any,
       });
       onClose();
     } catch (err) {
+      console.error("Save error:", err);
       alert("Failed to save");
     } finally {
       setIsSaving(false);
@@ -609,7 +620,7 @@ function EditScheduleModal({
 }
 
 function ScheduleManagementContent() {
-  const { user, apiFetch } = useAuth();
+  const { user, apiFetch, isLoading: authLoading, isAuthenticated } = useAuth();
 
   // Helper to get local YYYY-MM-DD
   const toLocalISO = (date: Date) => {
@@ -657,11 +668,17 @@ function ScheduleManagementContent() {
   const weekdays = ["MON", "TUE", "WED", "THU", "FRI", "SAT"];
   const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
-  // Fetch locations
+  // Fetch locations - wait for auth to be ready
   useEffect(() => {
+    if (authLoading || !isAuthenticated) return;
+
     async function fetchLocations() {
       try {
         const res = await apiFetch("/api/locations");
+        if (!res.ok) {
+          console.error("Failed to fetch locations:", res.status);
+          return;
+        }
         const data = await res.json();
         if (data.locations) {
           setLocations(data.locations.map((l: any) => ({ code: l.code, name: l.name })));
@@ -671,10 +688,12 @@ function ScheduleManagementContent() {
       }
     }
     fetchLocations();
-  }, [apiFetch]);
+  }, [apiFetch, authLoading, isAuthenticated]);
 
-  // Fetch schedules for current week
+  // Fetch schedules for current week - wait for auth to be ready
   useEffect(() => {
+    if (authLoading || !isAuthenticated) return;
+
     async function fetchSchedules() {
       setIsLoading(true);
       setError("");
@@ -683,21 +702,25 @@ function ScheduleManagementContent() {
         const endDate = toLocalISO(weekDates[5]);
 
         const res = await apiFetch(`/api/schedules?startDate=${startDate}&endDate=${endDate}&limit=100`);
-        const data = await res.json();
-
-        if (res.ok) {
-          setSchedules(data.schedules || []);
-        } else {
-          setError(data.error || "Failed to fetch schedules");
+        
+        if (!res.ok) {
+          const errorText = await res.text();
+          console.error("Schedule fetch failed:", res.status, errorText);
+          setError(`Failed to fetch schedules (${res.status})`);
+          return;
         }
+
+        const data = await res.json();
+        setSchedules(data.schedules || []);
       } catch (err: any) {
-        setError(err.message);
+        console.error("Fetch error:", err);
+        setError(err.message || "Failed to fetch schedules");
       } finally {
         setIsLoading(false);
       }
     }
     fetchSchedules();
-  }, [currentWeekStart, apiFetch]);
+  }, [currentWeekStart, apiFetch, authLoading, isAuthenticated]);
 
   // Get schedule for specific date and ship
   const getSchedule = (date: Date, shipName: string): Schedule | null => {
@@ -731,15 +754,17 @@ function ScheduleManagementContent() {
           }),
         });
 
-        const data = await res.json();
-        if (res.ok) {
-          schedule = data.schedule;
-          setSchedules([...schedules, data.schedule]);
-        } else {
-          alert(data.error || "Failed to create schedule");
+        if (!res.ok) {
+          const errorData = await res.json().catch(() => ({}));
+          alert(errorData.error || `Failed to create schedule (${res.status})`);
           return;
         }
+
+        const data = await res.json();
+        schedule = data.schedule;
+        setSchedules([...schedules, data.schedule]);
       } catch (err) {
+        console.error("Create schedule error:", err);
         alert("Failed to create schedule");
         return;
       }
@@ -757,11 +782,12 @@ function ScheduleManagementContent() {
       body: JSON.stringify(updates),
     });
 
-    const data = await res.json();
-
     if (!res.ok) {
-      throw new Error(data.error || "Failed to save");
+      const errorData = await res.json().catch(() => ({}));
+      throw new Error(errorData.error || "Failed to save");
     }
+
+    const data = await res.json();
 
     // Update local state
     setSchedules(schedules.map(s =>
@@ -778,11 +804,13 @@ function ScheduleManagementContent() {
       // Step 1: Update all schedules to published
       const scheduleIds: string[] = [];
       for (const schedule of schedules) {
-        await apiFetch(`/api/schedules/${schedule.id}`, {
+        const res = await apiFetch(`/api/schedules/${schedule.id}`, {
           method: "PATCH",
           body: JSON.stringify({ isPublished: true, isLaunched: true }),
         });
-        scheduleIds.push(schedule.id);
+        if (res.ok) {
+          scheduleIds.push(schedule.id);
+        }
       }
 
       // Step 2: Auto-create voyages from the published schedules
@@ -791,23 +819,25 @@ function ScheduleManagementContent() {
           method: "POST",
           body: JSON.stringify({ scheduleIds }),
         });
-        const voyageData = await voyageRes.json();
-        if (voyageRes.ok && voyageData.voyages?.length > 0) {
-          alert(
-            `Schedules published successfully!\n\n` +
-            `${voyageData.voyages.length} voyage(s) created:\n` +
-            voyageData.voyages
-              .map((v: any) => `• Voyage #${v.voyageNo} — ${v.shipName} (${v.stops?.length || 0} stops)`)
-              .join("\n")
-          );
-        } else if (voyageRes.ok) {
-          alert("Schedules published successfully!\n\nNo new voyages were created (may already exist or schedules have no events).");
+        
+        if (voyageRes.ok) {
+          const voyageData = await voyageRes.json();
+          if (voyageData.voyages?.length > 0) {
+            alert(
+              `Schedules published successfully!\n\n` +
+              `${voyageData.voyages.length} voyage(s) created:\n` +
+              voyageData.voyages
+                .map((v: any) => `• Voyage #${v.voyageNo} — ${v.shipName} (${v.stops?.length || 0} stops)`)
+                .join("\n")
+            );
+          } else {
+            alert("Schedules published successfully!\n\nNo new voyages were created (may already exist or schedules have no events).");
+          }
         } else {
-          // Schedules were published but voyage creation had an issue
-          alert(`Schedules published, but voyage creation had an issue: ${voyageData.error || "Unknown error"}`);
+          const errorData = await voyageRes.json().catch(() => ({}));
+          alert(`Schedules published, but voyage creation had an issue: ${errorData.error || "Unknown error"}`);
         }
       } catch (voyageErr) {
-        // Schedules were still published even if voyage creation fails
         console.error("Voyage creation error:", voyageErr);
         alert("Schedules published successfully!\n\nNote: Automatic voyage creation encountered an error. You can create voyages manually.");
       }
@@ -816,11 +846,12 @@ function ScheduleManagementContent() {
       const startDate = toLocalISO(weekDates[0]);
       const endDate = toLocalISO(weekDates[5]);
       const res = await apiFetch(`/api/schedules?startDate=${startDate}&endDate=${endDate}&limit=100`);
-      const data = await res.json();
       if (res.ok) {
+        const data = await res.json();
         setSchedules(data.schedules || []);
       }
     } catch (err) {
+      console.error("Launch error:", err);
       alert("Failed to publish schedules");
     } finally {
       setIsLaunching(false);
@@ -854,14 +885,17 @@ function ScheduleManagementContent() {
       }
 
       // Refresh schedules
-      const res = await apiFetch(`/api/schedules?limit=100`);
-      const data = await res.json();
+      const startDate = toLocalISO(weekDates[0]);
+      const endDate = toLocalISO(weekDates[5]);
+      const res = await apiFetch(`/api/schedules?startDate=${startDate}&endDate=${endDate}&limit=100`);
       if (res.ok) {
+        const data = await res.json();
         setSchedules(data.schedules || []);
       }
 
       alert(`Schedules will be published on ${launchAt.toLocaleString()}`);
     } catch (err) {
+      console.error("Schedule launch error:", err);
       alert("Failed to schedule launch");
     } finally {
       setIsScheduling(false);
@@ -880,6 +914,28 @@ function ScheduleManagementContent() {
     newStart.setDate(newStart.getDate() + 7);
     setCurrentWeekStart(newStart);
   };
+
+  // Show loading while auth is initializing
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <Loader2 className="w-12 h-12 animate-spin text-[#296341]" />
+      </div>
+    );
+  }
+
+  // Show message if not authenticated
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <div className="text-center">
+          <AlertCircle className="w-16 h-16 mx-auto mb-4 text-red-500" />
+          <h2 className="text-2xl font-bold mb-2">Authentication Required</h2>
+          <p className="text-gray-600">Please log in to access schedule management.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white">
