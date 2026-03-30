@@ -16,7 +16,16 @@ export async function GET(
 
     const schedule = await prisma.schedule.findUnique({
         where: { id },
-        include: { events: { orderBy: { sortOrder: "asc" } } },
+        include: { 
+            events: { 
+                orderBy: { sortOrder: "asc" },
+                include: {
+                    stops: {
+                        orderBy: { stopOrder: "asc" },
+                    },
+                },
+            },
+        },
     });
 
     if (!schedule) {
@@ -50,17 +59,36 @@ export async function PATCH(
             }
         }
 
-        // If events are provided, replace them
+        // If events are provided, replace them (including their stops)
         if (events) {
+            // Delete existing events (stops will be cascade deleted)
             await prisma.scheduleEvent.deleteMany({ where: { scheduleId: id } });
             updateData.events = {
                 create: events.map((event: any, index: number) => ({
+                    // New structure: fromLocation/toLocation
+                    fromLocation: event.fromLocation || event.location || "",
+                    toLocation: event.toLocation || event.location || "",
+                    departureTime: event.departureTime || event.startTime,
+                    arrivalTime: event.arrivalTime || event.endTime,
+                    // Legacy fields (for backward compatibility)
                     location: event.location,
                     startTime: event.startTime,
                     endTime: event.endTime,
+                    // Common fields
                     type: event.type,
                     notes: event.notes,
                     sortOrder: index,
+                    // Intermediate stops
+                    stops: event.stops?.length > 0 ? {
+                        create: event.stops.map((stop: any, stopIndex: number) => ({
+                            location: stop.location,
+                            arrivalTime: stop.arrivalTime,
+                            departureTime: stop.departureTime,
+                            activities: stop.activities || [],
+                            notes: stop.notes,
+                            stopOrder: stopIndex,
+                        })),
+                    } : undefined,
                 })),
             };
         }
@@ -68,7 +96,16 @@ export async function PATCH(
         const schedule = await prisma.schedule.update({
             where: { id },
             data: updateData,
-            include: { events: { orderBy: { sortOrder: "asc" } } },
+            include: { 
+                events: { 
+                    orderBy: { sortOrder: "asc" },
+                    include: {
+                        stops: {
+                            orderBy: { stopOrder: "asc" },
+                        },
+                    },
+                },
+            },
         });
 
         await createAuditLog({

@@ -8,28 +8,74 @@ import {
   Trash2,
   Loader2,
   User as UserIcon,
+  Users,
+  Baby,
+  UserCheck,
+  MapPin,
+  Calendar,
+  CreditCard,
+  FileText,
+  Luggage,
 } from "lucide-react";
 import imgLogo from "@/app/assets/ffb62b7af25544291ca34f641dc70191ad198db6.png";
 import imgUserManagementIcon from "@/app/assets/a961317a5944ebd34013fff0b9659f00f55e3f7c.png";
 import imgIdCard from "@/app/assets/10ad04e365367f2edb1a23ad5021caa2d9bfde6f.png";
 import { useAuth } from "@/lib/auth-context";
 
-// Types
-interface User {
+// Types for Passenger Booking
+interface PassengerLuggage {
   id: string;
-  firstName: string;
-  lastName: string;
+  type: string;
+  weight: number;
+  quantity: number;
+  price: number;
+}
+
+interface BookingImage {
+  id: string;
+  imageUrl: string;
+  imageType: string;
+  caption?: string;
+}
+
+interface PassengerBooking {
+  id: string;
+  invoiceNo: string;
+  name: string;
   email: string;
-  countryCode: string;
-  mobileNumber: string;
-  role: "USER" | "AGENT" | "ADMIN";
-  isActive: boolean;
+  contact: string;
+  infantCount: number;
+  childCount: number;
+  adultCount: number;
+  bookingDate: string;
+  fromLocation: string;
+  toLocation: string;
+  idType: string;
+  paymentStatus: "PAID" | "UNPAID" | "PARTIAL";
+  totalAmount: number;
+  vatPercent: number;
+  vatAmount: number;
+  subtotal: number;
+  remark?: string;
+  voyageId?: string;
   createdAt: string;
-  avatarUrl?: string;
+  updatedAt: string;
+  user?: {
+    firstName: string;
+    lastName: string;
+    email: string;
+  };
+  images: BookingImage[];
+  luggage: PassengerLuggage[];
+  invoice?: {
+    id: string;
+    invoiceNo: string;
+    paymentStatus: string;
+    paidAmount: number;
+  };
   _count?: {
-    cargoBookings: number;
-    passengerBookings: number;
-    invoices: number;
+    images: number;
+    luggage: number;
   };
 }
 
@@ -37,8 +83,8 @@ export default function UserManagement() {
   const { user: currentUser, apiFetch } = useAuth();
   
   // State
-  const [users, setUsers] = useState<User[]>([]);
-  const [expandedUser, setExpandedUser] = useState<string | null>(null);
+  const [passengers, setPassengers] = useState<PassengerBooking[]>([]);
+  const [expandedPassenger, setExpandedPassenger] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -53,25 +99,25 @@ export default function UserManagement() {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  // Fetch users
-  const fetchUsers = async (page: number = 1, search: string = "") => {
+  // Fetch passenger bookings
+  const fetchPassengers = async (page: number = 1, search: string = "") => {
     setIsLoading(true);
     setError("");
     try {
       const searchParam = search ? `&search=${encodeURIComponent(search)}` : "";
-      const res = await apiFetch(`/api/users?role=USER&limit=10&page=${page}${searchParam}`);
+      const res = await apiFetch(`/api/bookings/passenger?limit=10&page=${page}${searchParam}`);
       const data = await res.json();
       
       if (res.ok) {
-        setUsers(data.users || []);
+        setPassengers(data.bookings || []);
         setPagination(data.pagination || { page: 1, limit: 10, total: 0, totalPages: 0 });
       } else {
-        setError(data.error || "Failed to fetch users");
-        setUsers([]);
+        setError(data.error || "Failed to fetch passenger bookings");
+        setPassengers([]);
       }
     } catch (err: any) {
       setError(err.message);
-      setUsers([]);
+      setPassengers([]);
     } finally {
       setIsLoading(false);
     }
@@ -79,30 +125,30 @@ export default function UserManagement() {
 
   // Initial fetch and search
   useEffect(() => {
-    fetchUsers(1, debouncedSearch);
+    fetchPassengers(1, debouncedSearch);
   }, [debouncedSearch, apiFetch]);
 
-  // Toggle expanded user
-  const toggleUser = (id: string) => {
-    setExpandedUser(expandedUser === id ? null : id);
+  // Toggle expanded passenger
+  const togglePassenger = (id: string) => {
+    setExpandedPassenger(expandedPassenger === id ? null : id);
   };
 
   // Handle delete
-  const handleDelete = async (userId: string, userName: string) => {
-    if (!confirm(`Are you sure you want to deactivate ${userName}?`)) return;
+  const handleDelete = async (bookingId: string, passengerName: string) => {
+    if (!confirm(`Are you sure you want to delete booking for ${passengerName}?`)) return;
 
     try {
-      const res = await apiFetch(`/api/users/${userId}`, { method: "DELETE" });
+      const res = await apiFetch(`/api/bookings/passenger/${bookingId}`, { method: "DELETE" });
       const data = await res.json();
 
       if (!res.ok) {
-        alert(data.error || "Failed to deactivate user");
+        alert(data.error || "Failed to delete booking");
         return;
       }
 
       // Refresh list
-      const currentPage = users.length === 1 && pagination.page > 1 ? pagination.page - 1 : pagination.page;
-      fetchUsers(currentPage, debouncedSearch);
+      const currentPage = passengers.length === 1 && pagination.page > 1 ? pagination.page - 1 : pagination.page;
+      fetchPassengers(currentPage, debouncedSearch);
     } catch (err: any) {
       alert(err.message);
     }
@@ -111,12 +157,43 @@ export default function UserManagement() {
   // Page navigation
   const goToPage = (page: number) => {
     if (page < 1 || page > pagination.totalPages) return;
-    fetchUsers(page, debouncedSearch);
+    fetchPassengers(page, debouncedSearch);
   };
 
-  // Format phone
-  const formatPhone = (countryCode: string, phone: string) => {
-    return `${countryCode} ${phone}`;
+  // Format date
+  const formatDate = (dateStr: string) => {
+    return new Date(dateStr).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  };
+
+  // Format currency
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "BSD",
+    }).format(amount);
+  };
+
+  // Get total passengers
+  const getTotalPassengers = (booking: PassengerBooking) => {
+    return booking.infantCount + booking.childCount + booking.adultCount;
+  };
+
+  // Payment status badge
+  const PaymentBadge = ({ status }: { status: string }) => {
+    const styles = {
+      PAID: "bg-green-100 text-green-700",
+      UNPAID: "bg-red-100 text-red-700",
+      PARTIAL: "bg-yellow-100 text-yellow-700",
+    };
+    return (
+      <span className={`px-3 py-1 rounded-full text-[14px] font-medium ${styles[status as keyof typeof styles] || styles.UNPAID}`}>
+        {status}
+      </span>
+    );
   };
 
   return (
@@ -136,6 +213,7 @@ export default function UserManagement() {
           <h1 className="text-[40px] font-medium text-[#296341] mb-2">
             USER MANAGEMENT
           </h1>
+          <p className="text-[18px] text-gray-600 mb-2">Passenger Booking Records</p>
           <div className="h-[5px] bg-[#296341] rounded-full w-[202px]" />
         </div>
 
@@ -144,7 +222,7 @@ export default function UserManagement() {
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-7 h-7 text-black" />
           <input
             type="text"
-            placeholder="Search user name or email"
+            placeholder="Search passenger name, email, or invoice number"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full border border-gray-300 rounded pl-14 pr-4 py-3 text-[20px]"
@@ -162,58 +240,66 @@ export default function UserManagement() {
         )}
 
         {/* Loading State */}
-        {isLoading && users.length === 0 ? (
+        {isLoading && passengers.length === 0 ? (
           <div className="flex justify-center py-20">
             <Loader2 className="w-12 h-12 animate-spin text-[#296341]" />
           </div>
-        ) : users.length === 0 ? (
+        ) : passengers.length === 0 ? (
           <div className="text-center py-20 text-gray-500 border border-[#296341] rounded">
-            <UserIcon className="w-16 h-16 mx-auto mb-4 opacity-30" />
-            <p className="text-[24px]">No users found</p>
+            <Users className="w-16 h-16 mx-auto mb-4 opacity-30" />
+            <p className="text-[24px]">No passenger bookings found</p>
             {searchQuery && (
               <p className="text-[18px] mt-2">Try a different search term</p>
             )}
           </div>
         ) : (
           <>
-            {/* Users List */}
+            {/* Passengers List */}
             <div className="border border-[#296341]">
-              {users.map((user, index) => (
-                <div key={user.id}>
+              {passengers.map((passenger, index) => (
+                <div key={passenger.id}>
                   <div
                     className={`${
-                      expandedUser === user.id
-                        ? "border-[#296341] min-h-[250px]"
+                      expandedPassenger === passenger.id
+                        ? "border-[#296341]"
                         : "h-[65px]"
                     } border-b border-[#296341] relative`}
                   >
-                    {/* User Row */}
+                    {/* Passenger Row */}
                     <div className="flex items-center px-8 py-4 h-[65px]">
                       <div className="w-[50px] text-[28px]">
                         {(pagination.page - 1) * pagination.limit + index + 1}.
                       </div>
-                      <div className="w-[280px] text-[28px] truncate">
-                        {user.firstName} {user.lastName}
+                      <div className="w-[250px] text-[28px] truncate">
+                        {passenger.name}
                       </div>
-                      <div className="w-[380px] text-[28px] truncate">
-                        {user.email}
+                      <div className="w-[150px] text-[20px] truncate">
+                        {passenger.invoiceNo}
                       </div>
-                      <div className="w-[250px] text-[28px]">
-                        {formatPhone(user.countryCode, user.mobileNumber)}
+                      <div className="w-[180px] text-[20px] flex items-center gap-2">
+                        <MapPin className="w-4 h-4 text-gray-400" />
+                        {passenger.fromLocation} → {passenger.toLocation}
+                      </div>
+                      <div className="w-[120px] text-[20px] flex items-center gap-2">
+                        <Users className="w-4 h-4 text-gray-400" />
+                        {getTotalPassengers(passenger)} pax
+                      </div>
+                      <div className="w-[100px]">
+                        <PaymentBadge status={passenger.paymentStatus} />
                       </div>
                       <div className="flex-1" />
                       <button
-                        onClick={() => toggleUser(user.id)}
+                        onClick={() => togglePassenger(passenger.id)}
                         className="p-2 hover:bg-gray-100 rounded mr-4"
                       >
-                        {expandedUser === user.id ? (
+                        {expandedPassenger === passenger.id ? (
                           <ChevronUp className="w-9 h-9 text-[#296341]" />
                         ) : (
                           <ChevronDown className="w-9 h-9 text-[#296341]" />
                         )}
                       </button>
                       <button
-                        onClick={() => handleDelete(user.id, `${user.firstName} ${user.lastName}`)}
+                        onClick={() => handleDelete(passenger.id, passenger.name)}
                         className="p-2 hover:bg-red-50 rounded group"
                       >
                         <Trash2 className="w-10 h-10 text-[#296341] group-hover:text-red-500" />
@@ -221,89 +307,137 @@ export default function UserManagement() {
                     </div>
 
                     {/* Expanded Content */}
-                    {expandedUser === user.id && (
-                      <div className="px-8 pb-6 pt-2">
-                        <div className="flex items-start gap-6">
-                          {/* Large ID Card / Avatar */}
-                          <div className="border border-[#296341] rounded-[10px] overflow-hidden bg-gray-50">
-                            {user.avatarUrl ? (
-                              <img
-                                src={user.avatarUrl}
-                                alt="User Avatar"
-                                className="w-[272px] h-[142px] object-cover"
-                              />
+                    {expandedPassenger === passenger.id && (
+                      <div className="px-8 pb-6 pt-4">
+                        <div className="flex items-start gap-8">
+                          {/* ID Documents / Images */}
+                          <div className="flex flex-col gap-3">
+                            {passenger.images && passenger.images.length > 0 ? (
+                              passenger.images.slice(0, 2).map((img, imgIdx) => (
+                                <div key={img.id} className="border border-[#296341] rounded-[10px] overflow-hidden bg-gray-50">
+                                  <img
+                                    src={img.imageUrl}
+                                    alt={img.caption || `Document ${imgIdx + 1}`}
+                                    className="w-[180px] h-[100px] object-cover"
+                                  />
+                                </div>
+                              ))
                             ) : (
-                              <div className="w-[272px] h-[142px] flex items-center justify-center">
-                                <UserIcon className="w-16 h-16 text-gray-300" />
-                              </div>
+                              <>
+                                <div className="border border-[#296341] rounded-[10px] overflow-hidden">
+                                  <img
+                                    src={imgIdCard.src}
+                                    alt="ID Card"
+                                    className="w-[180px] h-[100px] object-cover"
+                                  />
+                                </div>
+                                <div className="border border-[#296341] rounded-[10px] overflow-hidden bg-gray-50 w-[180px] h-[100px] flex items-center justify-center">
+                                  <FileText className="w-10 h-10 text-gray-300" />
+                                </div>
+                              </>
                             )}
                           </div>
 
-                          {/* Small ID Cards */}
-                          <div className="flex flex-col gap-2">
-                            <div className="border border-[#296341] rounded-[10px] overflow-hidden">
-                              <img
-                                src={imgIdCard.src}
-                                alt="ID Card"
-                                className="w-[92px] h-[64px] object-cover"
-                              />
+                          {/* Booking Details */}
+                          <div className="flex-1 grid grid-cols-2 gap-x-12 gap-y-4">
+                            {/* Left Column */}
+                            <div className="space-y-3">
+                              <div className="flex items-center gap-2">
+                                <PaymentBadge status={passenger.paymentStatus} />
+                                <span className="text-[14px] text-gray-500">
+                                  Booked: {formatDate(passenger.createdAt)}
+                                </span>
+                              </div>
+                              
+                              <p className="text-[20px]">
+                                <span className="text-gray-500">Email:</span> {passenger.email || "N/A"}
+                              </p>
+                              <p className="text-[20px]">
+                                <span className="text-gray-500">Contact:</span> {passenger.contact || "N/A"}
+                              </p>
+                              <p className="text-[20px]">
+                                <span className="text-gray-500">ID Type:</span> {passenger.idType}
+                              </p>
+                              <p className="text-[20px]">
+                                <span className="text-gray-500">Travel Date:</span> {formatDate(passenger.bookingDate)}
+                              </p>
                             </div>
-                            <div className="border border-[#296341] rounded-[10px] overflow-hidden">
-                              <img
-                                src={imgIdCard.src}
-                                alt="ID Card"
-                                className="w-[92px] h-[64px] object-cover"
-                              />
+
+                            {/* Right Column */}
+                            <div className="space-y-3">
+                              <p className="text-[20px]">
+                                <span className="text-gray-500">Route:</span> {passenger.fromLocation} → {passenger.toLocation}
+                              </p>
+                              
+                              {/* Passenger Breakdown */}
+                              <div className="flex gap-6 py-2">
+                                {passenger.adultCount > 0 && (
+                                  <div className="flex items-center gap-2">
+                                    <UserCheck className="w-5 h-5 text-[#296341]" />
+                                    <span className="text-[18px]">{passenger.adultCount} Adult{passenger.adultCount > 1 ? "s" : ""}</span>
+                                  </div>
+                                )}
+                                {passenger.childCount > 0 && (
+                                  <div className="flex items-center gap-2">
+                                    <UserIcon className="w-5 h-5 text-blue-500" />
+                                    <span className="text-[18px]">{passenger.childCount} Child{passenger.childCount > 1 ? "ren" : ""}</span>
+                                  </div>
+                                )}
+                                {passenger.infantCount > 0 && (
+                                  <div className="flex items-center gap-2">
+                                    <Baby className="w-5 h-5 text-pink-500" />
+                                    <span className="text-[18px]">{passenger.infantCount} Infant{passenger.infantCount > 1 ? "s" : ""}</span>
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* Luggage */}
+                              {passenger.luggage && passenger.luggage.length > 0 && (
+                                <div className="pt-2 border-t border-gray-200">
+                                  <p className="text-[16px] text-gray-500 mb-2 flex items-center gap-2">
+                                    <Luggage className="w-4 h-4" /> Luggage
+                                  </p>
+                                  <div className="flex flex-wrap gap-2">
+                                    {passenger.luggage.map((lug) => (
+                                      <span key={lug.id} className="px-2 py-1 bg-gray-100 rounded text-[14px]">
+                                        {lug.quantity}x {lug.type} ({lug.weight}kg)
+                                      </span>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
                             </div>
                           </div>
 
-                          {/* User Details */}
-                          <div className="flex-1 space-y-3">
-                            <div className="flex items-center gap-4">
-                              <span className={`px-3 py-1 rounded-full text-[14px] font-medium ${
-                                user.isActive
-                                  ? "bg-green-100 text-green-700"
-                                  : "bg-red-100 text-red-700"
-                              }`}>
-                                {user.isActive ? "Active" : "Inactive"}
-                              </span>
-                              <span className="text-[16px] text-gray-500">
-                                Joined: {new Date(user.createdAt).toLocaleDateString()}
-                              </span>
-                            </div>
-                            
-                            <p className="text-[24px]">
-                              <span className="text-gray-500">Email:</span> {user.email}
+                          {/* Payment Summary */}
+                          <div className="w-[200px] bg-gray-50 rounded-lg p-4 border border-gray-200">
+                            <p className="text-[14px] text-gray-500 mb-3 flex items-center gap-2">
+                              <CreditCard className="w-4 h-4" /> Payment
                             </p>
-                            <p className="text-[24px]">
-                              <span className="text-gray-500">Phone:</span> {formatPhone(user.countryCode, user.mobileNumber)}
-                            </p>
-                            
-                            {/* Booking Stats */}
-                            {user._count && (
-                              <div className="flex gap-8 mt-4 pt-4 border-t border-gray-200">
-                                <div className="text-center">
-                                  <p className="text-[28px] font-bold text-[#296341]">
-                                    {user._count.cargoBookings}
-                                  </p>
-                                  <p className="text-[14px] text-gray-500">Cargo</p>
-                                </div>
-                                <div className="text-center">
-                                  <p className="text-[28px] font-bold text-[#296341]">
-                                    {user._count.passengerBookings}
-                                  </p>
-                                  <p className="text-[14px] text-gray-500">Passenger</p>
-                                </div>
-                                <div className="text-center">
-                                  <p className="text-[28px] font-bold text-[#296341]">
-                                    {user._count.invoices}
-                                  </p>
-                                  <p className="text-[14px] text-gray-500">Invoices</p>
-                                </div>
+                            <div className="space-y-2">
+                              <div className="flex justify-between text-[16px]">
+                                <span className="text-gray-500">Subtotal:</span>
+                                <span>{formatCurrency(passenger.subtotal)}</span>
                               </div>
-                            )}
+                              <div className="flex justify-between text-[16px]">
+                                <span className="text-gray-500">VAT ({passenger.vatPercent}%):</span>
+                                <span>{formatCurrency(passenger.vatAmount)}</span>
+                              </div>
+                              <div className="flex justify-between text-[20px] font-bold text-[#296341] pt-2 border-t border-gray-300">
+                                <span>Total:</span>
+                                <span>{formatCurrency(passenger.totalAmount)}</span>
+                              </div>
+                            </div>
                           </div>
                         </div>
+
+                        {/* Remark */}
+                        {passenger.remark && (
+                          <div className="mt-4 pt-4 border-t border-gray-200">
+                            <p className="text-[16px] text-gray-500">Remark:</p>
+                            <p className="text-[18px]">{passenger.remark}</p>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
@@ -314,7 +448,7 @@ export default function UserManagement() {
             {/* Footer Info & Pagination */}
             <div className="flex items-center justify-between mt-6">
               <p className="text-[20px] text-[#3b3b3b]">
-                Showing {((pagination.page - 1) * pagination.limit) + 1} - {Math.min(pagination.page * pagination.limit, pagination.total)} of {pagination.total} users
+                Showing {((pagination.page - 1) * pagination.limit) + 1} - {Math.min(pagination.page * pagination.limit, pagination.total)} of {pagination.total} bookings
               </p>
               
               {/* Pagination Controls */}

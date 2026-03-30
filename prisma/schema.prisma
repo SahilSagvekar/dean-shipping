@@ -405,14 +405,43 @@ model ScheduleEvent {
   scheduleId String
   schedule   Schedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
 
-  location String // Nassau, Marsh Harbour, Green Turtle Cay
-  startTime String? // "8am"
-  endTime   String? // "3pm"
-  type     String // "Freight Drop Off", "Freight Pick Up", "Freight Pick-up"
-  notes    String? // "(Dry Freight Only)", "(Include Freezer & Cooler items)"
+  // Journey endpoints (like train route: Borivali → Churchgate)
+  fromLocation   String   // Departure location code (e.g., "NAS")
+  toLocation     String   // Arrival location code (e.g., "GTC")
+  departureTime  String?  // "8:00 AM"
+  arrivalTime    String?  // "2:00 PM"
+  
+  // Legacy field - kept for backward compatibility, will be removed later
+  location       String?  // @deprecated - use fromLocation/toLocation instead
+  startTime      String?  // @deprecated - use departureTime instead
+  endTime        String?  // @deprecated - use arrivalTime instead
+
+  type     String   // "Freight Drop Off", "Freight Pick Up", "Passenger Boarding"
+  notes    String?  // "(Dry Freight Only)", "(Include Freezer & Cooler items)"
+
+  // Intermediate stops (like train stops: Kandivali, Andheri, Bandra, Dadar)
+  stops    ScheduleEventStop[]
 
   sortOrder Int      @default(0)
   createdAt DateTime @default(now())
+}
+
+// Intermediate stops within a journey (like train stations between start and end)
+model ScheduleEventStop {
+  id             String        @id @default(cuid())
+  scheduleEventId String
+  scheduleEvent   ScheduleEvent @relation(fields: [scheduleEventId], references: [id], onDelete: Cascade)
+
+  location       String        // Location code (e.g., "MHA")
+  arrivalTime    String?       // "10:00 AM"
+  departureTime  String?       // "10:30 AM"
+  activities     String[]      // ["Freight Drop Off", "Freight Pick Up"]
+  notes          String?       // "Dry Freight Only"
+
+  stopOrder      Int           @default(0)
+  createdAt      DateTime      @default(now())
+
+  @@index([scheduleEventId])
 }
 
 // ============================================

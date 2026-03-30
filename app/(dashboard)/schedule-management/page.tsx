@@ -1,21 +1,40 @@
 "use client"
 
 import { useState, useEffect } from 'react';
-import { MapPin, Check, ChevronDown, Plus, Trash2, Edit2, Loader2, X, Clock, Calendar, AlertCircle } from 'lucide-react';
+import { MapPin, Check, ChevronDown, Plus, Trash2, Edit2, Loader2, X, Clock, Calendar, AlertCircle, ArrowRight, Train } from 'lucide-react';
 import imgLogo from "@/app/assets/0630bc807bbd9122cb449e66c33d18d13536d121.png";
 import imgHero from "@/app/assets/b493fe526d34a8d0e654480300ff88ab45d2dde1.png";
 import imgShipBg from "@/app/assets/cf53a64ce492864216e5a9b357abee066ed01103.png";
 import { useAuth } from "@/lib/auth-context";
 
 // Types
-interface ScheduleEvent {
+interface ScheduleEventStop {
   id?: string;
   location: string;
-  startTime: string;
-  endTime: string;
+  arrivalTime: string;
+  departureTime: string;
+  activities: string[];
+  notes: string;
+  stopOrder?: number;
+}
+
+interface ScheduleEvent {
+  id?: string;
+  // New structure
+  fromLocation: string;
+  toLocation: string;
+  departureTime: string;
+  arrivalTime: string;
+  // Legacy fields (for backward compatibility)
+  location?: string;
+  startTime?: string;
+  endTime?: string;
+  // Common fields
   type: string;
   notes: string;
   sortOrder?: number;
+  // Intermediate stops
+  stops: ScheduleEventStop[];
 }
 
 interface Schedule {
@@ -58,23 +77,44 @@ function ScheduleItem({ data, onEdit }: { data: Schedule; onEdit: () => void }) 
           <span>Click to add events</span>
         </div>
       ) : (
-        data.events.map((event, idx) => (
-          <div key={idx} className="text-white">
-            <div className="flex items-center gap-2 mb-1">
-              <MapPin className="w-5 h-5 fill-white text-white" />
-              <span className="text-[22px] font-bold">{event.location}</span>
-              {(event.startTime || event.endTime) && (
-                <span className="text-[22px] font-bold ml-2">
-                  ({event.startTime}{event.startTime && event.endTime ? " - " : ""}{event.endTime})
-                </span>
-              )}
+        data.events.map((event, idx) => {
+          // Support both new and legacy format
+          const fromLoc = event.fromLocation || event.location || "";
+          const toLoc = event.toLocation || event.location || "";
+          const depTime = event.departureTime || event.startTime || "";
+          const arrTime = event.arrivalTime || event.endTime || "";
+          const stopsCount = event.stops?.length || 0;
+          
+          return (
+            <div key={idx} className="text-white">
+              <div className="flex items-center gap-2 mb-1 flex-wrap">
+                <MapPin className="w-5 h-5 fill-white text-white" />
+                <span className="text-[20px] font-bold">{fromLoc}</span>
+                {toLoc && toLoc !== fromLoc && (
+                  <>
+                    <ArrowRight className="w-5 h-5" />
+                    <span className="text-[20px] font-bold">{toLoc}</span>
+                  </>
+                )}
+                {(depTime || arrTime) && (
+                  <span className="text-[18px] font-medium ml-2 opacity-90">
+                    ({depTime}{depTime && arrTime ? " - " : ""}{arrTime})
+                  </span>
+                )}
+              </div>
+              <div className="pl-7">
+                <p className="text-[18px] font-bold leading-tight">{event.type}</p>
+                {stopsCount > 0 && (
+                  <p className="text-[14px] font-medium opacity-80 flex items-center gap-1">
+                    <Train className="w-4 h-4" />
+                    {stopsCount} intermediate stop{stopsCount > 1 ? 's' : ''}
+                  </p>
+                )}
+                {event.notes && <p className="text-[14px] font-medium opacity-90">{event.notes}</p>}
+              </div>
             </div>
-            <div className="pl-7">
-              <p className="text-[20px] font-bold leading-tight">{event.type}</p>
-              {event.notes && <p className="text-[16px] font-medium opacity-90">{event.notes}</p>}
-            </div>
-          </div>
-        ))
+          );
+        })
       )}
 
       {/* Status indicators */}
@@ -106,20 +146,38 @@ function EditScheduleModal({
   locations: { code: string; name: string }[];
 }) {
   const [isHoliday, setIsHoliday] = useState(schedule.isHoliday);
-  const [events, setEvents] = useState<ScheduleEvent[]>(schedule.events || []);
+  const [events, setEvents] = useState<ScheduleEvent[]>(() => {
+    // Convert legacy events to new format if needed
+    return (schedule.events || []).map(event => ({
+      ...event,
+      fromLocation: event.fromLocation || event.location || locations[0]?.code || "",
+      toLocation: event.toLocation || event.location || locations[0]?.code || "",
+      departureTime: event.departureTime || event.startTime || "",
+      arrivalTime: event.arrivalTime || event.endTime || "",
+      stops: event.stops || [],
+    }));
+  });
   const [isSaving, setIsSaving] = useState(false);
 
   const addEvent = () => {
-    setEvents([...events, { location: locations[0]?.code || "", startTime: "", endTime: "", type: eventTypes[0], notes: "" }]);
+    setEvents([...events, {
+      fromLocation: locations[0]?.code || "",
+      toLocation: locations[1]?.code || locations[0]?.code || "",
+      departureTime: "",
+      arrivalTime: "",
+      type: eventTypes[0],
+      notes: "",
+      stops: [],
+    }]);
   };
 
-  const updateEvent = (index: number, field: keyof ScheduleEvent, value: string) => {
+  const updateEvent = (index: number, field: keyof ScheduleEvent, value: any) => {
     const updated = [...events];
     updated[index] = { ...updated[index], [field]: value };
     setEvents(updated);
   };
 
-  const updateTime = (index: number, field: "startTime" | "endTime", type: "value" | "ampm", newValue: string) => {
+  const updateTime = (index: number, field: "departureTime" | "arrivalTime", type: "value" | "ampm", newValue: string) => {
     const updated = [...events];
     const current = updated[index][field] || "";
     const [val, ampm] = current.split(" ");
@@ -145,6 +203,67 @@ function EditScheduleModal({
     setEvents(events.filter((_, i) => i !== index));
   };
 
+  // Stop management functions
+  const addStop = (eventIndex: number) => {
+    const updated = [...events];
+    const currentStops = updated[eventIndex].stops || [];
+    updated[eventIndex].stops = [...currentStops, {
+      location: locations[0]?.code || "",
+      arrivalTime: "",
+      departureTime: "",
+      activities: [],
+      notes: "",
+    }];
+    setEvents(updated);
+  };
+
+  const updateStop = (eventIndex: number, stopIndex: number, field: keyof ScheduleEventStop, value: any) => {
+    const updated = [...events];
+    const stops = [...(updated[eventIndex].stops || [])];
+    stops[stopIndex] = { ...stops[stopIndex], [field]: value };
+    updated[eventIndex].stops = stops;
+    setEvents(updated);
+  };
+
+  const updateStopTime = (eventIndex: number, stopIndex: number, field: "arrivalTime" | "departureTime", type: "value" | "ampm", newValue: string) => {
+    const updated = [...events];
+    const stops = [...(updated[eventIndex].stops || [])];
+    const current = stops[stopIndex][field] || "";
+    const [val, ampm] = current.split(" ");
+
+    let result = "";
+    if (type === "value") {
+      result = `${newValue} ${ampm || "AM"}`;
+    } else {
+      result = `${val || ""} ${newValue}`;
+    }
+
+    stops[stopIndex] = { ...stops[stopIndex], [field]: result.trim() };
+    updated[eventIndex].stops = stops;
+    setEvents(updated);
+  };
+
+  const toggleStopActivity = (eventIndex: number, stopIndex: number, activity: string) => {
+    const updated = [...events];
+    const stops = [...(updated[eventIndex].stops || [])];
+    const currentActivities = stops[stopIndex].activities || [];
+    
+    if (currentActivities.includes(activity)) {
+      stops[stopIndex].activities = currentActivities.filter(a => a !== activity);
+    } else {
+      stops[stopIndex].activities = [...currentActivities, activity];
+    }
+    
+    updated[eventIndex].stops = stops;
+    setEvents(updated);
+  };
+
+  const removeStop = (eventIndex: number, stopIndex: number) => {
+    const updated = [...events];
+    updated[eventIndex].stops = (updated[eventIndex].stops || []).filter((_, i) => i !== stopIndex);
+    setEvents(updated);
+  };
+
   const handleSave = async () => {
     setIsSaving(true);
     try {
@@ -162,9 +281,9 @@ function EditScheduleModal({
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="bg-[#296341] p-6 rounded-t-xl flex items-center justify-between">
+        <div className="bg-[#296341] p-6 rounded-t-xl flex items-center justify-between sticky top-0 z-10">
           <div>
             <h3 className="text-white text-2xl font-bold">{schedule.shipName}</h3>
             <p className="text-white/80">{schedule.weekday}, {schedule.date} {schedule.month}</p>
@@ -192,60 +311,91 @@ function EditScheduleModal({
           {!isHoliday && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <h4 className="text-lg font-bold">Events</h4>
+                <h4 className="text-lg font-bold">Journeys</h4>
                 <button
                   onClick={addEvent}
                   className="bg-[#296341] text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-[#1e4a2e]"
                 >
-                  <Plus className="w-4 h-4" /> Add Event
+                  <Plus className="w-4 h-4" /> Add Journey
                 </button>
               </div>
 
               {events.length === 0 ? (
                 <div className="text-center py-8 text-gray-400">
-                  No events. Click "Add Event" to create one.
+                  No journeys. Click "Add Journey" to create one.
                 </div>
               ) : (
-                <div className="space-y-4">
-                  {events.map((event, index) => (
-                    <div key={index} className="border border-gray-200 rounded-lg p-4 space-y-3">
-                      <div className="flex items-center justify-between">
-                        <span className="font-medium text-gray-500">Event {index + 1}</span>
+                <div className="space-y-6">
+                  {events.map((event, eventIndex) => (
+                    <div key={eventIndex} className="border-2 border-gray-200 rounded-xl overflow-hidden">
+                      {/* Event Header */}
+                      <div className="bg-gray-50 px-4 py-3 flex items-center justify-between border-b">
+                        <div className="flex items-center gap-2">
+                          <span className="bg-[#296341] text-white text-sm px-2 py-1 rounded font-medium">
+                            Journey {eventIndex + 1}
+                          </span>
+                          {event.stops?.length > 0 && (
+                            <span className="text-gray-500 text-sm flex items-center gap-1">
+                              <Train className="w-4 h-4" />
+                              {event.stops.length} stop{event.stops.length > 1 ? 's' : ''}
+                            </span>
+                          )}
+                        </div>
                         <button
-                          onClick={() => removeEvent(index)}
+                          onClick={() => removeEvent(eventIndex)}
                           className="text-red-500 hover:bg-red-50 p-1 rounded"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-sm font-medium mb-1">Location</label>
-                          <select
-                            value={event.location}
-                            onChange={(e) => updateEvent(index, "location", e.target.value)}
-                            className="w-full border border-gray-300 rounded-lg px-3 py-2"
-                          >
-                            {locations.map(loc => (
-                              <option key={loc.code} value={loc.code}>{loc.name} ({loc.code})</option>
-                            ))}
-                          </select>
+                      <div className="p-4 space-y-4">
+                        {/* From / To Row */}
+                        <div className="grid grid-cols-[1fr_auto_1fr] gap-4 items-end">
+                          <div>
+                            <label className="block text-sm font-medium mb-1">From</label>
+                            <select
+                              value={event.fromLocation}
+                              onChange={(e) => updateEvent(eventIndex, "fromLocation", e.target.value)}
+                              className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                            >
+                              {locations.map(loc => (
+                                <option key={loc.code} value={loc.code}>{loc.name} ({loc.code})</option>
+                              ))}
+                            </select>
+                          </div>
+                          <div className="flex items-center justify-center pb-2">
+                            <ArrowRight className="w-6 h-6 text-gray-400" />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium mb-1">To</label>
+                            <select
+                              value={event.toLocation}
+                              onChange={(e) => updateEvent(eventIndex, "toLocation", e.target.value)}
+                              className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                            >
+                              {locations.map(loc => (
+                                <option key={loc.code} value={loc.code}>{loc.name} ({loc.code})</option>
+                              ))}
+                            </select>
+                          </div>
                         </div>
+
+                        {/* Time Row */}
                         <div className="grid grid-cols-2 gap-4">
                           <div>
-                            <label className="block text-sm font-medium mb-1">Start Time</label>
+                            <label className="block text-sm font-medium mb-1">Departure Time</label>
                             <div className="flex gap-2">
                               <input
                                 type="text"
-                                value={getTimeParts(event.startTime).value}
-                                onChange={(e) => updateTime(index, "startTime", "value", e.target.value)}
-                                placeholder="e.g., 8"
+                                value={getTimeParts(event.departureTime).value}
+                                onChange={(e) => updateTime(eventIndex, "departureTime", "value", e.target.value)}
+                                placeholder="e.g., 8:00"
                                 className="w-full border border-gray-300 rounded-lg px-3 py-2"
                               />
                               <select
-                                value={getTimeParts(event.startTime).ampm}
-                                onChange={(e) => updateTime(index, "startTime", "ampm", e.target.value)}
+                                value={getTimeParts(event.departureTime).ampm}
+                                onChange={(e) => updateTime(eventIndex, "departureTime", "ampm", e.target.value)}
                                 className="border border-gray-300 rounded-lg px-2 py-2 bg-gray-50"
                               >
                                 <option value="AM">AM</option>
@@ -254,18 +404,18 @@ function EditScheduleModal({
                             </div>
                           </div>
                           <div>
-                            <label className="block text-sm font-medium mb-1">End Time</label>
+                            <label className="block text-sm font-medium mb-1">Arrival Time</label>
                             <div className="flex gap-2">
                               <input
                                 type="text"
-                                value={getTimeParts(event.endTime).value}
-                                onChange={(e) => updateTime(index, "endTime", "value", e.target.value)}
-                                placeholder="e.g., 3"
+                                value={getTimeParts(event.arrivalTime).value}
+                                onChange={(e) => updateTime(eventIndex, "arrivalTime", "value", e.target.value)}
+                                placeholder="e.g., 2:00"
                                 className="w-full border border-gray-300 rounded-lg px-3 py-2"
                               />
                               <select
-                                value={getTimeParts(event.endTime).ampm}
-                                onChange={(e) => updateTime(index, "endTime", "ampm", e.target.value)}
+                                value={getTimeParts(event.arrivalTime).ampm}
+                                onChange={(e) => updateTime(eventIndex, "arrivalTime", "ampm", e.target.value)}
                                 className="border border-gray-300 rounded-lg px-2 py-2 bg-gray-50"
                               >
                                 <option value="AM">AM</option>
@@ -274,27 +424,158 @@ function EditScheduleModal({
                             </div>
                           </div>
                         </div>
-                        <div>
-                          <label className="block text-sm font-medium mb-1">Type</label>
-                          <select
-                            value={event.type}
-                            onChange={(e) => updateEvent(index, "type", e.target.value)}
-                            className="w-full border border-gray-300 rounded-lg px-3 py-2"
-                          >
-                            {eventTypes.map(type => (
-                              <option key={type} value={type}>{type}</option>
-                            ))}
-                          </select>
+
+                        {/* Type and Notes Row */}
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-sm font-medium mb-1">Type</label>
+                            <select
+                              value={event.type}
+                              onChange={(e) => updateEvent(eventIndex, "type", e.target.value)}
+                              className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                            >
+                              {eventTypes.map(type => (
+                                <option key={type} value={type}>{type}</option>
+                              ))}
+                            </select>
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium mb-1">Notes</label>
+                            <input
+                              type="text"
+                              value={event.notes}
+                              onChange={(e) => updateEvent(eventIndex, "notes", e.target.value)}
+                              placeholder="e.g., Dry Freight Only"
+                              className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                            />
+                          </div>
                         </div>
-                        <div>
-                          <label className="block text-sm font-medium mb-1">Notes</label>
-                          <input
-                            type="text"
-                            value={event.notes}
-                            onChange={(e) => updateEvent(index, "notes", e.target.value)}
-                            placeholder="e.g., Dry Freight Only"
-                            className="w-full border border-gray-300 rounded-lg px-3 py-2"
-                          />
+
+                        {/* Intermediate Stops Section */}
+                        <div className="border-t pt-4 mt-4">
+                          <div className="flex items-center justify-between mb-3">
+                            <h5 className="font-medium text-gray-700 flex items-center gap-2">
+                              <Train className="w-4 h-4" />
+                              Intermediate Stops
+                            </h5>
+                            <button
+                              onClick={() => addStop(eventIndex)}
+                              className="text-[#296341] text-sm font-medium flex items-center gap-1 hover:underline"
+                            >
+                              <Plus className="w-4 h-4" /> Add Stop
+                            </button>
+                          </div>
+
+                          {(!event.stops || event.stops.length === 0) ? (
+                            <div className="text-center py-4 text-gray-400 text-sm bg-gray-50 rounded-lg">
+                              No intermediate stops. Direct journey from {event.fromLocation} to {event.toLocation}.
+                            </div>
+                          ) : (
+                            <div className="space-y-3">
+                              {event.stops.map((stop, stopIndex) => (
+                                <div key={stopIndex} className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                                  <div className="flex items-center justify-between mb-2">
+                                    <span className="text-sm font-medium text-blue-700">Stop {stopIndex + 1}</span>
+                                    <button
+                                      onClick={() => removeStop(eventIndex, stopIndex)}
+                                      className="text-red-500 hover:bg-red-100 p-1 rounded"
+                                    >
+                                      <Trash2 className="w-3 h-3" />
+                                    </button>
+                                  </div>
+                                  
+                                  <div className="grid grid-cols-3 gap-3">
+                                    {/* Location */}
+                                    <div>
+                                      <label className="block text-xs font-medium mb-1 text-gray-600">Location</label>
+                                      <select
+                                        value={stop.location}
+                                        onChange={(e) => updateStop(eventIndex, stopIndex, "location", e.target.value)}
+                                        className="w-full border border-gray-300 rounded px-2 py-1.5 text-sm"
+                                      >
+                                        {locations.map(loc => (
+                                          <option key={loc.code} value={loc.code}>{loc.name}</option>
+                                        ))}
+                                      </select>
+                                    </div>
+                                    
+                                    {/* Arrival */}
+                                    <div>
+                                      <label className="block text-xs font-medium mb-1 text-gray-600">Arrival</label>
+                                      <div className="flex gap-1">
+                                        <input
+                                          type="text"
+                                          value={getTimeParts(stop.arrivalTime).value}
+                                          onChange={(e) => updateStopTime(eventIndex, stopIndex, "arrivalTime", "value", e.target.value)}
+                                          placeholder="10:00"
+                                          className="w-full border border-gray-300 rounded px-2 py-1.5 text-sm"
+                                        />
+                                        <select
+                                          value={getTimeParts(stop.arrivalTime).ampm}
+                                          onChange={(e) => updateStopTime(eventIndex, stopIndex, "arrivalTime", "ampm", e.target.value)}
+                                          className="border border-gray-300 rounded px-1 py-1.5 text-sm bg-gray-50"
+                                        >
+                                          <option value="AM">AM</option>
+                                          <option value="PM">PM</option>
+                                        </select>
+                                      </div>
+                                    </div>
+                                    
+                                    {/* Departure */}
+                                    <div>
+                                      <label className="block text-xs font-medium mb-1 text-gray-600">Departure</label>
+                                      <div className="flex gap-1">
+                                        <input
+                                          type="text"
+                                          value={getTimeParts(stop.departureTime).value}
+                                          onChange={(e) => updateStopTime(eventIndex, stopIndex, "departureTime", "value", e.target.value)}
+                                          placeholder="10:30"
+                                          className="w-full border border-gray-300 rounded px-2 py-1.5 text-sm"
+                                        />
+                                        <select
+                                          value={getTimeParts(stop.departureTime).ampm}
+                                          onChange={(e) => updateStopTime(eventIndex, stopIndex, "departureTime", "ampm", e.target.value)}
+                                          className="border border-gray-300 rounded px-1 py-1.5 text-sm bg-gray-50"
+                                        >
+                                          <option value="AM">AM</option>
+                                          <option value="PM">PM</option>
+                                        </select>
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  {/* Activities */}
+                                  <div className="mt-2">
+                                    <label className="block text-xs font-medium mb-1 text-gray-600">Activities</label>
+                                    <div className="flex flex-wrap gap-2">
+                                      {eventTypes.map(activity => (
+                                        <label key={activity} className="flex items-center gap-1 text-xs cursor-pointer">
+                                          <input
+                                            type="checkbox"
+                                            checked={stop.activities?.includes(activity) || false}
+                                            onChange={() => toggleStopActivity(eventIndex, stopIndex, activity)}
+                                            className="w-3 h-3 accent-[#296341]"
+                                          />
+                                          <span>{activity}</span>
+                                        </label>
+                                      ))}
+                                    </div>
+                                  </div>
+
+                                  {/* Notes */}
+                                  <div className="mt-2">
+                                    <input
+                                      type="text"
+                                      value={stop.notes}
+                                      onChange={(e) => updateStop(eventIndex, stopIndex, "notes", e.target.value)}
+                                      placeholder="Stop notes (optional)"
+                                      className="w-full border border-gray-300 rounded px-2 py-1.5 text-sm"
+                                    />
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>

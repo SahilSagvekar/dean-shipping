@@ -21,6 +21,7 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get("status") || undefined;
     const from = searchParams.get("from") || undefined;
     const to = searchParams.get("to") || undefined;
+    const search = searchParams.get("search") || undefined;
     const skip = (page - 1) * limit;
 
     const where: any = {};
@@ -30,6 +31,16 @@ export async function GET(request: NextRequest) {
     if (status) where.paymentStatus = status;
     if (from) where.fromLocation = from;
     if (to) where.toLocation = to;
+    
+    // Search by name, email, or invoice number
+    if (search) {
+        where.OR = [
+            { name: { contains: search, mode: "insensitive" } },
+            { email: { contains: search, mode: "insensitive" } },
+            { invoiceNo: { contains: search, mode: "insensitive" } },
+            { contact: { contains: search, mode: "insensitive" } },
+        ];
+    }
 
     const [bookings, total] = await Promise.all([
         prisma.passengerBooking.findMany({
