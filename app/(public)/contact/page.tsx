@@ -210,6 +210,50 @@ export default function Contact() {
               </div>
             </div>
           </div>
+
+          {/* Map Section */}
+          <div className="mt-12 md:mt-16">
+            <h2 className="font-['Inter'] font-semibold text-2xl md:text-[32px] text-[#296341] mb-6 text-center">
+              Find Us
+            </h2>
+            <div className="bg-white border-2 border-[#296341] rounded-xl overflow-hidden shadow-sm">
+              <iframe
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3607.8775881899897!2d-77.35500542374756!3d25.07881297779356!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x892f7d0e2a5a2e7d%3A0x7c8a8d9b0f8c8e0a!2sNassau%2C%20The%20Bahamas!5e0!3m2!1sen!2sus!4v1699000000000!5m2!1sen!2sus"
+                width="100%"
+                height="400"
+                style={{ border: 0 }}
+                allowFullScreen
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                className="w-full h-[300px] md:h-[450px]"
+                title="Dean's Shipping Ltd Location - Nassau, The Bahamas"
+              />
+            </div>
+            <div className="flex flex-wrap justify-center gap-4 mt-6">
+              <a
+                href="https://www.google.com/maps/search/?api=1&query=Parkgate+Road+Nassau+Bahamas"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 bg-[#296341] hover:bg-[#1e4d30] text-white font-['Inter'] font-medium text-base md:text-lg px-6 py-3 rounded-xl transition-colors"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24">
+                  <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" fill="currentColor" />
+                </svg>
+                Get Directions
+              </a>
+              <a
+                href="https://www.google.com/maps/search/?api=1&query=Potter's+Cay+Nassau+Bahamas"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 bg-white border-2 border-[#296341] text-[#296341] hover:bg-[#296341] hover:text-white font-['Inter'] font-medium text-base md:text-lg px-6 py-3 rounded-xl transition-colors"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24">
+                  <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" fill="currentColor" />
+                </svg>
+                Potter's Cay Location
+              </a>
+            </div>
+          </div>
         </div>
       </section>
     </div>

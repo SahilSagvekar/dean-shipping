@@ -764,17 +764,17 @@ export default function ManifestPage() {
       </header>
 
       {/* Main Content */}
-      <div className="bg-[#5f8a71] min-h-[600px] py-6 px-4 md:px-8">
+      <div className="bg-white min-h-[600px] py-6 px-4 md:px-8">
         <div className="max-w-[1200px] mx-auto">
           {isLoading ? (
             <div className="flex items-center justify-center py-20">
-              <Loader2 className="w-12 h-12 animate-spin text-white" />
+              <Loader2 className="w-12 h-12 animate-spin text-[#296341]" />
             </div>
           ) : voyages.length === 0 ? (
-            <div className="text-center py-20 bg-white/20 rounded-xl">
-              <Ship className="w-16 h-16 mx-auto mb-4 text-white/70" />
-              <p className="text-xl text-white">No voyages found</p>
-              <p className="text-white/60 mt-2">
+            <div className="text-center py-20 bg-gray-100 rounded-xl">
+              <Ship className="w-16 h-16 mx-auto mb-4 text-gray-400" />
+              <p className="text-xl text-gray-700">No voyages found</p>
+              <p className="text-gray-500 mt-2">
                 Create voyages from the Schedule Management page
               </p>
             </div>
@@ -793,7 +793,7 @@ export default function ManifestPage() {
               {hasMore && (
                 <button
                   onClick={() => fetchVoyages(page + 1, true)}
-                  className="text-xl font-medium text-black hover:text-white transition-colors mt-4"
+                  className="text-xl font-medium text-[#296341] hover:text-[#1e4c30] transition-colors mt-4"
                 >
                   Load More ......
                 </button>
