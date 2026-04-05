@@ -6,10 +6,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { requireAuth, requireStaff, createAuditLog, getClientIp } from "@/lib/auth";
+import { processAutomatedReminders } from "@/lib/automation";
 
 export async function GET(request: NextRequest) {
     const result = await requireAuth(request);
     if (result instanceof NextResponse) return result;
+
+    // Passive Automation Trigger
+    // We only trigger this for staff sessions to ensure it runs when someone is monitoring the system
+    if (result.user.role === 'ADMIN' || result.user.role === 'AGENT') {
+        // Fire and forget (don't await to avoid slowing down the current request)
+        processAutomatedReminders().catch(console.error);
+    }
 
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get("page") || "1");

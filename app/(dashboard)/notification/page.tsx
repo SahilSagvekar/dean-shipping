@@ -231,9 +231,11 @@ export default function NotificationsPage() {
   const [isSending, setIsSending] = useState(false);
   const [updatingInvoiceId, setUpdatingInvoiceId] = useState<string | null>(null);
 
-  // Reminder settings
+  // Automation settings
   const [reminderFrequency, setReminderFrequency] = useState<string>('DAILY');
+  const [automationActive, setAutomationActive] = useState<boolean>(false);
   const [lastReminderSent, setLastReminderSent] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   // Pending payments
   const [pendingInvoices, setPendingInvoices] = useState<Invoice[]>([]);
@@ -281,12 +283,54 @@ export default function NotificationsPage() {
     }
   };
 
+  // Fetch automation settings
+  const fetchSettings = async () => {
+    try {
+      const res = await apiFetch('/api/notifications/settings');
+      if (res.ok) {
+        const data = await res.json();
+        const s = data.settings || {};
+        if (s.REMINDER_FREQUENCY) setReminderFrequency(s.REMINDER_FREQUENCY);
+        if (s.REMINDER_AUTOMATION_ACTIVE) setAutomationActive(s.REMINDER_AUTOMATION_ACTIVE === 'true');
+        if (s.REMINDER_LAST_RUN) setLastReminderSent(s.REMINDER_LAST_RUN);
+      }
+    } catch (err) {
+      console.error('Error fetching settings:', err);
+    }
+  };
+
   useEffect(() => {
     fetchPendingInvoices();
     fetchNotifications();
+    fetchSettings();
   }, []);
 
-  // Send payment reminders
+  // Save settings
+  const handleSaveSettings = async () => {
+    setIsSaving(true);
+    try {
+      const res = await apiFetch('/api/notifications/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          frequency: reminderFrequency,
+          automationActive: automationActive
+        }),
+      });
+
+      if (res.ok) {
+        toast.success('Automation preferences saved');
+      } else {
+        toast.error('Failed to save preferences');
+      }
+    } catch (error) {
+      toast.error('Connection error');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Send payment reminders manually
   const handleSendReminders = async () => {
     setIsSending(true);
     try {
@@ -304,7 +348,7 @@ export default function NotificationsPage() {
           errorMsg = data.error || errorMsg;
         } catch (e) {
           if (text.includes("<!DOCTYPE html>")) {
-            errorMsg = "Server returned an error page. You may need to log out and log back in (especially if you recently switched databases).";
+            errorMsg = "Server returned an error page. Please log in again.";
           }
         }
         toast.error(errorMsg);
@@ -313,7 +357,7 @@ export default function NotificationsPage() {
       }
 
       const data = await res.json();
-      toast.success(`Payment reminders sent to ${data.sentCount || 0} customers`);
+      toast.success(`Sent to ${data.sentCount || 0} customers`);
       setLastReminderSent(new Date().toISOString());
     } catch (error) {
       console.error('Error sending reminders:', error);
@@ -370,45 +414,74 @@ export default function NotificationsPage() {
           <div className="w-52 h-1.5 bg-black rounded-full mt-2" />
         </div>
 
-        {/* Reminder Frequency Selection */}
-        <section className="mb-8">
-          <div className="flex flex-wrap items-center gap-8 md:gap-16 mb-6">
-            {REMINDER_FREQUENCIES.map((freq) => (
-              <RadioButton
-                key={freq.value}
-                selected={reminderFrequency === freq.value}
-                onClick={() => setReminderFrequency(freq.value)}
-                label={freq.label}
-              />
-            ))}
+        {/* Automation Settings Section */}
+        <section className="mb-12 bg-gray-50/50 border-2 border-dashed border-gray-200 rounded-[20px] p-6 md:p-8">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8 mb-8">
+            <div>
+              <h2 className="text-2xl font-black text-[#132540] flex items-center gap-2 mb-1">
+                <Settings className="w-6 h-6 text-gray-400" /> AUTOMATION <span className="text-[#296341]">SETTINGS</span>
+              </h2>
+              <p className="text-gray-500 font-medium italic">Configure recurring payment reminders</p>
+            </div>
+
+            {/* Automation Toggle Switch */}
+            <div className="flex items-center gap-4 bg-white px-6 py-3 rounded-full border border-gray-200 shadow-sm">
+              <span className={`text-sm font-black uppercase tracking-widest ${automationActive ? 'text-green-600' : 'text-gray-400'}`}>
+                {automationActive ? 'Automation Active' : 'Automation Disabled'}
+              </span>
+              <button 
+                onClick={() => setAutomationActive(!automationActive)}
+                className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors focus:outline-none ${automationActive ? 'bg-green-500' : 'bg-gray-300'}`}
+              >
+                <span className={`inline-block h-6 w-6 transform rounded-full bg-white transition-transform ${automationActive ? 'translate-x-7' : 'translate-x-1'}`} />
+              </button>
+            </div>
           </div>
 
-          {/* Send Reminder Button */}
-          <button
-            onClick={handleSendReminders}
-            disabled={isSending}
-            className="bg-[#132540] text-white font-semibold px-8 py-3 rounded-[10px] text-lg hover:bg-[#1a3254] transition-colors disabled:opacity-50 flex items-center gap-2"
-          >
-            {isSending ? (
-              <Loader2 className="w-5 h-5 animate-spin" />
-            ) : (
-              <Send className="w-5 h-5" />
-            )}
-            Reminder Send
-          </button>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-end">
+            <div>
+              <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-4">Reminder Frequency</label>
+              <div className="flex flex-wrap gap-4 md:gap-8">
+                {REMINDER_FREQUENCIES.map((freq) => (
+                  <RadioButton
+                    key={freq.value}
+                    selected={reminderFrequency === freq.value}
+                    onClick={() => setReminderFrequency(freq.value)}
+                    label={freq.label}
+                  />
+                ))}
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row items-center gap-4">
+              <button
+                onClick={handleSaveSettings}
+                disabled={isSaving}
+                className="w-full sm:w-auto bg-[#132540] text-white font-black px-8 py-3 rounded-full text-sm uppercase tracking-widest hover:bg-[#1a3254] transition-all transform active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg shadow-blue-500/10"
+              >
+                {isSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : <CheckCircle className="w-5 h-5" />}
+                Save Preferences
+              </button>
+
+              <button
+                onClick={handleSendReminders}
+                disabled={isSending}
+                className="w-full sm:w-auto border-2 border-black text-black font-black px-8 py-3 rounded-full text-sm uppercase tracking-widest hover:bg-black hover:text-white transition-all transform active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {isSending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
+                Manual Send Now
+              </button>
+            </div>
+          </div>
 
           {/* Last reminder info */}
           {lastReminderSent && (
-            <p className="mt-4 text-gray-500 text-lg">
-              Last reminder sent - {new Date(lastReminderSent).toLocaleDateString('en-GB', {
-                day: '2-digit',
-                month: '2-digit',
-                year: 'numeric'
-              })} {new Date(lastReminderSent).toLocaleTimeString('en-GB', {
-                hour: '2-digit',
-                minute: '2-digit'
-              })}
-            </p>
+            <div className="mt-8 pt-6 border-t border-gray-100 flex items-center gap-3 text-gray-500 font-medium">
+               <Clock className="w-5 h-5 text-gray-400" />
+               <span>Last automated send triggered on <strong className="text-gray-900">{new Date(lastReminderSent).toLocaleString('en-GB', {
+                  day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
+               })}</strong></span>
+            </div>
           )}
         </section>
 
