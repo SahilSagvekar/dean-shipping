@@ -24,7 +24,9 @@ import {
   Briefcase,
   Mail,
   Layers,
-  MoreHorizontal
+  MoreHorizontal,
+  Ship,
+  Anchor
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { toast } from 'sonner';
@@ -88,6 +90,39 @@ interface Location {
   id: string;
   code: string;
   name: string;
+}
+
+interface VoyageStop {
+  id: string;
+  order?: number;
+  stopOrder?: number;
+  location: Location;
+  arrivalDate?: string;
+  departureDate?: string;
+  arrivalTime?: string;
+  departureTime?: string;
+}
+
+interface Voyage {
+  id: string;
+  voyageNo: number | string;
+  status: string;
+  date?: string;
+  departureDate?: string;
+  arrivalDate?: string;
+  shipName?: string;
+  ship?: {
+    id: string;
+    name: string;
+  };
+  from?: Location;
+  to?: Location;
+  stops?: VoyageStop[];
+  schedule?: {
+    id: string;
+    date: string;
+    shipName: string;
+  };
 }
 
 interface UploadedImage {
@@ -868,7 +903,7 @@ export default function CargoBooking() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingLocations, setIsLoadingLocations] = useState(true);
   const [locations, setLocations] = useState<Location[]>([]);
-  const [upcomingVoyages, setUpcomingVoyages] = useState<any[]>([]);
+  const [upcomingVoyages, setUpcomingVoyages] = useState<Voyage[]>([]);
   const [selectedVoyageId, setSelectedVoyageId] = useState("");
   const [isLoadingVoyages, setIsLoadingVoyages] = useState(false);
 
@@ -1010,6 +1045,107 @@ export default function CargoBooking() {
     }
     fetchVoyages();
   }, [apiFetch]);
+
+  // Get the selected voyage object
+  const selectedVoyage = upcomingVoyages.find(v => v.id === selectedVoyageId);
+
+  // Get voyage locations (stops) for the selected voyage
+  const getVoyageLocations = (): Location[] => {
+    if (!selectedVoyage) return [];
+    
+    const voyageLocations: Location[] = [];
+    
+    // Add from location if exists
+    if (selectedVoyage.from) {
+      voyageLocations.push(selectedVoyage.from);
+    }
+    
+    // Add stops
+    if (selectedVoyage.stops && selectedVoyage.stops.length > 0) {
+      selectedVoyage.stops
+        .sort((a, b) => (a.stopOrder || a.order || 0) - (b.stopOrder || b.order || 0))
+        .forEach((stop: VoyageStop) => {
+          // Avoid duplicates
+          if (!voyageLocations.find(l => l.id === stop.location.id)) {
+            voyageLocations.push(stop.location);
+          }
+        });
+    }
+    
+    // Add to location if not already there
+    if (selectedVoyage.to && !voyageLocations.find(l => l.id === selectedVoyage.to?.id)) {
+      voyageLocations.push(selectedVoyage.to);
+    }
+    
+    return voyageLocations;
+  };
+
+  // Handle voyage selection
+  const handleVoyageSelect = (voyageId: string) => {
+    setSelectedVoyageId(voyageId);
+    
+    if (voyageId) {
+      const voyage = upcomingVoyages.find(v => v.id === voyageId);
+      if (voyage) {
+        // Auto-populate voyage number
+        setVoyageNo(String(voyage.voyageNo));
+        
+        // Auto-set booking date to voyage departure date if available
+        const voyageDate = voyage.date || voyage.departureDate;
+        if (voyageDate) {
+          try {
+            const depDate = new Date(voyageDate).toISOString().split('T')[0];
+            setBookingDate(depDate);
+          } catch (e) {
+            console.error("Error parsing voyage date:", e);
+          }
+        }
+        
+        // Get voyage locations and set defaults
+        const voyageLocations = getVoyageLocationsForVoyage(voyage);
+        if (voyageLocations.length >= 2) {
+          setFromLocation(voyageLocations[0].code);
+          setToLocation(voyageLocations[voyageLocations.length - 1].code);
+        } else if (voyageLocations.length === 1) {
+          setFromLocation(voyageLocations[0].code);
+        }
+      }
+    } else {
+      // Cleared voyage selection - reset to all locations
+      setVoyageNo("");
+      if (locations.length > 0) {
+        setFromLocation(locations[0].code);
+        if (locations.length > 1) {
+          setToLocation(locations[1].code);
+        }
+      }
+    }
+  };
+
+  // Helper to get locations for a specific voyage
+  const getVoyageLocationsForVoyage = (voyage: Voyage): Location[] => {
+    const voyageLocations: Location[] = [];
+    
+    if (voyage.from) {
+      voyageLocations.push(voyage.from);
+    }
+    
+    if (voyage.stops && voyage.stops.length > 0) {
+      voyage.stops
+        .sort((a, b) => (a.stopOrder || a.order || 0) - (b.stopOrder || b.order || 0))
+        .forEach((stop: VoyageStop) => {
+          if (!voyageLocations.find(l => l.id === stop.location.id)) {
+            voyageLocations.push(stop.location);
+          }
+        });
+    }
+    
+    if (voyage.to && !voyageLocations.find(l => l.id === voyage.to?.id)) {
+      voyageLocations.push(voyage.to);
+    }
+    
+    return voyageLocations;
+  };
 
   // Get current service config
   const currentServiceConfig = SERVICE_CONFIGS[service];
@@ -1741,6 +1877,45 @@ export default function CargoBooking() {
   // Check if deficiency section should show damage location (Container has more detailed damage locations)
   const shouldShowDamageLocation = ['CONTAINER', 'PALLET', 'BUNDLE'].includes(service);
 
+  // Build voyage options for dropdown
+  const voyageOptions = [
+    { value: '', label: 'Select a voyage (optional)' },
+    ...upcomingVoyages.map(v => {
+      const shipName = v.ship?.name || v.shipName || 'Unknown Ship';
+      const voyageDateStr = v.date || v.departureDate;
+      const depDate = voyageDateStr 
+        ? new Date(voyageDateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+        : '';
+      const route = v.from && v.to 
+        ? `${v.from.code} → ${v.to.code}`
+        : '';
+      return {
+        value: v.id,
+        label: `${v.voyageNo} - ${shipName}${depDate ? ` (${depDate})` : ''}${route ? ` | ${route}` : ''}`
+      };
+    })
+  ];
+
+  // Get location options based on whether a voyage is selected
+  const getLocationOptions = () => {
+    if (selectedVoyageId && selectedVoyage) {
+      const voyageLocations = getVoyageLocations();
+      if (voyageLocations.length > 0) {
+        return voyageLocations.map(loc => ({
+          value: loc.code,
+          label: `${loc.code} - ${loc.name}`
+        }));
+      }
+    }
+    // Fall back to all locations
+    return locations.map(loc => ({
+      value: loc.code,
+      label: `${loc.code} - ${loc.name}`
+    }));
+  };
+
+  const locationOptions = getLocationOptions();
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hidden file inputs */}
@@ -1782,6 +1957,7 @@ export default function CargoBooking() {
       </div>
 
       <main className="max-w-[1400px] mx-auto px-4 sm:px-8 py-8 pb-32">
+
         {/* Service Type Selector */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-8">
           <div className="flex flex-col md:flex-row md:items-center gap-4 md:gap-6">
@@ -1833,8 +2009,74 @@ export default function CargoBooking() {
           </div>
         )}
 
-        {/* From / To / Date Section */}
+        {/* Voyage / From / To / Date Section */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8 mb-8">
+          {/* Voyage Selector */}
+          <div className="mb-6">
+            <BoxedSelectField
+              label="Voyage"
+              value={selectedVoyageId}
+              onChange={handleVoyageSelect}
+              icon={<Ship className="w-5 h-5" />}
+              disabled={isLoadingVoyages}
+              options={
+                isLoadingVoyages
+                  ? [{ value: '', label: 'Loading voyages...' }]
+                  : voyageOptions.length === 1
+                    ? [{ value: '', label: 'No upcoming voyages available' }]
+                    : voyageOptions
+              }
+            />
+          </div>
+
+          {/* Selected Voyage Info */}
+          {selectedVoyage && (
+            <div className="bg-[#f0f7f3] rounded-xl p-4 mb-6 border border-[#296341]/10">
+              <div className="flex flex-wrap items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <Anchor className="w-5 h-5 text-[#296341]" />
+                  <span className="font-bold text-gray-800">{selectedVoyage.ship?.name || selectedVoyage.shipName || 'Unknown Ship'}</span>
+                </div>
+                <span className="px-2 py-1 bg-[#296341]/10 rounded-md text-sm font-medium text-[#296341]">Voyage {selectedVoyage.voyageNo}</span>
+                {(selectedVoyage.date || selectedVoyage.departureDate) && (
+                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <Calendar className="w-4 h-4" />
+                    <span>Departs: {new Date(selectedVoyage.date || selectedVoyage.departureDate!).toLocaleDateString()}</span>
+                  </div>
+                )}
+                {selectedVoyage.from && selectedVoyage.to && (
+                  <div className="flex items-center gap-2 text-sm">
+                    <span className="font-medium text-gray-700">{selectedVoyage.from.code}</span>
+                    <ArrowRight className="w-4 h-4 text-gray-400" />
+                    <span className="font-medium text-gray-700">{selectedVoyage.to.code}</span>
+                  </div>
+                )}
+              </div>
+              {selectedVoyage.stops && selectedVoyage.stops.length > 0 && (
+                <div className="mt-3 pt-3 border-t border-[#296341]/10">
+                  <p className="text-xs text-gray-500 mb-2">Stops:</p>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedVoyage.stops
+                      .sort((a, b) => (a.stopOrder || a.order || 0) - (b.stopOrder || b.order || 0))
+                      .map((stop: VoyageStop, idx: number) => (
+                        <span key={stop.id} className="px-2 py-1 bg-white rounded text-xs font-medium text-gray-600">
+                          {idx + 1}. {stop.location.code}
+                        </span>
+                      ))
+                    }
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* From / To / Date */}
+          {selectedVoyageId && (
+            <p className="text-sm text-[#296341] mb-4 flex items-center gap-2">
+              <Ship className="w-4 h-4" />
+              Locations filtered to voyage stops
+            </p>
+          )}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <BoxedSelectField
               label="From"
@@ -1846,15 +2088,9 @@ export default function CargoBooking() {
               options={
                 isLoadingLocations
                   ? [{ value: '', label: 'Loading...' }]
-                  : locations.length === 0
+                  : locationOptions.length === 0
                     ? [{ value: '', label: 'No locations available' }]
-                    : (selectedVoyageId
-                      ? upcomingVoyages.find(v => v.id === selectedVoyageId)?.stops.map((s: any) => ({
-                        value: s.location.code,
-                        label: `${s.location.code} - ${s.location.name}`
-                      })) || locations.map(loc => ({ value: loc.code, label: `${loc.code} - ${loc.name}` }))
-                      : locations.map(loc => ({ value: loc.code, label: `${loc.code} - ${loc.name}` }))
-                    )
+                    : locationOptions
               }
             />
             <BoxedSelectField
@@ -1867,15 +2103,9 @@ export default function CargoBooking() {
               options={
                 isLoadingLocations
                   ? [{ value: '', label: 'Loading...' }]
-                  : locations.length === 0
+                  : locationOptions.length === 0
                     ? [{ value: '', label: 'No locations available' }]
-                    : (selectedVoyageId
-                      ? upcomingVoyages.find(v => v.id === selectedVoyageId)?.stops.map((s: any) => ({
-                        value: s.location.code,
-                        label: `${s.location.code} - ${s.location.name}`
-                      })) || locations.map(loc => ({ value: loc.code, label: `${loc.code} - ${loc.name}` }))
-                      : locations.map(loc => ({ value: loc.code, label: `${loc.code} - ${loc.name}` }))
-                    )
+                    : locationOptions
               }
             />
             <div className="space-y-2">
@@ -2062,6 +2292,16 @@ export default function CargoBooking() {
         <div className="bg-[#c2dccf] lg:bg-[#d4e0d9] rounded-3xl lg:rounded-none p-6 lg:p-8 mb-8 border border-[#296341]/20 lg:border-[#296341]">
           <h3 className="text-sm lg:text-[20px] font-bold text-gray-600 lg:text-black uppercase lg:normal-case tracking-wider mb-6">Total Amount</h3>
 
+          {/* Show selected voyage in summary */}
+          {selectedVoyage && (
+            <div className="bg-white/50 rounded-xl p-3 mb-4 flex items-center gap-3">
+              <Ship className="w-5 h-5 text-blue-600" />
+              <span className="font-medium text-gray-700">
+                Voyage: {selectedVoyage.voyageNo} - {selectedVoyage.ship?.name || 'Unknown Ship'}
+              </span>
+            </div>
+          )}
+
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
             <div className="bg-white/40 lg:bg-transparent p-4 lg:p-0 rounded-xl lg:rounded-none border border-white/20 lg:border-none">
               <p className="text-[10px] lg:text-[14px] text-gray-500 lg:text-black uppercase lg:normal-case font-black lg:font-bold">Quantity Total</p>
@@ -2093,95 +2333,6 @@ export default function CargoBooking() {
             </div>
           </div>
         </div>
-
-        {/* User Details Section */}
-        {/* <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8 mb-8">
-          <h2 className="text-[20px] font-bold text-[#296341] mb-6">USER DETAILS</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <InputField
-              label="Full Name"
-              value={contactName}
-              onChange={setContactName}
-              placeholder="Enter full name"
-              required
-            />
-            <InputField
-              label="Address"
-              value={address}
-              onChange={setAddress}
-              placeholder="Enter address"
-            />
-            <BoxedInputField
-              label="Email Address"
-              value={contactEmail}
-              onChange={setContactEmail}
-              placeholder="Enter email"
-              type="email"
-            />
-            <BoxedInputField
-              label="Contact Number"
-              value={contactPhone}
-              onChange={setContactPhone}
-              placeholder="Enter phone number"
-              type="tel"
-            />
-            <BoxedSelectField
-              label="ID Type"
-              value={idType}
-              onChange={setIdType}
-              options={[
-                { value: 'Passport', label: 'Passport' },
-                { value: 'Driver License', label: 'Driver License' },
-                { value: 'National ID', label: 'National ID' },
-                { value: 'Other', label: 'Other' }
-              ]}
-            />
-          </div>
-
-          <div className="mt-8">
-            <h3 className="text-[16px] font-bold text-gray-700 mb-4">Identity Documents</h3>
-            <div className="flex flex-wrap gap-4">
-              {userDocuments.length === 0 ? (
-                <div
-                  onClick={() => userDocumentRef.current?.click()}
-                  className="w-[150px] h-[200px] border-2 border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center cursor-pointer hover:border-[#296341] transition-colors"
-                >
-                  <ImageIcon className="w-10 h-10 text-gray-400 mb-2" />
-                  <p className="text-sm text-gray-500 text-center px-2">Upload {idType}</p>
-                </div>
-              ) : (
-                <>
-                  {userDocuments.map((doc, index) => (
-                    <div key={doc.id} className="relative w-[150px] h-[200px] rounded-xl overflow-hidden border border-gray-200 shadow-sm group">
-                      <img
-                        src={doc.preview || doc.url || imgPassport.src}
-                        alt={`${idType} ${index + 1}`}
-                        className="w-full h-full object-cover"
-                      />
-                      <button
-                        onClick={() => removeUserDocument(doc.id)}
-                        className="absolute top-2 right-2 w-7 h-7 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
-                      <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-xs text-center py-2 font-medium">
-                        {idType}
-                      </div>
-                    </div>
-                  ))}
-                  {userDocuments.length < 4 && (
-                    <div
-                      onClick={() => userDocumentRef.current?.click()}
-                      className="w-[150px] h-[200px] border-2 border-dashed border-gray-300 rounded-xl flex items-center justify-center cursor-pointer hover:border-[#296341] transition-colors"
-                    >
-                      <Plus className="w-8 h-8 text-gray-400" />
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
-          </div>
-        </div> */}
 
         {/* Action Buttons */}
         <div className="space-y-4">
@@ -2318,6 +2469,19 @@ export default function CargoBooking() {
             </div>
 
             <div className="space-y-6">
+              {/* Voyage Info */}
+              {selectedVoyage && (
+                <div className="border-b pb-4">
+                  <h4 className="font-bold text-gray-700 mb-2">Voyage</h4>
+                  <div className="flex items-center gap-3">
+                    <Ship className="w-5 h-5 text-blue-500" />
+                    <span className="font-bold">{selectedVoyage.voyageNo}</span>
+                    <span className="text-gray-500">-</span>
+                    <span>{selectedVoyage.ship?.name || 'Unknown Ship'}</span>
+                  </div>
+                </div>
+              )}
+
               {/* Service Details */}
               <div className="border-b pb-4">
                 <h4 className="font-bold text-gray-700 mb-2">Service Details</h4>
