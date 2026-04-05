@@ -168,53 +168,49 @@ function AgentManagementContent() {
   );
 
   return (
-    <div className="bg-white">
-
-      {/* Sidebar and Hamburger are now handled by (dashboard)/layout.tsx */}
-
-
+    <div className="bg-white min-h-screen flex flex-col">
 
       {/* Hero Illustration */}
-      <div className="flex justify-center mb-12 px-8">
-        <div className="relative w-full max-w-[1000px] aspect-[1000/400] overflow-hidden rounded-xl shadow-lg">
+      <div className="flex justify-center mb-6 lg:mb-12 px-4 lg:px-8">
+        <div className="relative w-full max-w-[1000px] aspect-[2/1] lg:aspect-[1000/400] overflow-hidden rounded-xl shadow-lg">
           <img
             src={imgHero.src}
             alt="Agent Management"
             className="w-full h-full object-cover"
           />
-          {/* Blurred background effect similar to design */}
+          {/* Blurred background effect */}
           <div className="absolute inset-0 -z-10 blur-2xl opacity-50 scale-110">
             <img src={imgHero.src} alt="" className="w-full h-full object-cover" />
           </div>
         </div>
       </div>
 
-      <main className="max-w-[1400px] mx-auto px-8 pb-12 flex-1 w-full">
+      <main className="max-w-[1400px] mx-auto px-4 lg:px-8 pb-12 flex-1 w-full">
         {/* Title Section */}
-        <div className="mb-12">
-          <h1 className="text-[36px] font-bold text-black mb-1">AGENT MANAGEMENT</h1>
-          <div className="h-[4px] bg-black w-[180px]" />
+        <div className="mb-8 lg:mb-12">
+          <h1 className="text-[28px] lg:text-[36px] font-bold text-black mb-1">AGENT MANAGEMENT</h1>
+          <div className="h-[4px] bg-black w-[120px] lg:w-[180px]" />
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex gap-12 mb-12">
+        <div className="flex flex-wrap gap-4 lg:gap-12 mb-8 lg:mb-12">
           <button
             onClick={() => setActiveTab('add')}
-            className={`px-10 py-2 rounded-[8px] text-[24px] font-medium transition-all ${activeTab === 'add' ? 'bg-[#296341] text-white' : 'bg-[#296341] text-white opacity-90'
+            className={`px-6 lg:px-10 py-2 rounded-[8px] text-[18px] lg:text-[24px] font-medium transition-all ${activeTab === 'add' ? 'bg-[#296341] text-white' : 'bg-[#296341] text-white opacity-90'
               }`}
           >
             Add Agent
           </button>
           <button
             onClick={() => setActiveTab('view')}
-            className={`px-10 py-2 rounded-[8px] text-[24px] font-medium transition-all ${activeTab === 'view' ? 'bg-[#296341] text-white' : 'bg-[#296341] text-white opacity-90'
+            className={`px-6 lg:px-10 py-2 rounded-[8px] text-[18px] lg:text-[24px] font-medium transition-all ${activeTab === 'view' ? 'bg-[#296341] text-white' : 'bg-[#296341] text-white opacity-90'
               }`}
           >
             View Agents
           </button>
           <button
             onClick={() => setActiveTab('change')}
-            className={`px-10 py-2 rounded-[8px] text-[24px] font-medium transition-all ${activeTab === 'change' ? 'bg-[#296341] text-white' : 'bg-[#296341] text-white opacity-90'
+            className={`px-6 lg:px-10 py-2 rounded-[8px] text-[18px] lg:text-[24px] font-medium transition-all ${activeTab === 'change' ? 'bg-[#296341] text-white' : 'bg-[#296341] text-white opacity-90'
               }`}
           >
             Change Password
@@ -223,60 +219,60 @@ function AgentManagementContent() {
 
         {/* Add New Agent Section */}
         {activeTab === 'add' && (
-          <div className="bg-[#e5f7f1] p-10 rounded-lg mb-8">
+          <div className="bg-[#e5f7f1] p-6 lg:p-10 rounded-lg mb-8">
             <div className="flex items-center gap-3 mb-8">
-              <Plus className="w-8 h-8 text-[#296341] border-2 border-[#296341] rounded-full" />
-              <h2 className="text-[24px] font-medium text-[#296341]">Add New Agent</h2>
+              <Plus className="w-6 h-6 lg:w-8 lg:h-8 text-[#296341] border-2 border-[#296341] rounded-full" />
+              <h2 className="text-[20px] lg:text-[24px] font-medium text-[#296341]">Add New Agent</h2>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-12 gap-y-8 mb-10">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-12 gap-y-6 lg:gap-y-8 mb-10">
               <div>
-                <label className="block text-[22px] font-medium mb-2">Name</label>
+                <label className="block text-[18px] lg:text-[22px] font-medium mb-2">Name</label>
                 <input
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   placeholder="Full Name"
-                  className="w-full border border-[#296341] rounded-[4px] px-4 py-2 text-[18px] bg-white shadow-sm outline-none"
+                  className="w-full border border-[#296341] rounded-[4px] px-4 py-2 text-[16px] lg:text-[18px] bg-white shadow-sm outline-none"
                 />
               </div>
               <div>
-                <label className="block text-[22px] font-medium mb-2">Email</label>
+                <label className="block text-[18px] lg:text-[22px] font-medium mb-2">Email</label>
                 <input
                   type="email"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   placeholder="email@example.com"
-                  className="w-full border border-[#296341] rounded-[4px] px-4 py-2 text-[18px] bg-white shadow-sm outline-none"
+                  className="w-full border border-[#296341] rounded-[4px] px-4 py-2 text-[16px] lg:text-[18px] bg-white shadow-sm outline-none"
                 />
               </div>
               <div>
-                <label className="block text-[22px] font-medium mb-2">Mobile Number</label>
+                <label className="block text-[18px] lg:text-[22px] font-medium mb-2">Mobile Number</label>
                 <input
                   type="text"
                   value={formData.mobileNumber}
                   onChange={(e) => setFormData({ ...formData, mobileNumber: e.target.value })}
                   placeholder="2421234567"
-                  className="w-full border border-[#296341] rounded-[4px] px-4 py-2 text-[18px] bg-white shadow-sm outline-none"
+                  className="w-full border border-[#296341] rounded-[4px] px-4 py-2 text-[16px] lg:text-[18px] bg-white shadow-sm outline-none"
                 />
               </div>
               <div>
-                <label className="block text-[22px] font-medium mb-2">Password</label>
+                <label className="block text-[18px] lg:text-[22px] font-medium mb-2">Password</label>
                 <input
                   type="text"
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                   placeholder="••••••••"
-                  className="w-full border border-[#296341] rounded-[4px] px-4 py-2 text-[18px] bg-white shadow-sm outline-none"
+                  className="w-full border border-[#296341] rounded-[4px] px-4 py-2 text-[16px] lg:text-[18px] bg-white shadow-sm outline-none"
                 />
               </div>
               <div className="md:col-span-1">
-                <label className="block text-[22px] font-medium mb-2">Role</label>
+                <label className="block text-[18px] lg:text-[22px] font-medium mb-2">Role</label>
                 <div className="relative">
                   <select
                     value={formData.role}
                     onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                    className="w-full border border-[#296341] rounded-[4px] px-4 py-2 text-[18px] bg-white shadow-sm appearance-none outline-none"
+                    className="w-full border border-[#296341] rounded-[4px] px-4 py-2 text-[16px] lg:text-[18px] bg-white shadow-sm appearance-none outline-none"
                   >
                     <option>Freight Supervisor</option>
                     <option>Freight Agent</option>
@@ -288,7 +284,7 @@ function AgentManagementContent() {
                 <button
                   onClick={handleAddAgent}
                   disabled={isSubmitting}
-                  className="bg-[#132540] text-white px-16 py-2 rounded-[8px] text-[24px] font-medium hover:bg-[#1a3254] transition-colors w-full md:w-auto disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="bg-[#132540] text-white px-8 lg:px-16 py-2 rounded-[8px] text-[18px] lg:text-[24px] font-medium hover:bg-[#1a3254] transition-colors w-full md:w-auto disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   {isSubmitting && <Loader2 className="w-5 h-5 animate-spin" />}
                   Save
@@ -300,10 +296,10 @@ function AgentManagementContent() {
 
         {/* View Agents Section */}
         {activeTab === 'view' && (
-          <div className="bg-[#e8eff6] p-10 rounded-lg mb-8">
+          <div className="bg-[#e8eff6] p-6 lg:p-10 rounded-lg mb-8">
             <div className="flex items-center gap-3 mb-8">
-              <Grid3x3 className="w-8 h-8 text-[#296341]" />
-              <h2 className="text-[24px] font-medium text-[#296341]">View Agents</h2>
+              <Grid3x3 className="w-6 h-6 lg:w-8 lg:h-8 text-[#296341]" />
+              <h2 className="text-[20px] lg:text-[24px] font-medium text-[#296341]">View Agents</h2>
             </div>
 
             <div className="space-y-4">
@@ -317,21 +313,35 @@ function AgentManagementContent() {
                 filteredAgents.map((agent, index) => (
                   <div
                     key={agent.id}
-                    className="border border-[#296341] bg-white flex items-center px-6 py-2 rounded-sm shadow-sm"
+                    className="border border-[#296341] bg-white flex flex-col lg:flex-row lg:items-center px-4 lg:px-6 py-4 lg:py-2 rounded-sm shadow-sm gap-4"
                   >
-                    <div className="w-[60px] text-[20px] font-bold">{index + 1}.</div>
-                    <div className="w-[300px] text-[18px]">{agent.firstName} {agent.lastName}</div>
-                    <div className="flex-1 text-[18px] text-center">{agent.email}</div>
-                    <div className="w-[300px] text-[18px] flex items-center justify-between px-4">
+                    <div className="flex items-center justify-between lg:contents">
+                       <div className="flex items-center gap-2 lg:contents">
+                          <div className="w-[30px] lg:w-[60px] text-[16px] lg:text-[20px] font-bold">{index + 1}.</div>
+                          <div className="w-[150px] lg:w-[300px] text-[16px] lg:text-[18px]">{agent.firstName} {agent.lastName}</div>
+                       </div>
+                       <div className="lg:hidden">
+                         <button
+                            onClick={() => handleDeleteAgent(agent.id)}
+                            className="p-2 hover:bg-red-50 rounded transition-colors group"
+                          >
+                            <Trash2 className="w-6 h-6 text-[#296341] group-hover:text-red-500" />
+                          </button>
+                       </div>
+                    </div>
+                    <div className="flex-1 text-[16px] lg:text-[18px] lg:text-center truncate">{agent.email}</div>
+                    <div className="w-full lg:w-[300px] text-[16px] lg:text-[18px] flex items-center justify-between px-0 lg:px-4">
                       <span>{agent.designation}</span>
                       <ChevronDown className="w-6 h-6 text-[#296341]" />
                     </div>
-                    <button
-                      onClick={() => handleDeleteAgent(agent.id)}
-                      className="p-2 ml-4 hover:bg-red-50 rounded transition-colors group"
-                    >
-                      <Trash2 className="w-6 h-6 text-[#296341] group-hover:text-red-500" />
-                    </button>
+                    <div className="hidden lg:block">
+                      <button
+                        onClick={() => handleDeleteAgent(agent.id)}
+                        className="p-2 hover:bg-red-50 rounded transition-colors group"
+                      >
+                        <Trash2 className="w-6 h-6 text-[#296341] group-hover:text-red-500" />
+                      </button>
+                    </div>
                   </div>
                 ))
               )}
@@ -341,10 +351,10 @@ function AgentManagementContent() {
 
         {/* Change Password Section */}
         {activeTab === 'change' && (
-          <div className="bg-[#dcf5f6] p-10 rounded-lg mb-8">
+          <div className="bg-[#dcf5f6] p-6 lg:p-10 rounded-lg mb-8">
             <div className="flex items-center gap-3 mb-8">
-              <RefreshCw className="w-8 h-8 text-[#296341]" />
-              <h2 className="text-[24px] font-medium text-[#296341]">Change Password</h2>
+              <RefreshCw className="w-6 h-6 lg:w-8 lg:h-8 text-[#296341]" />
+              <h2 className="text-[20px] lg:text-[24px] font-medium text-[#296341]">Change Password</h2>
             </div>
 
             {/* Search Bar */}
@@ -353,21 +363,21 @@ function AgentManagementContent() {
               <input
                 type="text"
                 placeholder="Search Agent Name"
-                className="w-full border border-[#296341] rounded-[4px] pl-12 pr-4 py-2 text-[18px] outline-none"
+                className="w-full border border-[#296341] rounded-[4px] pl-12 pr-4 py-2 text-[16px] lg:text-[18px] outline-none"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
 
-            <div className="bg-white rounded-lg p-10 shadow-lg border border-gray-100">
+            <div className="bg-white rounded-lg p-6 lg:p-10 shadow-lg border border-gray-100">
               {/* Reset Password Form */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
                 <div>
-                  <label className="block text-[20px] font-medium mb-2">Select Agent</label>
+                  <label className="block text-[18px] lg:text-[20px] font-medium mb-2">Select Agent</label>
                   <select
                     value={passwordData.targetAgentId}
                     onChange={(e) => setPasswordData({ ...passwordData, targetAgentId: e.target.value })}
-                    className="w-full border border-[#296341] rounded-[4px] px-4 py-2 text-[18px] bg-white shadow-sm outline-none"
+                    className="w-full border border-[#296341] rounded-[4px] px-4 py-2 text-[16px] lg:text-[18px] bg-white shadow-sm outline-none"
                   >
                     <option value="">Select an agent</option>
                     {agents.map(agent => (
@@ -378,13 +388,13 @@ function AgentManagementContent() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-[20px] font-medium mb-2">New Password</label>
+                  <label className="block text-[18px] lg:text-[20px] font-medium mb-2">New Password</label>
                   <div className="relative">
                     <input
                       type={showNewPassword ? 'text' : 'password'}
                       value={passwordData.newPassword}
                       onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
-                      className="w-full bg-[#e5f7f1] border border-gray-400 rounded-[4px] px-4 py-2 text-[18px] pr-12 outline-none"
+                      className="w-full bg-[#e5f7f1] border border-gray-400 rounded-[4px] px-4 py-2 text-[16px] lg:text-[18px] pr-12 outline-none"
                       placeholder="Enter new password"
                     />
                     <button
@@ -401,7 +411,7 @@ function AgentManagementContent() {
                 <button
                   onClick={handleChangePassword}
                   disabled={isSubmitting}
-                  className="bg-[#132540] text-white px-16 py-2 rounded-[8px] text-[24px] font-medium hover:bg-[#1a3254] transition-colors disabled:opacity-50 flex items-center gap-2"
+                  className="bg-[#132540] text-white px-12 lg:px-16 py-2 rounded-[8px] text-[18px] lg:text-[24px] font-medium hover:bg-[#1a3254] transition-colors disabled:opacity-50 flex items-center gap-2"
                 >
                   {isSubmitting && <Loader2 className="w-5 h-5 animate-spin" />}
                   Save
@@ -413,12 +423,12 @@ function AgentManagementContent() {
       </main>
 
       {/* Footer */}
-      <footer className="bg-[#296341] py-8 mt-auto">
-        <div className="max-w-[1400px] mx-auto px-8 flex items-center justify-between">
+      <footer className="bg-[#296341] py-6 lg:py-8 mt-auto">
+        <div className="max-w-[1400px] mx-auto px-4 lg:px-8 flex flex-col lg:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <img src={imgLogo.src} alt="Dean's Shipping Ltd" className="h-[70px]" />
+            <img src={imgLogo.src} alt="Dean's Shipping Ltd" className="h-[50px] lg:h-[70px]" />
           </div>
-          <div className="text-white text-[28px] font-semibold">
+          <div className="text-white text-[20px] lg:text-[28px] font-semibold text-center">
             Administration | <span className="font-normal">Cicily Dean</span>
           </div>
         </div>

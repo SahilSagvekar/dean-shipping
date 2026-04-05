@@ -18,7 +18,6 @@ import {
   CreditCard,
   FileText,
   Luggage,
-  AlertCircle,
 } from "lucide-react";
 import imgLogo from "@/app/assets/ffb62b7af25544291ca34f641dc70191ad198db6.png";
 import imgUserManagementIcon from "@/app/assets/a961317a5944ebd34013fff0b9659f00f55e3f7c.png";
@@ -206,18 +205,18 @@ export default function UserManagement() {
         <img
           src={imgUserManagementIcon.src}
           alt="User Management"
-          className="h-[120px] md:h-[160px] lg:h-[200px] w-auto transition-all"
+          className="h-[100px] lg:h-[200px] w-auto transition-all"
         />
       </div>
 
-      <main className="max-w-[1400px] mx-auto px-4 sm:px-8 pb-8 flex-1 w-full">
+      <main className="max-w-[1400px] mx-auto px-4 lg:px-8 pb-8 flex-1 w-full">
         {/* Title */}
         <div className="mb-6 lg:mb-8 text-center lg:text-left">
-          <h1 className="text-[32px] md:text-[40px] font-black text-[#296341] mb-2 italic tracking-tighter uppercase">
+          <h1 className="text-[28px] lg:text-[40px] font-black text-[#296341] mb-1 italic tracking-tighter uppercase leading-none">
             USER MANAGEMENT
           </h1>
-          <p className="text-[16px] md:text-[18px] text-gray-500 font-bold uppercase tracking-widest mb-2">Passenger Booking Records</p>
-          <div className="h-[5px] bg-[#296341] rounded-full w-[150px] md:w-[202px] mx-auto lg:mx-0" />
+          <p className="text-[14px] lg:text-[18px] text-gray-500 font-bold uppercase tracking-widest mb-2">Passenger Booking Records</p>
+          <div className="h-[5px] bg-[#296341] rounded-full w-[120px] lg:w-[202px] mx-auto lg:mx-0" />
         </div>
 
         {/* Search Bar */}
@@ -228,30 +227,23 @@ export default function UserManagement() {
             placeholder="Search name, email, or invoice..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full border-2 border-gray-100 focus:border-[#296341] rounded-[10px] pl-12 lg:pl-14 pr-4 py-3 lg:py-4 text-[18px] lg:text-[20px] font-medium outline-none transition-all placeholder:text-gray-300"
+            className="w-full border-2 border-gray-100 focus:border-[#296341] rounded-[10px] pl-12 lg:pl-14 pr-4 py-3 lg:py-4 text-[16px] lg:text-[20px] font-medium outline-none transition-all placeholder:text-gray-300"
           />
           {isLoading && (
             <Loader2 className="absolute right-4 top-1/2 -translate-y-1/2 w-6 h-6 text-[#296341] animate-spin" />
           )}
         </div>
 
-        {/* Error State */}
-        {error && (
-          <div className="bg-red-50 border-l-4 border-red-500 text-red-700 px-4 py-3 rounded-md mb-6 font-bold flex items-center gap-2">
-            <AlertCircle className="w-5 h-5" /> {error}
-          </div>
-        )}
-
         {/* Loading State */}
         {isLoading && passengers.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 grayscale opacity-50">
             <Loader2 className="w-12 h-12 animate-spin text-[#296341] mb-4" />
-            <p className="text-gray-400 font-black italic uppercase tracking-widest">Gathering Data</p>
+            <p className="text-gray-400 font-black italic uppercase tracking-widest text-[14px]">Gathering Data</p>
           </div>
         ) : passengers.length === 0 ? (
           <div className="text-center py-20 bg-gray-50/50 border-2 border-dashed border-gray-200 rounded-[20px]">
             <Users className="w-16 h-16 mx-auto mb-4 text-[#296341] opacity-20" />
-            <p className="text-[24px] font-black italic text-gray-300 uppercase italic">No records found</p>
+            <p className="text-[20px] lg:text-[24px] font-black italic text-gray-300 uppercase">No records found</p>
           </div>
         ) : (
           <>
@@ -260,15 +252,14 @@ export default function UserManagement() {
               {passengers.map((passenger, index) => (
                 <div key={passenger.id} className="group transition-colors hover:bg-gray-50/50 border-b border-gray-100 last:border-0">
                   <div className={`relative ${expandedPassenger === passenger.id ? "bg-white" : ""}`}>
-                    {/* Passenger Row / Card Header */}
-                    <div className="flex flex-col lg:flex-row lg:items-center px-4 lg:px-8 py-4 lg:h-[65px] gap-3 lg:gap-0">
-                      {/* Mobile Header: Index + Name + Status */}
+                    {/* Passenger Row */}
+                    <div className="flex flex-col lg:flex-row lg:items-center px-4 lg:px-8 py-4 lg:h-[65px] gap-4 lg:gap-0">
                       <div className="flex items-center justify-between lg:contents">
-                        <div className="flex items-center gap-3 lg:contents">
-                          <div className="w-[35px] lg:w-[50px] text-[18px] lg:text-[28px] font-black text-gray-300 italic group-hover:text-[#296341] transition-colors tabular-nums">
+                        <div className="flex items-center gap-2 lg:contents">
+                          <div className="w-[30px] lg:w-[50px] text-[18px] lg:text-[28px] font-black text-gray-300 italic group-hover:text-[#296341] transition-colors tabular-nums">
                             {((pagination.page - 1) * pagination.limit + index + 1).toString().padStart(2, '0')}.
                           </div>
-                          <div className="text-[20px] lg:text-[28px] font-black text-[#132540] truncate lg:w-[250px] uppercase tracking-tighter">
+                          <div className="text-[18px] lg:text-[28px] font-black text-[#132540] truncate lg:w-[250px] uppercase">
                             {passenger.name}
                           </div>
                         </div>
@@ -277,8 +268,7 @@ export default function UserManagement() {
                         </div>
                       </div>
 
-                      {/* Details Row (Mobile: 2 cols, Desktop: contents) */}
-                      <div className="grid grid-cols-2 lg:contents gap-2">
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-6 lg:contents">
                         <div className="text-[14px] lg:text-[20px] font-bold text-gray-500 font-mono lg:w-[150px]">
                           {passenger.invoiceNo}
                         </div>
@@ -297,11 +287,10 @@ export default function UserManagement() {
 
                       <div className="flex-1" />
                       
-                      {/* Action Buttons */}
                       <div className="flex items-center justify-end gap-2 lg:gap-4 mt-2 lg:mt-0 pt-2 lg:pt-0 border-t lg:border-0 border-gray-100">
                         <button
                           onClick={() => togglePassenger(passenger.id)}
-                          className="flex-1 lg:flex-none p-2 hover:bg-[#296341]/10 rounded-full transition-colors flex items-center justify-center lg:block"
+                          className="flex-1 lg:flex-none p-2 hover:bg-[#296341]/10 rounded-full transition-colors flex justify-center items-center lg:block"
                         >
                           {expandedPassenger === passenger.id ? (
                             <ChevronUp className="w-7 h-7 lg:w-9 lg:h-9 text-[#296341]" />
@@ -320,9 +309,9 @@ export default function UserManagement() {
 
                     {/* Expanded Content */}
                     {expandedPassenger === passenger.id && (
-                      <div className="px-4 lg:px-8 pb-8 pt-4 animate-in fade-in slide-in-from-top-4 duration-300 bg-white border-t border-gray-50">
+                      <div className="px-4 lg:px-8 pb-8 pt-4 animate-in fade-in slide-in-from-top-4 duration-300">
                         <div className="flex flex-col lg:flex-row items-start gap-8">
-                          {/* ID Documents / Images */}
+                          {/* ID Documents */}
                           <div className="w-full lg:w-auto flex flex-row lg:flex-col gap-3 overflow-x-auto pb-2 lg:pb-0 scrollbar-hide">
                             {passenger.images && passenger.images.length > 0 ? (
                               passenger.images.map((img, imgIdx) => (
@@ -330,145 +319,70 @@ export default function UserManagement() {
                                   <img
                                     src={img.imageUrl}
                                     alt={img.caption || `Document ${imgIdx + 1}`}
-                                    className="w-[140px] h-[80px] lg:w-[180px] lg:h-[100px] object-cover transition-transform group-hover/img:scale-110"
+                                    className="w-[120px] h-[70px] lg:w-[180px] lg:h-[100px] object-cover transition-transform group-hover/img:scale-110"
                                   />
-                                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center">
-                                    <Search className="w-6 h-6 text-white" />
-                                  </div>
                                 </div>
                               ))
                             ) : (
-                              <>
-                                <div className="border border-gray-100 rounded-xl overflow-hidden opacity-40">
-                                  <img
-                                    src={imgIdCard.src}
-                                    alt="ID Placeholder"
-                                    className="w-[140px] h-[80px] lg:w-[180px] lg:h-[100px] object-cover grayscale"
-                                  />
-                                </div>
-                              </>
+                              <div className="border border-gray-100 rounded-xl overflow-hidden opacity-40">
+                                <img src={imgIdCard.src} alt="ID Placeholder" className="w-[120px] h-[70px] lg:w-[180px] lg:h-[100px] object-cover grayscale" />
+                              </div>
                             )}
                           </div>
 
-                          {/* Booking Details */}
+                          {/* Details Grid */}
                           <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6 w-full">
-                            {/* Left Column */}
                             <div className="space-y-4">
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                  <PaymentBadge status={passenger.paymentStatus} />
-                                </div>
-                                <span className="text-[12px] font-black text-gray-300 uppercase tracking-widest tabular-nums">
-                                  Ref: #{passenger.id.slice(-6)}
-                                </span>
-                              </div>
-                              
-                              <div className="space-y-2">
-                                <p className="text-[16px] lg:text-[20px] font-bold text-gray-700 flex items-center justify-between">
-                                  <span className="text-gray-400 text-xs font-black uppercase tracking-widest">Email</span> 
-                                  <span className="truncate max-w-[200px]">{passenger.email || "N/A"}</span>
-                                </p>
-                                <p className="text-[16px] lg:text-[20px] font-bold text-gray-700 flex items-center justify-between">
-                                  <span className="text-gray-400 text-xs font-black uppercase tracking-widest">Contact</span> 
-                                  <span>{passenger.contact || "N/A"}</span>
-                                </p>
-                                <p className="text-[16px] lg:text-[20px] font-bold text-gray-700 flex items-center justify-between">
-                                  <span className="text-gray-400 text-xs font-black uppercase tracking-widest">ID Type</span> 
-                                  <span className="bg-gray-100 px-3 py-1 rounded-full text-[12px] uppercase">{passenger.idType}</span>
-                                </p>
-                                <p className="text-[16px] lg:text-[20px] font-bold text-[#296341] flex items-center justify-between">
-                                  <span className="text-gray-400 text-xs font-black uppercase tracking-widest">Travel Date</span> 
-                                  <span>{formatDate(passenger.bookingDate)}</span>
-                                </p>
-                              </div>
+                              <p className="text-[14px] lg:text-[20px] font-bold text-gray-700 flex items-center justify-between">
+                                <span className="text-gray-400 text-xs font-black uppercase">Email</span> 
+                                <span className="truncate max-w-[200px]">{passenger.email || "N/A"}</span>
+                              </p>
+                              <p className="text-[14px] lg:text-[20px] font-bold text-gray-700 flex items-center justify-between">
+                                <span className="text-gray-400 text-xs font-black uppercase">Contact</span> 
+                                <span>{passenger.contact || "N/A"}</span>
+                              </p>
+                              <p className="text-[14px] lg:text-[20px] font-bold text-gray-700 flex items-center justify-between">
+                                <span className="text-gray-400 text-xs font-black uppercase">ID Type</span> 
+                                <span className="uppercase">{passenger.idType}</span>
+                              </p>
+                              <p className="text-[14px] lg:text-[20px] font-bold text-[#296341] flex items-center justify-between">
+                                <span className="text-gray-400 text-xs font-black uppercase">Travel Date</span> 
+                                <span>{formatDate(passenger.bookingDate)}</span>
+                              </p>
                             </div>
 
-                            {/* Right Column */}
-                            <div className="space-y-6">
+                            <div className="space-y-4">
                               <div>
-                                <label className="text-xs font-black text-gray-400 uppercase tracking-widest mb-2 block">Passenger Breakdown</label>
-                                <div className="flex flex-wrap gap-4 p-4 bg-gray-50 rounded-2xl border border-gray-100">
-                                  {passenger.adultCount > 0 && (
-                                    <div className="flex items-center gap-2">
-                                      <UserCheck className="w-5 h-5 text-[#296341]" />
-                                      <span className="text-[16px] font-black text-[#132540]">{passenger.adultCount} ADULTS</span>
-                                    </div>
-                                  )}
-                                  {passenger.childCount > 0 && (
-                                    <div className="flex items-center gap-2">
-                                      <UserIcon className="w-5 h-5 text-blue-500" />
-                                      <span className="text-[16px] font-black text-[#132540]">{passenger.childCount} CHILDREN</span>
-                                    </div>
-                                  )}
-                                  {passenger.infantCount > 0 && (
-                                    <div className="flex items-center gap-2">
-                                      <Baby className="w-5 h-5 text-pink-500" />
-                                      <span className="text-[16px] font-black text-[#132540]">{passenger.infantCount} INFANTS</span>
-                                    </div>
-                                  )}
+                                <label className="text-xs font-black text-gray-400 uppercase mb-2 block">Breakdown</label>
+                                <div className="flex flex-wrap gap-4 p-4 bg-gray-50 rounded-xl border border-gray-100">
+                                  {passenger.adultCount > 0 && <span className="text-[14px] lg:text-[16px] font-black">{passenger.adultCount} ADULTS</span>}
+                                  {passenger.childCount > 0 && <span className="text-[14px] lg:text-[16px] font-black">{passenger.childCount} CHILDREN</span>}
+                                  {passenger.infantCount > 0 && <span className="text-[14px] lg:text-[16px] font-black">{passenger.infantCount} INFANTS</span>}
                                 </div>
                               </div>
-
-                              {/* Luggage Area */}
                               {passenger.luggage && passenger.luggage.length > 0 && (
-                                <div className="space-y-2">
-                                  <label className="text-xs font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
-                                    <Luggage className="w-4 h-4" /> Registered Luggage
-                                  </label>
-                                  <div className="flex flex-wrap gap-2">
-                                    {passenger.luggage.map((lug) => (
-                                      <span key={lug.id} className="px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-[13px] font-black text-[#296341] shadow-sm">
-                                        {lug.quantity}x {lug.type} ({lug.weight}kg)
-                                      </span>
-                                    ))}
-                                  </div>
+                                <div className="flex flex-wrap gap-2">
+                                  {passenger.luggage.map(lug => (
+                                    <span key={lug.id} className="px-3 py-1 bg-[#296341]/10 rounded text-xs font-bold text-[#296341]">
+                                      {lug.quantity}x {lug.type} ({lug.weight}kg)
+                                    </span>
+                                  ))}
                                 </div>
                               )}
                             </div>
                           </div>
 
-                          {/* Payment Summary */}
-                          <div className="w-full lg:w-[250px] bg-[#132540] rounded-2xl p-6 shadow-xl shadow-blue-900/10 text-white transform lg:-translate-y-4">
-                            <p className="text-[10px] font-black text-blue-300/50 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
-                              <CreditCard className="w-4 h-4" /> Billing Summary
-                            </p>
-                            <div className="space-y-3">
-                              <div className="flex justify-between text-[14px]">
-                                <span className="text-blue-200/50">Subtotal</span>
-                                <span className="font-bold tabular-nums">{formatCurrency(passenger.subtotal)}</span>
-                              </div>
-                              <div className="flex justify-between text-[14px]">
-                                <span className="text-blue-200/50">Tax ({passenger.vatPercent}%)</span>
-                                <span className="font-bold tabular-nums">{formatCurrency(passenger.vatAmount)}</span>
-                              </div>
-                              <div className="pt-3 border-t border-white/10 mt-3">
-                                <div className="flex justify-between text-[24px] font-black tabular-nums">
-                                  <span className="text-xs uppercase tracking-tighter self-center text-blue-100">Total</span>
-                                  <span>{formatCurrency(passenger.totalAmount)}</span>
-                                </div>
+                          {/* Billing */}
+                          <div className="w-full lg:w-[220px] bg-[#132540] rounded-xl p-6 text-white">
+                            <p className="text-[10px] font-black uppercase opacity-50 mb-4">Billing Summary</p>
+                            <div className="space-y-2 text-[14px]">
+                              <div className="flex justify-between"><span>Subtotal</span><span>{formatCurrency(passenger.subtotal)}</span></div>
+                              <div className="flex justify-between"><span>Tax</span><span>{formatCurrency(passenger.vatAmount)}</span></div>
+                              <div className="pt-2 border-t border-white/10 mt-2">
+                                <div className="flex justify-between font-black text-[18px]"><span>Total</span><span>{formatCurrency(passenger.totalAmount)}</span></div>
                               </div>
                             </div>
-                            
-                            {passenger.invoice && (
-                              <div className="mt-4 pt-4 border-t border-white/10 text-[11px] text-blue-200/40 font-bold uppercase tracking-widest text-center">
-                                PAID AMOUNT: {formatCurrency(passenger.invoice.paidAmount)}
-                              </div>
-                            )}
                           </div>
-                        </div>
-
-                        {/* Remark */}
-                        {passenger.remark && (
-                          <div className="mt-6 pt-6 border-t border-gray-100 bg-gray-50/50 p-4 rounded-xl">
-                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Administrative Remarks</p>
-                            <p className="text-[16px] text-gray-600 italic font-medium leading-relaxed">&ldquo;{passenger.remark}&rdquo;</p>
-                          </div>
-                        )}
-                        
-                        <div className="mt-6 flex justify-end">
-                           <button className="flex items-center gap-2 text-[12px] font-black uppercase tracking-tighter text-[#296341] hover:underline bg-gray-50 px-4 py-2 rounded-full transition-all active:scale-95">
-                              View Full Manifest Entry <ChevronRight className="w-4 h-4" />
-                           </button>
                         </div>
                       </div>
                     )}
@@ -477,95 +391,69 @@ export default function UserManagement() {
               ))}
             </div>
 
-            {/* Footer Pagination */}
-            <div className="flex flex-col md:flex-row items-center justify-between gap-6 mt-10">
-              <p className="text-[16px] lg:text-[20px] font-black text-[#132540] italic opacity-40 uppercase tracking-tighter">
+            {/* Pagination */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-6 mt-10">
+              <p className="text-[14px] lg:text-[16px] font-bold text-gray-400">
                 Showing {((pagination.page - 1) * pagination.limit) + 1} - {Math.min(pagination.page * pagination.limit, pagination.total)} of {pagination.total} records
               </p>
               
-              {/* Pagination Controls */}
-              {pagination.totalPages > 1 && (
-                <div className="flex items-center gap-3">
-                  <button
-                    onClick={() => goToPage(pagination.page - 1)}
-                    disabled={pagination.page <= 1 || isLoading}
-                    className="p-3 rounded-full border-2 border-gray-100 text-gray-400 disabled:opacity-20 hover:bg-[#296341] hover:text-white transition-all shadow-sm"
-                  >
-                    <ChevronLeft className="w-5 h-5" />
-                  </button>
-                  
-                  <div className="flex items-center gap-2">
-                    {Array.from({ length: Math.min(pagination.totalPages, 3) }, (_, i) => {
-                       // Logic to show a few pages around current
-                       let p = pagination.page;
-                       if (p === 1) p = 1;
-                       else if (p === pagination.totalPages) p = Math.max(1, pagination.totalPages - 2);
-                       else p = p - 1;
-                       
-                       const pageNum = Math.min(pagination.totalPages, p + i);
-                       if (pageNum < 1) return null;
-
-                      return (
-                        <button
-                          key={pageNum}
-                          onClick={() => goToPage(pageNum)}
-                          disabled={isLoading}
-                          className={`w-10 h-10 rounded-full font-black text-[14px] transition-all transform active:scale-90 ${
-                            pageNum === pagination.page
-                              ? "bg-[#296341] text-white shadow-lg shadow-green-900/20"
-                              : "bg-white border-2 border-gray-100 text-gray-400 hover:border-[#296341] hover:text-[#296341]"
-                          }`}
-                        >
-                          {pageNum}
-                        </button>
-                      );
-                    })}
-                  </div>
-                  
-                  <button
-                    onClick={() => goToPage(pagination.page + 1)}
-                    disabled={pagination.page >= pagination.totalPages || isLoading}
-                    className="p-3 rounded-full border-2 border-gray-100 text-gray-400 disabled:opacity-20 hover:bg-[#296341] hover:text-white transition-all shadow-sm"
-                  >
-                    <ChevronRight className="w-5 h-5" />
-                  </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => goToPage(pagination.page - 1)}
+                  disabled={pagination.page <= 1 || isLoading}
+                  className="p-2 rounded border border-gray-200 disabled:opacity-20 hover:bg-gray-100 transition-colors"
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                </button>
+                
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: pagination.totalPages }, (_, i) => i + 1).map(pageNum => (
+                    <button
+                      key={pageNum}
+                      onClick={() => goToPage(pageNum)}
+                      className={`w-8 h-8 rounded font-black text-[14px] transition-all ${
+                        pageNum === pagination.page
+                          ? "bg-[#296341] text-white"
+                          : "border border-gray-100 text-gray-400 hover:border-[#296341] hover:text-[#296341]"
+                      }`}
+                    >
+                      {pageNum}
+                    </button>
+                  ))}
                 </div>
-              )}
+                
+                <button
+                  onClick={() => goToPage(pagination.page + 1)}
+                  disabled={pagination.page >= pagination.totalPages || isLoading}
+                  className="p-2 rounded border border-gray-200 disabled:opacity-20 hover:bg-gray-100 transition-colors"
+                >
+                  <ChevronRight className="w-5 h-5" />
+                </button>
+              </div>
             </div>
           </>
         )}
       </main>
 
-      {/* Modern High-End Footer */}
-      <footer className="bg-[#132540] py-10 lg:py-16 mt-12 border-t-8 border-[#296341]">
-        <div className="max-w-[1400px] mx-auto px-8">
-          <div className="flex flex-col lg:flex-row items-center justify-between gap-10">
-            <div className="flex items-center gap-6">
-              <div className="bg-white p-3 rounded-3xl shadow-2xl">
-                <img
-                  src={imgLogo.src}
-                  alt="Dean's Shipping"
-                  className="h-[60px] lg:h-[90px] w-auto"
-                />
-              </div>
-              <div className="h-[60px] w-1 bg-white/10 rounded-full hidden sm:block" />
-              <div className="hidden sm:block">
-                <p className="text-white font-black text-2xl uppercase tracking-widest leading-none">DEAN&apos;S SHIPPING</p>
-                <p className="text-blue-300/50 font-bold text-xs uppercase tracking-[0.4em] mt-1">Personnel Management</p>
-              </div>
+      {/* Footer */}
+      <footer className="bg-[#132540] py-8 lg:py-12 mt-12 border-t-4 border-[#296341]">
+        <div className="max-w-[1400px] mx-auto px-8 flex flex-col lg:flex-row items-center justify-between gap-8">
+          <div className="flex items-center gap-4">
+            <div className="bg-white p-2 rounded-xl">
+              <img src={imgLogo.src} alt="Dean's Shipping" className="h-[50px] lg:h-[70px] w-auto" />
             </div>
-            
-            <div className="flex flex-col items-center lg:items-end">
-              <div className="text-white text-[24px] lg:text-[40px] font-black italic uppercase tracking-tighter leading-none mb-2">
-                <span className="text-[#296341] opacity-50 not-italic mr-2">LOGGED AS</span>
-                {currentUser ? `${currentUser.firstName} ${currentUser.lastName}` : "GUEST ACCESS"}
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                <span className="text-[12px] font-black text-blue-200/30 uppercase tracking-[0.3em]">
-                  SECURE PORTAL ACCESS • {currentUser?.role || "ADMIN"} PRIVILEGES
-                </span>
-              </div>
+            <div>
+              <p className="text-white font-black text-lg uppercase tracking-tight">DEAN&apos;S SHIPPING</p>
+              <p className="text-blue-200/50 font-bold text-xs uppercase tracking-widest">Personnel Management</p>
+            </div>
+          </div>
+          
+          <div className="flex flex-col items-center lg:items-end text-center lg:text-right">
+            <div className="text-white text-[18px] lg:text-[28px] font-black uppercase">
+              {currentUser ? `${currentUser.firstName} ${currentUser.lastName}` : "GUEST"}
+            </div>
+            <div className="text-[10px] lg:text-[12px] font-black text-blue-200/30 uppercase tracking-[0.2em] mt-1">
+              SECURE PORTAL ACCESS • {currentUser?.role || "ADMIN"}
             </div>
           </div>
         </div>
