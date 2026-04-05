@@ -264,71 +264,46 @@ function EditScheduleModal({
     setEvents(updated);
   };
 
-  // const handleSave = async () => {
-  //   setIsSaving(true);
-  //   try {
-  //     // Map events to legacy format for database compatibility
-  //     const mappedEvents = isHoliday ? [] : events.map(event => ({
-  //       // Legacy fields that the API expects
-  //       location: event.fromLocation || event.location || "",
-  //       startTime: event.departureTime || event.startTime || "",
-  //       endTime: event.arrivalTime || event.endTime || "",
-  //       type: event.type,
-  //       notes: event.notes || "",
-  //     }));
-
-  //     await onSave({
-  //       isHoliday,
-  //       events: mappedEvents as any,
-  //     });
-  //     onClose();
-  //   } catch (err) {
-  //     console.error("Save error:", err);
-  //     alert("Failed to save");
-  //   } finally {
-  //     setIsSaving(false);
-  //   }
-  // };
-
-
   const handleSave = async () => {
-  setIsSaving(true);
-  try {
-    const mappedEvents = isHoliday ? [] : events.map(event => ({
-      // New structure
-      fromLocation: event.fromLocation,
-      toLocation: event.toLocation,
-      departureTime: event.departureTime,
-      arrivalTime: event.arrivalTime,
-      // Legacy fields (for backward compatibility)
-      location: event.fromLocation,
-      startTime: event.departureTime,
-      endTime: event.arrivalTime,
-      // Common fields
-      type: event.type,
-      notes: event.notes || "",
-      // Intermediate stops
-      stops: (event.stops || []).map(stop => ({
-        location: stop.location,
-        arrivalTime: stop.arrivalTime,
-        departureTime: stop.departureTime,
-        activities: stop.activities || [],
-        notes: stop.notes || "",
-      })),
-    }));
+    setIsSaving(true);
+    try {
+      // Map events with full new format (fromLocation, toLocation, stops)
+      // Also include legacy fields for backward compatibility
+      const mappedEvents = isHoliday ? [] : events.map(event => ({
+        // New format fields
+        fromLocation: event.fromLocation || "",
+        toLocation: event.toLocation || "",
+        departureTime: event.departureTime || "",
+        arrivalTime: event.arrivalTime || "",
+        // Legacy fields (for backward compatibility with existing code)
+        location: event.fromLocation || event.location || "",
+        startTime: event.departureTime || event.startTime || "",
+        endTime: event.arrivalTime || event.endTime || "",
+        // Common fields
+        type: event.type,
+        notes: event.notes || "",
+        // Intermediate stops
+        stops: (event.stops || []).map(stop => ({
+          location: stop.location,
+          arrivalTime: stop.arrivalTime || "",
+          departureTime: stop.departureTime || "",
+          activities: stop.activities || [],
+          notes: stop.notes || "",
+        })),
+      }));
 
-    await onSave({
-      isHoliday,
-      events: mappedEvents as any,
-    });
-    onClose();
-  } catch (err) {
-    console.error("Save error:", err);
-    alert("Failed to save");
-  } finally {
-    setIsSaving(false);
-  }
-};
+      await onSave({
+        isHoliday,
+        events: mappedEvents as any,
+      });
+      onClose();
+    } catch (err) {
+      console.error("Save error:", err);
+      alert("Failed to save");
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">

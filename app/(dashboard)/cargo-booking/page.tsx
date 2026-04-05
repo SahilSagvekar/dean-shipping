@@ -50,6 +50,38 @@ interface CargoItem {
   quantity: number;
   total: number;
   isPaid: boolean;
+  // Extended form data
+  service: ServiceType;
+  boxSubType?: BoxSubType;
+  cargoSize: CargoSizeType;
+  flags: { fragile: boolean; hazardous: boolean; live: boolean };
+  value?: string;
+  // Service-specific fields
+  containerNo?: string;
+  chassisNo?: string;
+  temperature?: string;
+  containerSize?: string;
+  containerType?: string;
+  contents?: string;
+  palletNo?: string;
+  reeferNo?: string;
+  palletHeight?: string;
+  palletType?: string;
+  deckNo?: string;
+  material?: string;
+  color?: string;
+  luggageType?: string;
+  envelopeType?: string;
+  bundleQuantity?: string;
+  bundleLength?: string;
+  bundleSize?: string;
+  itemLocation?: string;
+  itemNumber?: string;
+  itemName?: string;
+  // Deficiency
+  damageFound?: string;
+  damageLocation?: string;
+  deficiencyComment?: string;
 }
 
 interface Location {
@@ -911,7 +943,6 @@ export default function CargoBooking() {
   const [showAddItemModal, setShowAddItemModal] = useState(false);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [editingItem, setEditingItem] = useState<CargoItem | null>(null);
-  const [newItemType, setNewItemType] = useState("DRY BOX(S)");
   const [newItemUnitPrice, setNewItemUnitPrice] = useState("");
   const [newItemQuantity, setNewItemQuantity] = useState("");
   const [newItemIsPaid, setNewItemIsPaid] = useState(false);
@@ -1048,8 +1079,143 @@ export default function CargoBooking() {
     toast.success("Document removed");
   };
 
-  // Add/Edit Item Handler
-  const handleAddItem = () => {
+  // Generate item type label based on current form state
+  const getItemTypeLabel = (): string => {
+    switch (service) {
+      case 'CONTAINER':
+        const sizeLabel = containerSize ? ` (${containerSize})` : '';
+        const typeLabel = containerType ? ` ${containerType}` : '';
+        return `Container${typeLabel}${sizeLabel}`;
+      case 'PALLET':
+        const palletTypeLabel = palletType ? ` ${palletType}` : '';
+        const heightLabel = palletHeight ? ` ${palletHeight}` : '';
+        return `Pallet${palletTypeLabel}${heightLabel}`;
+      case 'LUGGAGE':
+        return luggageType ? `Luggage - ${luggageType}` : 'Luggage';
+      case 'BOX':
+        return `${boxSubType} BOX (${cargoSize})`;
+      case 'ENVELOPE':
+        return envelopeType || 'Envelope';
+      case 'BUNDLE':
+        const bundleDesc = material ? `${material} Bundle` : 'Bundle';
+        return bundleLength ? `${bundleDesc} (${bundleLength})` : bundleDesc;
+      case 'OTHER':
+        return itemName || 'Other Item';
+      default:
+        return service;
+    }
+  };
+
+  // Get icon type based on service
+  const getItemIcon = (): string => {
+    switch (service) {
+      case 'CONTAINER':
+        return 'container';
+      case 'BOX':
+        return 'box';
+      case 'ENVELOPE':
+        return 'envelope';
+      case 'LUGGAGE':
+        return 'luggage';
+      case 'PALLET':
+        return 'pallet';
+      case 'BUNDLE':
+        return 'bundle';
+      default:
+        return 'other';
+    }
+  };
+
+  // Add Item from Form - creates item based on current form state
+  const handleAddItemFromForm = () => {
+    // Validate required fields
+    if (!price) {
+      toast.error("Please enter a price for this item");
+      return;
+    }
+
+    const unitPrice = parseFloat(price.replace(/[^0-9.]/g, ''));
+    if (isNaN(unitPrice) || unitPrice <= 0) {
+      toast.error("Please enter a valid price greater than 0");
+      return;
+    }
+
+    // Get quantity (default to 1, or use bundleQuantity for bundles)
+    let qty = 1;
+    if (service === 'BUNDLE' && bundleQuantity) {
+      qty = parseInt(bundleQuantity) || 1;
+    }
+
+    const total = unitPrice * qty;
+    const itemType = getItemTypeLabel();
+
+    const newItem: CargoItem = {
+      id: Date.now(),
+      icon: getItemIcon(),
+      type: itemType,
+      unitPrice,
+      quantity: qty,
+      total,
+      isPaid: false,
+      // Store all form data
+      service,
+      boxSubType: service === 'BOX' ? boxSubType : undefined,
+      cargoSize,
+      flags: { ...flags },
+      value: value || undefined,
+      // Container specific
+      containerNo: containerNo || undefined,
+      chassisNo: chassisNo || undefined,
+      temperature: temperature || undefined,
+      containerSize: containerSize || undefined,
+      containerType: containerType || undefined,
+      contents: contents || undefined,
+      // Pallet specific
+      palletNo: palletNo || undefined,
+      reeferNo: reeferNo || undefined,
+      palletHeight: palletHeight || undefined,
+      palletType: palletType || undefined,
+      deckNo: deckNo || undefined,
+      // Luggage specific
+      material: material || undefined,
+      color: color || undefined,
+      luggageType: luggageType || undefined,
+      // Envelope specific
+      envelopeType: envelopeType || undefined,
+      // Bundle specific
+      bundleQuantity: bundleQuantity || undefined,
+      bundleLength: bundleLength || undefined,
+      bundleSize: bundleSize || undefined,
+      itemLocation: itemLocation || undefined,
+      itemNumber: itemNumber || undefined,
+      // Other specific
+      itemName: itemName || undefined,
+      // Deficiency
+      damageFound: damageFound || undefined,
+      damageLocation: damageLocation || undefined,
+      deficiencyComment: comment || undefined,
+    };
+
+    setItems([...items, newItem]);
+    toast.success(`${itemType} added to booking`);
+
+    // Reset form fields for next item (but keep location/date)
+    resetServiceFields();
+  };
+
+  // Edit Item Handler - opens modal with item data for editing
+  const handleEditItem = (item: CargoItem) => {
+    setEditingItem(item);
+    setNewItemUnitPrice(item.unitPrice.toString());
+    setNewItemQuantity(item.quantity.toString());
+    setNewItemIsPaid(item.isPaid);
+    setShowAddItemModal(true);
+  };
+
+  // Update edited item
+  const handleUpdateItem = () => {
+    if (!editingItem) return;
+
     if (!newItemUnitPrice || !newItemQuantity) {
       toast.error("Please fill in unit price and quantity");
       return;
@@ -1070,42 +1236,18 @@ export default function CargoBooking() {
 
     const total = unitPrice * qty;
 
-    if (editingItem) {
-      setItems(items.map(item =>
-        item.id === editingItem.id
-          ? { ...item, type: newItemType, unitPrice, quantity: qty, total, isPaid: newItemIsPaid }
-          : item
-      ));
-      toast.success("Item updated successfully");
-    } else {
-      const newItem: CargoItem = {
-        id: Date.now(),
-        icon: newItemType.includes('BOX') ? 'box' : 'container',
-        type: newItemType,
-        unitPrice,
-        quantity: qty,
-        total,
-        isPaid: newItemIsPaid
-      };
-      setItems([...items, newItem]);
-      toast.success("Item added successfully");
-    }
+    setItems(items.map(item =>
+      item.id === editingItem.id
+        ? { ...item, unitPrice, quantity: qty, total, isPaid: newItemIsPaid }
+        : item
+    ));
+    toast.success("Item updated successfully");
 
     setShowAddItemModal(false);
     setEditingItem(null);
-    setNewItemType("DRY BOX(S)");
     setNewItemUnitPrice("");
     setNewItemQuantity("");
     setNewItemIsPaid(false);
-  };
-
-  const handleEditItem = (item: CargoItem) => {
-    setEditingItem(item);
-    setNewItemType(item.type);
-    setNewItemUnitPrice(item.unitPrice.toString());
-    setNewItemQuantity(item.quantity.toString());
-    setNewItemIsPaid(item.isPaid);
-    setShowAddItemModal(true);
   };
 
   const handleDeleteItem = (itemId: number) => {
@@ -1209,46 +1351,51 @@ export default function CargoBooking() {
     setIsSubmitting(true);
 
     try {
+      // For single item bookings, use the item's stored data
+      // For multi-item bookings, the items array contains all the details
+      const primaryItem = items.length === 1 ? items[0] : null;
+      
       const payload = {
-        service,
-        boxSubType: service === 'BOX' ? boxSubType : null,
-        cargoSize: cargoSize.toUpperCase(),
-        flags,
-        value: value || null,
-        price: price || null,
+        // Use primary item's service type, or the current form state for multi-item
+        service: primaryItem?.service || service,
+        boxSubType: primaryItem?.boxSubType || (service === 'BOX' ? boxSubType : null),
+        cargoSize: (primaryItem?.cargoSize || cargoSize).toUpperCase(),
+        flags: primaryItem?.flags || flags,
+        value: primaryItem?.value || value || null,
+        price: primaryItem ? primaryItem.unitPrice.toString() : (price || null),
 
-        // Container specific
-        containerNo: service === 'CONTAINER' || service === 'PALLET' ? containerNo || null : null,
-        chassisNo: service === 'CONTAINER' ? chassisNo || null : null,
-        temperature: service === 'CONTAINER' ? temperature || null : null,
-        size: service === 'CONTAINER' ? containerSize || null : null,
-        containerType: service === 'CONTAINER' ? containerType || null : null,
-        contents: service === 'CONTAINER' ? contents || null : null,
+        // Container specific (from primary item or current form)
+        containerNo: primaryItem?.containerNo || containerNo || null,
+        chassisNo: primaryItem?.chassisNo || chassisNo || null,
+        temperature: primaryItem?.temperature || temperature || null,
+        size: primaryItem?.containerSize || containerSize || null,
+        containerType: primaryItem?.containerType || containerType || null,
+        contents: primaryItem?.contents || contents || null,
 
         // Pallet specific
-        palletNo: ['PALLET', 'BOX'].includes(service) ? palletNo || null : null,
-        reeferNo: service === 'PALLET' ? reeferNo || null : null,
-        height: service === 'PALLET' ? palletHeight || null : null,
-        palletType: service === 'PALLET' ? palletType || null : null,
-        decksNo: ['PALLET', 'BUNDLE'].includes(service) ? deckNo || null : null,
+        palletNo: primaryItem?.palletNo || palletNo || null,
+        reeferNo: primaryItem?.reeferNo || reeferNo || null,
+        height: primaryItem?.palletHeight || palletHeight || null,
+        palletType: primaryItem?.palletType || palletType || null,
+        decksNo: primaryItem?.deckNo || deckNo || null,
 
         // Luggage specific
-        material: ['LUGGAGE', 'BUNDLE'].includes(service) ? material || null : null,
-        color: service === 'LUGGAGE' ? color || null : null,
-        luggageType: service === 'LUGGAGE' ? luggageType || null : null,
+        material: primaryItem?.material || material || null,
+        color: primaryItem?.color || color || null,
+        luggageType: primaryItem?.luggageType || luggageType || null,
 
         // Envelope specific
-        envelopeType: service === 'ENVELOPE' ? envelopeType || null : null,
+        envelopeType: primaryItem?.envelopeType || envelopeType || null,
 
         // Bundle specific
-        bundleQuantity: service === 'BUNDLE' ? bundleQuantity || null : null,
-        bundleLength: service === 'BUNDLE' ? bundleLength || null : null,
-        bundleSize: service === 'BUNDLE' ? bundleSize || null : null,
-        itemLocation: service === 'BUNDLE' ? itemLocation || null : null,
-        itemNumber: service === 'BUNDLE' ? itemNumber || null : null,
+        bundleQuantity: primaryItem?.bundleQuantity || bundleQuantity || null,
+        bundleLength: primaryItem?.bundleLength || bundleLength || null,
+        bundleSize: primaryItem?.bundleSize || bundleSize || null,
+        itemLocation: primaryItem?.itemLocation || itemLocation || null,
+        itemNumber: primaryItem?.itemNumber || itemNumber || null,
 
         // Other specific
-        itemName: service === 'OTHER' ? itemName || null : null,
+        itemName: primaryItem?.itemName || itemName || null,
 
         // Common fields
         voyageId: selectedVoyageId || null,
@@ -1261,17 +1408,49 @@ export default function CargoBooking() {
         contactPhone: contactPhone || null,
         address: address || null,
         idType,
-        damageFound: damageFound || null,
-        damageLocation: damageLocation || null,
-        deficiencyComment: comment || null,
+        // Use primary item's deficiency data or current form
+        damageFound: primaryItem?.damageFound || damageFound || null,
+        damageLocation: primaryItem?.damageLocation || damageLocation || null,
+        deficiencyComment: primaryItem?.deficiencyComment || comment || null,
         paymentStatus,
         remark: remark || null,
+        // Items array with full details for each item
         items: items.map(item => ({
           itemType: item.type,
           unitPrice: item.unitPrice,
           quantity: item.quantity,
           total: item.total,
-          isPaid: item.isPaid
+          isPaid: item.isPaid,
+          // Include service-specific details per item
+          service: item.service,
+          boxSubType: item.boxSubType,
+          cargoSize: item.cargoSize,
+          flags: item.flags,
+          value: item.value,
+          containerNo: item.containerNo,
+          chassisNo: item.chassisNo,
+          temperature: item.temperature,
+          containerSize: item.containerSize,
+          containerType: item.containerType,
+          contents: item.contents,
+          palletNo: item.palletNo,
+          reeferNo: item.reeferNo,
+          palletHeight: item.palletHeight,
+          palletType: item.palletType,
+          deckNo: item.deckNo,
+          material: item.material,
+          color: item.color,
+          luggageType: item.luggageType,
+          envelopeType: item.envelopeType,
+          bundleQuantity: item.bundleQuantity,
+          bundleLength: item.bundleLength,
+          bundleSize: item.bundleSize,
+          itemLocation: item.itemLocation,
+          itemNumber: item.itemNumber,
+          itemName: item.itemName,
+          damageFound: item.damageFound,
+          damageLocation: item.damageLocation,
+          deficiencyComment: item.deficiencyComment,
         })),
         containerImages: [],
         userDocuments: [],
@@ -1391,7 +1570,6 @@ export default function CargoBooking() {
     throw new Error(errorMsg);
   };
 
-  const itemTypes = ['DRY BOX(S)', 'FROZEN BOX(S)', 'COOLER BOX(S)', 'CONTAINER (20FT)', 'CONTAINER (40FT)', 'PALLET', 'LUGGAGE', 'BUNDLE', 'PARCEL', 'ENVELOPE', 'OTHER'];
   const { subtotal, vatAmount, grandTotal } = calculateTotals();
 
   const getLocationName = (code: string) => {
@@ -1791,16 +1969,10 @@ export default function CargoBooking() {
         {/* Add Item Button */}
         <div className="mb-8">
           <button
-            onClick={() => {
-              setEditingItem(null);
-              setNewItemType("DRY BOX(S)");
-              setNewItemUnitPrice("");
-              setNewItemQuantity("");
-              setNewItemIsPaid(false);
-              setShowAddItemModal(true);
-            }}
+            onClick={handleAddItemFromForm}
             className="w-full bg-[#132540] text-white py-4 rounded-xl text-lg font-bold hover:bg-[#1a3254] transition-all shadow-md active:scale-[0.99] flex items-center justify-center gap-3"
           >
+            <Plus className="w-5 h-5" />
             ADD ITEM <span className="text-red-300">*</span>
           </button>
         </div>
@@ -1808,34 +1980,69 @@ export default function CargoBooking() {
         {/* Items List */}
         {items.length > 0 && (
           <div className="bg-[#f0f7f3] rounded-2xl p-6 mb-8 space-y-3">
-            {items.map((item) => (
-              <div key={item.id} className="bg-white rounded-xl py-4 px-6 flex items-center shadow-sm group">
-                <div className="w-10 h-10 flex items-center justify-center text-[#296341] bg-[#eef6f2] rounded-lg mr-4">
-                  {item.icon === 'box' || item.type.includes('BOX') ? <Box className="w-5 h-5" /> : <Container className="w-5 h-5" />}
+            {items.map((item) => {
+              // Get the right icon based on service type
+              const getIcon = () => {
+                switch (item.icon) {
+                  case 'container':
+                    return <Container className="w-5 h-5" />;
+                  case 'pallet':
+                    return <Layers className="w-5 h-5" />;
+                  case 'luggage':
+                    return <Briefcase className="w-5 h-5" />;
+                  case 'box':
+                    return <Box className="w-5 h-5" />;
+                  case 'envelope':
+                    return <Mail className="w-5 h-5" />;
+                  case 'bundle':
+                    return <Package className="w-5 h-5" />;
+                  default:
+                    return <MoreHorizontal className="w-5 h-5" />;
+                }
+              };
+
+              // Get item subtitle with key details
+              const getSubtitle = () => {
+                const parts: string[] = [];
+                if (item.cargoSize) parts.push(item.cargoSize);
+                if (item.flags?.fragile) parts.push('Fragile');
+                if (item.flags?.hazardous) parts.push('Hazardous');
+                if (item.flags?.live) parts.push('Live');
+                if (item.damageFound) parts.push(`Damage: ${item.damageFound}`);
+                return parts.length > 0 ? parts.join(' • ') : `$${item.unitPrice.toFixed(2)} × ${item.quantity}`;
+              };
+
+              return (
+                <div key={item.id} className="bg-white rounded-xl py-4 px-6 flex items-center shadow-sm group hover:shadow-md transition-shadow">
+                  <div className="w-10 h-10 flex items-center justify-center text-[#296341] bg-[#eef6f2] rounded-lg mr-4">
+                    {getIcon()}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-bold text-gray-800 truncate">{item.type}</p>
+                    <p className="text-sm text-gray-500 truncate">{getSubtitle()}</p>
+                  </div>
+                  <div className="text-lg font-black text-[#296341] mx-4 whitespace-nowrap">
+                    ${item.total.toFixed(2)}
+                  </div>
+                  <div className="flex gap-1">
+                    <button
+                      onClick={() => handleEditItem(item)}
+                      className="p-2 text-gray-400 hover:text-[#296341] hover:bg-[#eef6f2] rounded-lg transition-colors"
+                      title="Edit price/quantity"
+                    >
+                      <Edit2 className="w-5 h-5" />
+                    </button>
+                    <button
+                      onClick={() => handleDeleteItem(item.id)}
+                      className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                      title="Remove item"
+                    >
+                      <Trash2 className="w-5 h-5" />
+                    </button>
+                  </div>
                 </div>
-                <div className="flex-1">
-                  <p className="font-bold text-gray-800">{item.type}</p>
-                  <p className="text-sm text-gray-500">${item.unitPrice.toFixed(2)} × {item.quantity}</p>
-                </div>
-                <div className="text-lg font-black text-[#296341] mr-6">
-                  ${item.total.toFixed(2)}
-                </div>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => handleEditItem(item)}
-                    className="p-2 text-gray-400 hover:text-[#296341] transition-colors"
-                  >
-                    <Edit2 className="w-5 h-5" />
-                  </button>
-                  <button
-                    onClick={() => handleDeleteItem(item.id)}
-                    className="p-2 text-gray-400 hover:text-red-500 transition-colors"
-                  >
-                    <Trash2 className="w-5 h-5" />
-                  </button>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
 
@@ -1885,7 +2092,7 @@ export default function CargoBooking() {
         </div>
 
         {/* User Details Section */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8 mb-8">
+        {/* <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8 mb-8">
           <h2 className="text-[20px] font-bold text-[#296341] mb-6">USER DETAILS</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <InputField
@@ -1928,7 +2135,6 @@ export default function CargoBooking() {
             />
           </div>
 
-          {/* User Document Upload */}
           <div className="mt-8">
             <h3 className="text-[16px] font-bold text-gray-700 mb-4">Identity Documents</h3>
             <div className="flex flex-wrap gap-4">
@@ -1972,31 +2178,23 @@ export default function CargoBooking() {
               )}
             </div>
           </div>
-        </div>
+        </div> */}
 
         {/* Action Buttons */}
         <div className="space-y-4">
           <button
-            onClick={() => {
-              setEditingItem(null);
-              setNewItemType("DRY BOX(S)");
-              setNewItemUnitPrice("");
-              setNewItemQuantity("");
-              setNewItemIsPaid(false);
-              setShowAddItemModal(true);
-            }}
-            className="w-full bg-[#132540] text-white py-4 rounded-xl text-lg font-bold hover:bg-[#1a3254] transition-all flex items-center justify-center gap-2"
-          >
-            <Plus className="w-5 h-5" /> NEW ITEM
-          </button>
-          <button
             onClick={handleSubmit}
-            disabled={isSubmitting}
+            disabled={isSubmitting || items.length === 0}
             className="w-full bg-[#132540] text-white py-4 rounded-xl text-lg font-bold hover:bg-[#1a3254] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             {isSubmitting && <Loader2 className="w-5 h-5 animate-spin" />}
-            {isSubmitting ? 'SUBMITTING...' : 'SUBMIT'}
+            {isSubmitting ? 'SUBMITTING...' : 'SUBMIT BOOKING'}
           </button>
+          {items.length === 0 && (
+            <p className="text-center text-sm text-gray-500">
+              Fill in the form above and click "Add Item" to add cargo items to your booking
+            </p>
+          )}
         </div>
       </main>
 
@@ -2012,13 +2210,13 @@ export default function CargoBooking() {
         </div>
       </footer>
 
-      {/* Add Item Modal */}
-      {showAddItemModal && (
+      {/* Edit Item Modal - for editing price/quantity of existing items */}
+      {showAddItemModal && editingItem && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl p-6 md:p-8 w-full max-w-[500px] shadow-2xl">
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-[24px] font-bold text-[#296341]">
-                {editingItem ? 'Edit Item' : 'Add New Item'}
+                Edit Item
               </h3>
               <button
                 onClick={() => {
@@ -2032,12 +2230,14 @@ export default function CargoBooking() {
             </div>
 
             <div className="space-y-6">
-              <BoxedSelectField
-                label="Item Type"
-                value={newItemType}
-                onChange={setNewItemType}
-                options={itemTypes.map(t => ({ value: t, label: t }))}
-              />
+              {/* Show item type (read-only) */}
+              <div className="bg-[#eef6f2] rounded-xl p-4">
+                <p className="text-[12px] text-gray-500 uppercase tracking-wide mb-1">Item Type</p>
+                <p className="text-lg font-bold text-[#296341]">{editingItem.type}</p>
+                {editingItem.cargoSize && (
+                  <p className="text-sm text-gray-600">Size: {editingItem.cargoSize}</p>
+                )}
+              </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <BoxedInputField
@@ -2051,7 +2251,7 @@ export default function CargoBooking() {
                   label="Quantity"
                   value={newItemQuantity}
                   onChange={setNewItemQuantity}
-                  placeholder="0"
+                  placeholder="1"
                   type="number"
                 />
               </div>
@@ -2089,10 +2289,10 @@ export default function CargoBooking() {
                   Cancel
                 </button>
                 <button
-                  onClick={handleAddItem}
+                  onClick={handleUpdateItem}
                   className="flex-1 py-3 rounded-xl bg-[#296341] text-white font-bold hover:bg-emerald-800 transition-colors"
                 >
-                  {editingItem ? 'Update' : 'Add'}
+                  Update
                 </button>
               </div>
             </div>

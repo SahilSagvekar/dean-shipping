@@ -3,6 +3,11 @@
 // ============================================
 // When schedules are published, this endpoint
 // auto-creates Voyages with VoyageStops from the schedule events.
+// 
+// New format support:
+// - Each ScheduleEvent has fromLocation, toLocation, and intermediate stops[]
+// - Creates one Voyage per Schedule (not per event)
+// - VoyageStops are built from: fromLocation → stops[] → toLocation
 
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
@@ -14,7 +19,7 @@ export async function POST(request: NextRequest) {
 
     try {
         const body = await request.json();
-        const { scheduleIds } = body; // Array of schedule IDs to create voyages for
+        const { scheduleIds } = body;
 
         if (!scheduleIds || !Array.isArray(scheduleIds) || scheduleIds.length === 0) {
             return NextResponse.json(
@@ -23,18 +28,21 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // Fetch all the schedules with their events
+        // Fetch all the schedules with their events and stops
         const schedules = await prisma.schedule.findMany({
             where: {
                 id: { in: scheduleIds },
             },
             include: {
-                events: { orderBy: { sortOrder: "asc" } },
-                voyages: true, // Check if voyage already exists
+                events: {
+                    orderBy: { sortOrder: "asc" },
+                    include: {
+                        stops: { orderBy: { stopOrder: "asc" } },
+                    },
+                },
+                voyages: true,
             },
         });
-
-        console.log(`Check if voyage already exist ${JSON.stringify(schedules)}` );
 
         if (schedules.length === 0) {
             return NextResponse.json(
@@ -49,13 +57,9 @@ export async function POST(request: NextRequest) {
             select: { voyageNo: true },
         });
 
-        console.log(`maxVoyage ${JSON.stringify(maxVoyage)}` );
-
         let nextVoyageNo = (maxVoyage?.voyageNo || 200) + 1;
 
-        console.log(`nextVoyageNo ${nextVoyageNo}` );
-
-        // Fetch all locations for name → code mapping
+        // Fetch all locations for name/code resolution
         const allLocations = await prisma.location.findMany();
         const locationByName: Record<string, typeof allLocations[0]> = {};
         const locationByCode: Record<string, typeof allLocations[0]> = {};
@@ -64,8 +68,9 @@ export async function POST(request: NextRequest) {
             locationByCode[loc.code.toLowerCase()] = loc;
         });
 
-        // Helper to resolve a location string (could be a name like "Nassau" or a code like "NAS")
-        const resolveLocation = (str: string) => {
+        // Helper to resolve a location string (name or code)
+        const resolveLocation = (str: string | null | undefined) => {
+            if (!str) return null;
             const lower = str.toLowerCase().trim();
             return locationByName[lower] || locationByCode[lower] || null;
         };
@@ -76,64 +81,160 @@ export async function POST(request: NextRequest) {
         for (const schedule of schedules) {
             // Skip if schedule already has a voyage
             if (schedule.voyages.length > 0) {
-                console.log(`length > 0 ${JSON.stringify(schedule.voyages)}.`);
-                console.log("skippedSchedules" + schedule.id)
                 skippedSchedules.push(schedule.id);
-                console.log('1');
                 continue;
             }
 
             // Skip holiday schedules
             if (schedule.isHoliday) {
-                console.log(`isHoliday ${JSON.stringify(schedule.isHoliday)}.`);
                 skippedSchedules.push(schedule.id);
-                console.log('2');
                 continue;
             }
 
-            // Skip schedules with no events (no stops to create)
+            // Skip schedules with no events
             if (schedule.events.length === 0) {
-
-                console.log(`.events.length === 0 ${JSON.stringify(schedule.events.length)}.`);
                 skippedSchedules.push(schedule.id);
                 continue;
             }
 
-            // Resolve and merge locations from schedule events
-            const stopsMap = new Map<string, {
-                location: typeof allLocations[0],
-                events: typeof schedule.events
-            }>();
+            // Build voyage stops from all events
+            // Each event represents a journey: fromLocation → stops[] → toLocation
+            // We'll create a unified list of VoyageStops for the entire schedule
+            interface VoyageStopData {
+                locationId: string;
+                arrivalTime: string | null;
+                departureTime: string | null;
+                activities: string[];
+                notes: string | null;
+                stopOrder: number;
+            }
+
+            const voyageStopsMap = new Map<string, VoyageStopData>();
+            let stopOrderCounter = 1;
+
+            // Track the overall voyage from/to
+            let overallFromLocation: typeof allLocations[0] | null = null;
+            let overallToLocation: typeof allLocations[0] | null = null;
 
             for (const event of schedule.events) {
-                const location = resolveLocation(event.location);
-                if (!location) {
-                    console.warn(`Could not resolve location "${event.location}" for schedule ${schedule.id}`);
+                // Use new format fields first, fallback to legacy
+                const fromLocStr = event.fromLocation || event.location || "";
+                const toLocStr = event.toLocation || event.location || "";
+                const depTime = event.departureTime || event.startTime || null;
+                const arrTime = event.arrivalTime || event.endTime || null;
+
+                const fromLoc = resolveLocation(fromLocStr);
+                const toLoc = resolveLocation(toLocStr);
+
+                if (!fromLoc) {
+                    console.warn(`Could not resolve fromLocation "${fromLocStr}" for schedule ${schedule.id}`);
                     continue;
                 }
 
-                if (!stopsMap.has(location.id)) {
-                    stopsMap.set(location.id, { location, events: [] });
+                // Set overall voyage from (first event's from)
+                if (!overallFromLocation) {
+                    overallFromLocation = fromLoc;
                 }
-                stopsMap.get(location.id)!.events.push(event);
+
+                // Add fromLocation as a stop (departure point)
+                if (!voyageStopsMap.has(fromLoc.id)) {
+                    voyageStopsMap.set(fromLoc.id, {
+                        locationId: fromLoc.id,
+                        arrivalTime: null, // First stop has no arrival
+                        departureTime: depTime,
+                        activities: [event.type],
+                        notes: event.notes || null,
+                        stopOrder: stopOrderCounter++,
+                    });
+                } else {
+                    // Merge with existing stop
+                    const existing = voyageStopsMap.get(fromLoc.id)!;
+                    if (!existing.activities.includes(event.type)) {
+                        existing.activities.push(event.type);
+                    }
+                    if (event.notes && !existing.notes?.includes(event.notes)) {
+                        existing.notes = existing.notes ? `${existing.notes}; ${event.notes}` : event.notes;
+                    }
+                    if (depTime && !existing.departureTime) {
+                        existing.departureTime = depTime;
+                    }
+                }
+
+                // Add intermediate stops
+                if (event.stops && event.stops.length > 0) {
+                    for (const stop of event.stops) {
+                        const stopLoc = resolveLocation(stop.location);
+                        if (!stopLoc) {
+                            console.warn(`Could not resolve intermediate stop "${stop.location}" for schedule ${schedule.id}`);
+                            continue;
+                        }
+
+                        if (!voyageStopsMap.has(stopLoc.id)) {
+                            voyageStopsMap.set(stopLoc.id, {
+                                locationId: stopLoc.id,
+                                arrivalTime: stop.arrivalTime || null,
+                                departureTime: stop.departureTime || null,
+                                activities: stop.activities || [],
+                                notes: stop.notes || null,
+                                stopOrder: stopOrderCounter++,
+                            });
+                        } else {
+                            // Merge with existing stop
+                            const existing = voyageStopsMap.get(stopLoc.id)!;
+                            for (const activity of (stop.activities || [])) {
+                                if (!existing.activities.includes(activity)) {
+                                    existing.activities.push(activity);
+                                }
+                            }
+                            if (stop.notes && !existing.notes?.includes(stop.notes)) {
+                                existing.notes = existing.notes ? `${existing.notes}; ${stop.notes}` : stop.notes;
+                            }
+                        }
+                    }
+                }
+
+                // Add toLocation as a stop (arrival point)
+                if (toLoc && toLoc.id !== fromLoc.id) {
+                    overallToLocation = toLoc; // Update overall destination
+
+                    if (!voyageStopsMap.has(toLoc.id)) {
+                        voyageStopsMap.set(toLoc.id, {
+                            locationId: toLoc.id,
+                            arrivalTime: arrTime,
+                            departureTime: null, // Final stop has no departure
+                            activities: [event.type],
+                            notes: event.notes || null,
+                            stopOrder: stopOrderCounter++,
+                        });
+                    } else {
+                        // Merge with existing stop
+                        const existing = voyageStopsMap.get(toLoc.id)!;
+                        if (!existing.activities.includes(event.type)) {
+                            existing.activities.push(event.type);
+                        }
+                        if (arrTime && !existing.arrivalTime) {
+                            existing.arrivalTime = arrTime;
+                        }
+                    }
+                }
             }
 
-            const resolvedStops = Array.from(stopsMap.values()).map((stop, index) => ({
-                location: stop.location,
-                events: stop.events,
-                stopOrder: index + 1,
-            }));
+            // Convert map to array and sort by stopOrder
+            const voyageStops = Array.from(voyageStopsMap.values())
+                .sort((a, b) => a.stopOrder - b.stopOrder);
 
-            // console.log(JSON.stringify(resolvedStops.length));
+            // Skip if no valid stops were created
+            if (voyageStops.length === 0 || !overallFromLocation) {
+                skippedSchedules.push(schedule.id);
+                continue;
+            }
 
-            // if (resolvedStops.length < 2) {
-            //     // Need at least 2 stops for a voyage
-            //     skippedSchedules.push(schedule.id);
-            //     continue;
-            // }
+            // If no separate toLocation, use the last stop
+            if (!overallToLocation) {
+                const lastStopId = voyageStops[voyageStops.length - 1].locationId;
+                overallToLocation = allLocations.find(l => l.id === lastStopId) || overallFromLocation;
+            }
 
-            const firstStop = resolvedStops[0];
-            const lastStop = resolvedStops[resolvedStops.length - 1];
             const voyageNo = nextVoyageNo++;
 
             // Create the voyage with stops in a transaction
@@ -143,43 +244,30 @@ export async function POST(request: NextRequest) {
                         voyageNo,
                         shipName: schedule.shipName,
                         date: schedule.date,
-                        fromId: firstStop.location.id,
-                        toId: lastStop.location.id,
+                        fromId: overallFromLocation!.id,
+                        toId: overallToLocation!.id,
                         status: "SCHEDULED",
                         scheduleId: schedule.id,
                     },
                 });
 
-                // Create VoyageStops
-                await tx.voyageStop.createMany({
-                    data: resolvedStops.map((stop, index) => {
-                        const isFirst = index === 0;
-                        const isLast = index === resolvedStops.length - 1;
+                // Reassign stopOrder sequentially
+                const stopsData = voyageStops.map((stop, index) => ({
+                    voyageId: newVoyage.id,
+                    locationId: stop.locationId,
+                    stopOrder: index + 1,
+                    arrivalTime: index === 0 ? null : stop.arrivalTime,
+                    departureTime: index === voyageStops.length - 1 ? null : stop.departureTime,
+                    activities: stop.activities,
+                    notes: stop.notes,
+                }));
 
-                        // Merge activities and notes from all events at this location
-                        const activities = Array.from(new Set(stop.events.map(e => e.type)));
-                        const notes = stop.events.map(e => e.notes).filter(Boolean).join("; ");
-
-                        // Use startTime of first event and endTime of last event at this location
-                        const arrivalTime = isFirst ? null : stop.events[0].startTime || null;
-                        const departureTime = isLast ? null : stop.events[stop.events.length - 1].endTime || null;
-
-                        return {
-                            voyageId: newVoyage.id,
-                            locationId: stop.location.id,
-                            stopOrder: stop.stopOrder,
-                            departureTime,
-                            arrivalTime,
-                            activities,
-                            notes: notes || null,
-                        };
-                    }),
-                });
+                await tx.voyageStop.createMany({ data: stopsData });
 
                 return newVoyage;
             });
 
-            // Fetch the complete voyage
+            // Fetch the complete voyage with relations
             const completeVoyage = await prisma.voyage.findUnique({
                 where: { id: voyage.id },
                 include: {
@@ -198,15 +286,16 @@ export async function POST(request: NextRequest) {
 
             await createAuditLog({
                 userId: result.user.id,
-                // userId: "test",
                 action: "AUTO_CREATE_VOYAGE",
                 entity: "voyage",
                 entityId: voyage.id,
                 metadata: {
                     voyageNo,
                     scheduleId: schedule.id,
-                    stopsCount: resolvedStops.length,
+                    stopsCount: voyageStops.length,
                     shipName: schedule.shipName,
+                    from: overallFromLocation?.code,
+                    to: overallToLocation?.code,
                 },
                 ipAddress: getClientIp(request),
             });
