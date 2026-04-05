@@ -145,6 +145,13 @@ export async function POST(request: NextRequest) {
             damageLocation,
             deficiencyComment,
 
+            // Additional Services
+            hasTape,
+            wrapType,
+            hasTags,
+            insuranceAmount,
+            additionalServicePrice,
+
             // Payment
             paymentStatus,
             remark,
@@ -229,15 +236,19 @@ export async function POST(request: NextRequest) {
         // =========================================
         // CALCULATE TOTALS
         // =========================================
-        let totalAmount = 0;
+        let itemsTotal = 0;
         if (items && items.length > 0) {
-            totalAmount = items.reduce((sum: number, item: any) => {
+            itemsTotal = items.reduce((sum: number, item: any) => {
                 const itemTotal = parseFloat(item.total) || (parseFloat(item.unitPrice) * parseInt(item.quantity)) || 0;
                 return sum + itemTotal;
             }, 0);
         }
-        const vatAmount = totalAmount * 0.12;
-        const grandTotal = totalAmount + vatAmount;
+        
+        // Add additional services to subtotal
+        const servicesTotal = parseFloat(additionalServicePrice) || 0;
+        const subtotal = itemsTotal + servicesTotal;
+        const vatAmount = subtotal * 0.12;
+        const grandTotal = subtotal + vatAmount;
 
         // =========================================
         // NORMALIZE DATA
@@ -342,11 +353,18 @@ export async function POST(request: NextRequest) {
                     damageLocation: damageLocation || null,
                     deficiencyComment: deficiencyComment || null,
 
+                    // Additional Services
+                    hasTape: hasTape || false,
+                    wrapType: wrapType || null,
+                    hasTags: hasTags || false,
+                    insuranceAmount: insuranceAmount ? parseFloat(insuranceAmount) : null,
+                    additionalServicePrice: parseFloat(additionalServicePrice) || 0,
+
                     // Payment
                     paymentStatus: paymentStatus || "UNPAID",
                     totalAmount: grandTotal,
                     vatAmount,
-                    subtotal: totalAmount,
+                    subtotal: subtotal,
                     remark: remark || null,
 
                     // Items
@@ -402,7 +420,7 @@ export async function POST(request: NextRequest) {
                     invoiceNo,
                     userId: result.user.id,
                     cargoBookingId: newBooking.id,
-                    subtotal: totalAmount,
+                    subtotal: subtotal,
                     vatAmount,
                     totalAmount: grandTotal,
                     paymentStatus: (paymentStatus || "UNPAID") as any,
@@ -455,7 +473,7 @@ export async function POST(request: NextRequest) {
                     invoiceNo,
                     customerName: contactName,
                     totalAmount: grandTotal,
-                    subtotal: totalAmount,
+                    subtotal: subtotal,
                     vatAmount,
                     items: invoiceItems,
                     fromLocation,

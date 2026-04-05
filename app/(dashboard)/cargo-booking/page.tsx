@@ -336,6 +336,46 @@ const BoxedSelectField = ({ label, value, onChange, options, required, icon, dis
   </div>
 );
 
+interface PriceInputFieldProps extends InputFieldProps {
+  availablePrices: any[];
+  isLoading?: boolean;
+}
+
+const PriceInputField = ({ label, value, onChange, placeholder, availablePrices, isLoading, className = '' }: PriceInputFieldProps) => {
+  const datalistId = `prices-${label.replace(/\s+/g, '-')}`;
+  
+  return (
+    <div className={`space-y-1 sm:space-y-2 ${className}`}>
+      <label className="text-[12px] lg:text-[20px] font-bold text-gray-400 lg:text-black uppercase lg:normal-case tracking-wider lg:tracking-normal flex items-center gap-2">
+        {label}
+        {isLoading && <Loader2 className="w-4 h-4 animate-spin text-[#296341]" />}
+      </label>
+      <div className="relative">
+        <input
+          list={datalistId}
+          type="text"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={placeholder || "Enter or pick price"}
+          className="w-full h-[44px] lg:h-auto border-b-2 border-gray-100 lg:border-gray-200 outline-none focus:border-blue-600 lg:focus:border-[#296341] text-[16px] lg:text-[20px] font-medium lg:font-bold transition-colors bg-transparent placeholder:text-gray-300"
+        />
+        <datalist id={datalistId}>
+          {availablePrices.map((p: any) => (
+            <option key={p.id} value={p.value}>
+              {p.size} - ${p.value}
+            </option>
+          ))}
+        </datalist>
+        {availablePrices.length > 0 && !isLoading && (
+          <div className="absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none opacity-50">
+            <ChevronDown className="w-5 h-5" />
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 // Size & Flag Radio Group Component
 interface SizeFlagsProps {
   size: CargoSizeType;
@@ -451,6 +491,8 @@ interface ContainerFormProps {
   setPrice: (v: string) => void;
   contents: string;
   setContents: (v: string) => void;
+  availablePrices: any[];
+  isLoadingPrices: boolean;
 }
 
 const ContainerFormFields = ({
@@ -461,7 +503,9 @@ const ContainerFormFields = ({
   containerType, setContainerType,
   value, setValue,
   price, setPrice,
-  contents, setContents
+  contents, setContents,
+  availablePrices,
+  isLoadingPrices
 }: ContainerFormProps) => (
   <div className="space-y-8">
     <div className="border-l-4 border-blue-600 pl-4">
@@ -503,7 +547,14 @@ const ContainerFormFields = ({
       />
     </div>
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-      <InputField label="Price" value={price} onChange={setPrice} placeholder="$500" />
+      <PriceInputField 
+        label="Price" 
+        value={price} 
+        onChange={setPrice} 
+        placeholder="$500" 
+        availablePrices={availablePrices}
+        isLoading={isLoadingPrices}
+      />
       <InputField label="Contents" value={contents} onChange={setContents} placeholder="Describe container contents..." />
     </div>
   </div>
@@ -530,6 +581,8 @@ interface PalletFormProps {
   setValue: (v: string) => void;
   price: string;
   setPrice: (v: string) => void;
+  availablePrices: any[];
+  isLoadingPrices: boolean;
 }
 
 const PalletFormFields = ({
@@ -542,7 +595,9 @@ const PalletFormFields = ({
   cargoSize, setCargoSize,
   flags, setFlags,
   value, setValue,
-  price, setPrice
+  price, setPrice,
+  availablePrices,
+  isLoadingPrices
 }: PalletFormProps) => (
   <div className="space-y-8">
     <h3 className="text-[20px] font-bold text-gray-800 uppercase tracking-wide">Pallet Inspection</h3>
@@ -585,7 +640,14 @@ const PalletFormFields = ({
 
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
       <InputField label="Value" value={value} onChange={setValue} placeholder="Enter value" />
-      <InputField label="Price" value={price} onChange={setPrice} placeholder="Enter price" />
+      <PriceInputField 
+        label="Price" 
+        value={price} 
+        onChange={setPrice} 
+        placeholder="Enter price" 
+        availablePrices={availablePrices}
+        isLoading={isLoadingPrices}
+      />
     </div>
   </div>
 );
@@ -605,6 +667,8 @@ interface LuggageFormProps {
   setValue: (v: string) => void;
   price: string;
   setPrice: (v: string) => void;
+  availablePrices: any[];
+  isLoadingPrices: boolean;
 }
 
 const LuggageFormFields = ({
@@ -614,7 +678,9 @@ const LuggageFormFields = ({
   cargoSize, setCargoSize,
   flags, setFlags,
   value, setValue,
-  price, setPrice
+  price, setPrice,
+  availablePrices,
+  isLoadingPrices
 }: LuggageFormProps) => (
   <div className="space-y-8">
     <h3 className="text-[20px] font-bold text-gray-800 uppercase tracking-wide">Luggage Inspection</h3>
@@ -648,7 +714,14 @@ const LuggageFormFields = ({
 
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
       <InputField label="Value" value={value} onChange={setValue} placeholder="Enter value" />
-      <InputField label="Price" value={price} onChange={setPrice} placeholder="Enter price" />
+      <PriceInputField 
+        label="Price" 
+        value={price} 
+        onChange={setPrice} 
+        placeholder="Enter price" 
+        availablePrices={availablePrices}
+        isLoading={isLoadingPrices}
+      />
     </div>
   </div>
 );
@@ -666,6 +739,8 @@ interface BoxFormProps {
   setPrice: (v: string) => void;
   palletNo: string;
   setPalletNo: (v: string) => void;
+  availablePrices: any[];
+  isLoadingPrices: boolean;
 }
 
 const BoxFormFields = ({
@@ -674,7 +749,9 @@ const BoxFormFields = ({
   flags, setFlags,
   value, setValue,
   price, setPrice,
-  palletNo, setPalletNo
+  palletNo, setPalletNo,
+  availablePrices,
+  isLoadingPrices
 }: BoxFormProps) => (
   <div className="space-y-8">
     {/* Box Sub-Type Selector */}
@@ -717,7 +794,14 @@ const BoxFormFields = ({
 
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
       <InputField label="Value" value={value} onChange={setValue} placeholder="Enter value" />
-      <InputField label="Price" value={price} onChange={setPrice} placeholder="Enter price" />
+      <PriceInputField 
+        label="Price" 
+        value={price} 
+        onChange={setPrice} 
+        placeholder="Enter price" 
+        availablePrices={availablePrices}
+        isLoading={isLoadingPrices}
+      />
       <InputField label="Pallet#" value={palletNo} onChange={setPalletNo} placeholder="Enter pallet number" />
     </div>
   </div>
@@ -730,12 +814,16 @@ interface EnvelopeFormProps {
   setValue: (v: string) => void;
   price: string;
   setPrice: (v: string) => void;
+  availablePrices: any[];
+  isLoadingPrices: boolean;
 }
 
 const EnvelopeFormFields = ({
   envelopeType, setEnvelopeType,
   value, setValue,
-  price, setPrice
+  price, setPrice,
+  availablePrices,
+  isLoadingPrices
 }: EnvelopeFormProps) => {
   const envelopeTypes = ['Small Box', 'Envelope', 'Parcel'];
 
@@ -763,7 +851,14 @@ const EnvelopeFormFields = ({
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <InputField label="Value" value={value} onChange={setValue} placeholder="Enter value" />
-        <InputField label="Price" value={price} onChange={setPrice} placeholder="Enter price" />
+        <PriceInputField 
+          label="Price" 
+          value={price} 
+          onChange={setPrice} 
+          placeholder="Enter price" 
+          availablePrices={availablePrices}
+          isLoading={isLoadingPrices}
+        />
       </div>
     </div>
   );
@@ -790,6 +885,8 @@ interface BundleFormProps {
   setItemLocation: (v: string) => void;
   itemNumber: string;
   setItemNumber: (v: string) => void;
+  availablePrices: any[];
+  isLoadingPrices: boolean;
 }
 
 const BundleFormFields = ({
@@ -802,7 +899,9 @@ const BundleFormFields = ({
   value, setValue,
   price, setPrice,
   itemLocation, setItemLocation,
-  itemNumber, setItemNumber
+  itemNumber, setItemNumber,
+  availablePrices,
+  isLoadingPrices
 }: BundleFormProps) => (
   <div className="space-y-8">
     <h3 className="text-[20px] font-bold text-gray-800 uppercase tracking-wide">Bundle Inspection</h3>
@@ -836,7 +935,14 @@ const BundleFormFields = ({
 
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       <InputField label="Value" value={value} onChange={setValue} placeholder="Enter value" />
-      <InputField label="Price" value={price} onChange={setPrice} placeholder="Enter price" />
+      <PriceInputField 
+        label="Price" 
+        value={price} 
+        onChange={setPrice} 
+        placeholder="Enter price" 
+        availablePrices={availablePrices}
+        isLoading={isLoadingPrices}
+      />
     </div>
 
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -867,6 +973,8 @@ interface OtherFormProps {
   setValue: (v: string) => void;
   price: string;
   setPrice: (v: string) => void;
+  availablePrices: any[];
+  isLoadingPrices: boolean;
 }
 
 const OtherFormFields = ({
@@ -874,7 +982,9 @@ const OtherFormFields = ({
   cargoSize, setCargoSize,
   flags, setFlags,
   value, setValue,
-  price, setPrice
+  price, setPrice,
+  availablePrices,
+  isLoadingPrices
 }: OtherFormProps) => (
   <div className="space-y-8">
     <h3 className="text-[20px] font-bold text-gray-800 uppercase tracking-wide">Item Inspection</h3>
@@ -889,7 +999,14 @@ const OtherFormFields = ({
 
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       <InputField label="Value" value={value} onChange={setValue} placeholder="Enter value" />
-      <InputField label="Price" value={price} onChange={setPrice} placeholder="Enter price" />
+      <PriceInputField 
+        label="Price" 
+        value={price} 
+        onChange={setPrice} 
+        placeholder="Enter price" 
+        availablePrices={availablePrices}
+        isLoading={isLoadingPrices}
+      />
     </div>
   </div>
 );
@@ -987,8 +1104,36 @@ export default function CargoBooking() {
   const [newItemQuantity, setNewItemQuantity] = useState("");
   const [newItemIsPaid, setNewItemIsPaid] = useState(false);
 
+  // =========== ADDITIONAL SERVICES STATE ===========
+  const [showAdditionalServicesModal, setShowAdditionalServicesModal] = useState(false);
+  const [tempHasTape, setTempHasTape] = useState(false);
+  const [tempWrapType, setTempWrapType] = useState<'PARTIAL' | 'FULL' | null>(null);
+  const [tempHasTags, setTempHasTags] = useState(false);
+  const [tempInsuranceAmount, setTempInsuranceAmount] = useState("");
+  const [tempAdditionalServicePrice, setTempAdditionalServicePrice] = useState("");
+
+  const [hasTape, setHasTape] = useState(false);
+  const [wrapType, setWrapType] = useState<'PARTIAL' | 'FULL' | null>(null);
+  const [hasTags, setHasTags] = useState(false);
+  const [insuranceAmount, setInsuranceAmount] = useState("");
+  const [additionalServicePrice, setAdditionalServicePrice] = useState("");
+
   // =========== CREATED BOOKING STATE ===========
   const [createdBooking, setCreatedBooking] = useState<any>(null);
+
+  // =========== PRICE FETCHING STATE ===========
+  const [availablePrices, setAvailablePrices] = useState<any[]>([]);
+  const [isLoadingPrices, setIsLoadingPrices] = useState(false);
+
+  // Mapping helper for PriceCategory
+  const getPriceCategory = (service: ServiceType, boxSubType?: BoxSubType): string => {
+    if (service === 'BOX') {
+      if (boxSubType === 'FROZEN') return 'FROZEN_BOX';
+      if (boxSubType === 'COOLER') return 'COOLER_BOX';
+      return 'DRY_BOX';
+    }
+    return service;
+  };
 
   // Set user details when user loads
   useEffect(() => {
@@ -998,6 +1143,56 @@ export default function CargoBooking() {
       setContactPhone(user.mobileNumber || "");
     }
   }, [user]);
+
+  // Fetch Available Prices based on route and service
+  useEffect(() => {
+    async function fetchPrices() {
+      if (!fromLocation || !toLocation) return;
+      
+      setIsLoadingPrices(true);
+      try {
+        const category = getPriceCategory(service, boxSubType);
+        const res = await apiFetch(`/api/prices?category=${category}&from=${fromLocation}&to=${toLocation}`);
+        
+        if (res.ok) {
+          const data = await res.json();
+          const prices = data.prices || [];
+          setAvailablePrices(prices);
+          
+          // Auto-fill price based on size matching
+          let matchedPrice = null;
+          
+          // Determine current size string to match
+          let currentSize = cargoSize;
+          if (service === 'CONTAINER' && containerSize) currentSize = containerSize;
+          if (service === 'PALLET' && palletHeight) currentSize = palletHeight;
+          if (service === 'BUNDLE' && bundleLength) currentSize = bundleLength;
+          if (service === 'ENVELOPE' && envelopeType) currentSize = envelopeType;
+
+          // Attempt matching (exact string match or case-insensitive)
+          matchedPrice = prices.find((p: any) => 
+            p.size.toLowerCase() === currentSize.toLowerCase()
+          );
+
+          if (matchedPrice) {
+            setPrice(String(matchedPrice.value));
+          } else if (prices.length > 0 && !price) {
+            // If no exact size match but we have prices, use the first one if price is empty
+            // (or maybe don't auto-fill if not matched?)
+            // For now, let's only auto-fill if matched
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch prices:", err);
+      } finally {
+        setIsLoadingPrices(false);
+      }
+    }
+
+    // Debounce a bit or at least wait for location
+    const timer = setTimeout(fetchPrices, 300);
+    return () => clearTimeout(timer);
+  }, [service, boxSubType, fromLocation, toLocation, cargoSize, containerSize, palletHeight, envelopeType, bundleLength]);
 
   // Fetch Locations
   useEffect(() => {
@@ -1152,10 +1347,12 @@ export default function CargoBooking() {
 
   // Calculate totals
   const calculateTotals = () => {
-    const subtotal = items.reduce((sum, item) => sum + item.total, 0);
+    const itemsTotal = items.reduce((sum, item) => sum + item.total, 0);
+    const servicesTotal = parseFloat(additionalServicePrice) || 0;
+    const subtotal = itemsTotal + servicesTotal;
     const vatAmount = subtotal * 0.12;
     const grandTotal = subtotal + vatAmount;
-    return { subtotal, vatAmount, grandTotal };
+    return { subtotal, vatAmount, grandTotal, itemsTotal, servicesTotal };
   };
 
   // Image upload handlers
@@ -1555,6 +1752,12 @@ export default function CargoBooking() {
         deficiencyComment: primaryItem?.deficiencyComment || comment || null,
         paymentStatus,
         remark: remark || null,
+        // Additional Services
+        hasTape,
+        wrapType,
+        hasTags,
+        insuranceAmount: parseFloat(insuranceAmount) || null,
+        additionalServicePrice: parseFloat(additionalServicePrice) || 0,
         // Items array with full details for each item
         items: items.map(item => ({
           itemType: item.type,
@@ -1728,6 +1931,11 @@ export default function CargoBooking() {
 
   // Render service-specific form fields
   const renderServiceFields = () => {
+    const commonProps = {
+      availablePrices,
+      isLoadingPrices
+    };
+
     switch (service) {
       case 'CONTAINER':
         return (
@@ -1748,6 +1956,7 @@ export default function CargoBooking() {
             setPrice={setPrice}
             contents={contents}
             setContents={setContents}
+            {...commonProps}
           />
         );
 
@@ -1774,6 +1983,7 @@ export default function CargoBooking() {
             setValue={setValue}
             price={price}
             setPrice={setPrice}
+            {...commonProps}
           />
         );
 
@@ -1794,6 +2004,7 @@ export default function CargoBooking() {
             setValue={setValue}
             price={price}
             setPrice={setPrice}
+            {...commonProps}
           />
         );
 
@@ -1812,6 +2023,7 @@ export default function CargoBooking() {
             setPrice={setPrice}
             palletNo={palletNo}
             setPalletNo={setPalletNo}
+            {...commonProps}
           />
         );
 
@@ -1824,6 +2036,7 @@ export default function CargoBooking() {
             setValue={setValue}
             price={price}
             setPrice={setPrice}
+            {...commonProps}
           />
         );
 
@@ -1850,6 +2063,7 @@ export default function CargoBooking() {
             setItemLocation={setItemLocation}
             itemNumber={itemNumber}
             setItemNumber={setItemNumber}
+            {...commonProps}
           />
         );
 
@@ -1866,6 +2080,7 @@ export default function CargoBooking() {
             setValue={setValue}
             price={price}
             setPrice={setPrice}
+            {...commonProps}
           />
         );
 
@@ -2283,8 +2498,22 @@ export default function CargoBooking() {
 
         {/* Additional Services Button */}
         <div className="mb-8">
-          <button className="w-full bg-[#132540] text-white py-4 rounded-xl text-lg font-bold hover:bg-[#1a3254] transition-all shadow-md">
+          <button 
+            onClick={() => {
+              // Pre-fill temp state with current values
+              setTempHasTape(hasTape);
+              setTempWrapType(wrapType);
+              setTempHasTags(hasTags);
+              setTempInsuranceAmount(insuranceAmount);
+              setTempAdditionalServicePrice(additionalServicePrice);
+              setShowAdditionalServicesModal(true);
+            }}
+            className="w-full bg-[#132540] text-white py-4 rounded-xl text-lg font-bold hover:bg-[#1a3254] transition-all shadow-md flex items-center justify-center gap-2"
+          >
             ADDITIONAL SERVICES
+            {(hasTape || wrapType || hasTags || (parseFloat(additionalServicePrice) > 0)) && (
+              <span className="w-6 h-6 bg-[#296341] rounded-full flex items-center justify-center text-xs">✓</span>
+            )}
           </button>
         </div>
 
@@ -2561,6 +2790,129 @@ export default function CargoBooking() {
           </div>
         </div>
       )}
+
+      {/* Additional Services Modal */}
+      {showAdditionalServicesModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-[100] p-4">
+          <div className="bg-white rounded-[40px] p-8 w-full max-w-[500px] shadow-2xl animate-in zoom-in-95 duration-300">
+            <div className="mb-10 text-center relative">
+              <h3 className="text-[20px] font-black text-gray-400 uppercase tracking-widest">
+                Additional Services
+              </h3>
+              <div className="w-12 h-1.5 bg-[#296341] rounded-full mx-auto mt-2" />
+            </div>
+
+            <div className="space-y-12">
+              {/* Tape Selection */}
+              <div className="space-y-6">
+                <div className="flex items-center">
+                  <span className="text-[20px] font-bold text-gray-500 w-24">Tape</span>
+                  <div className="flex-1 flex justify-around">
+                    <label className="flex items-center gap-3 cursor-pointer group">
+                      <div 
+                        onClick={() => {
+                          setTempHasTape(true);
+                          setTempWrapType('PARTIAL');
+                        }}
+                        className={`w-6 h-6 rounded-full border-2 transition-all flex items-center justify-center ${tempWrapType === 'PARTIAL' ? 'border-[#296341]' : 'border-gray-200'}`}
+                      >
+                        {tempWrapType === 'PARTIAL' && <div className="w-3.5 h-3.5 rounded-full bg-[#296341]" />}
+                      </div>
+                      <span className="text-[18px] font-bold text-gray-700">Partial Wrap</span>
+                    </label>
+                    <label className="flex items-center gap-3 cursor-pointer group">
+                      <div 
+                        onClick={() => {
+                          setTempHasTape(true);
+                          setTempWrapType('FULL');
+                        }}
+                        className={`w-6 h-6 rounded-full border-2 transition-all flex items-center justify-center ${tempWrapType === 'FULL' ? 'border-[#296341]' : 'border-gray-200'}`}
+                      >
+                        {tempWrapType === 'FULL' && <div className="w-3.5 h-3.5 rounded-full bg-[#296341]" />}
+                      </div>
+                      <span className="text-[18px] font-bold text-gray-700">Full Wrap</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              {/* Tags Toggle */}
+              <div className="flex items-center">
+                <span className="text-[20px] font-bold text-gray-500 w-24">Tags</span>
+                <div className="flex-1 px-12">
+                  <div 
+                    onClick={() => setTempHasTags(!tempHasTags)}
+                    className={`w-6 h-6 rounded-full border-2 transition-all flex items-center justify-center cursor-pointer ${tempHasTags ? 'border-[#296341]' : 'border-gray-200'}`}
+                  >
+                    {tempHasTags && <div className="w-3.5 h-3.5 rounded-full bg-[#296341]" />}
+                  </div>
+                </div>
+              </div>
+
+              {/* Insurance Input */}
+              <div className="space-y-3">
+                <label className="text-[16px] font-black text-gray-500 uppercase tracking-widest block">
+                   Insurance
+                </label>
+                <div className="relative">
+                   <input 
+                    type="text"
+                    value={tempInsuranceAmount}
+                    onChange={(e) => setTempInsuranceAmount(e.target.value)}
+                    placeholder="Enter coverage amount"
+                    className="w-full h-[60px] border-2 border-gray-100 rounded-full px-8 text-xl font-bold bg-[#fafafa] focus:border-[#296341] focus:bg-white outline-none transition-all"
+                  />
+                  {tempInsuranceAmount && (
+                    <span className="absolute left-6 top-1/2 -translate-y-1/2 text-gray-400 font-bold">$</span>
+                  )}
+                </div>
+              </div>
+
+              {/* Manual Price Override */}
+              <div className="flex items-center justify-end gap-5 pt-4">
+                <span className="text-[20px] font-bold text-gray-500">Price</span>
+                <div className="relative">
+                  <input 
+                    type="text"
+                    value={tempAdditionalServicePrice}
+                    onChange={(e) => setTempAdditionalServicePrice(e.target.value)}
+                    className="w-[160px] h-[54px] border-2 border-gray-100 rounded-2xl px-4 text-center text-2xl font-black bg-[#fafafa] focus:border-[#296341] focus:bg-white outline-none transition-all placeholder:text-gray-300"
+                    placeholder="0.00"
+                  />
+                  <div className="absolute -left-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-white border-2 border-gray-100 rounded-full flex items-center justify-center">
+                    <span className="text-[14px] font-bold text-gray-400">$</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-4 pt-8">
+                <button 
+                  onClick={() => setShowAdditionalServicesModal(false)}
+                  className="flex-1 h-[64px] rounded-full bg-gray-100 text-gray-500 text-[18px] font-black hover:bg-gray-200 transition-colors uppercase tracking-widest shadow-sm"
+                >
+                  cancel
+                </button>
+                <button 
+                  onClick={() => {
+                    setHasTape(tempHasTape);
+                    setWrapType(tempWrapType);
+                    setHasTags(tempHasTags);
+                    setInsuranceAmount(tempInsuranceAmount);
+                    setAdditionalServicePrice(tempAdditionalServicePrice);
+                    setShowAdditionalServicesModal(false);
+                    toast.success("Additional services saved");
+                  }}
+                  className="flex-1 h-[64px] rounded-full bg-[#75bf9d] text-white text-[18px] font-black hover:bg-[#5daf8a] transition-all uppercase tracking-widest shadow-lg shadow-[#75bf9d]/20 active:scale-95"
+                >
+                  save
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
+
   );
 }

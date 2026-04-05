@@ -35,6 +35,8 @@ export async function GET(request: NextRequest) {
             recentPassengerBookings,
             recentActivity,
             upcomingVoyages,
+            recentIncidents,
+            openIncidentsCount,
         ] = await Promise.all([
             // Total shipments today
             prisma.cargoBooking.count({
@@ -133,6 +135,16 @@ export async function GET(request: NextRequest) {
                 orderBy: { date: "asc" },
                 take: 5,
             }),
+            // Recent incident reports
+            prisma.incidentReport.findMany({
+                where: { status: "OPEN" },
+                include: {
+                    reportedBy: { select: { firstName: true, lastName: true } },
+                },
+                orderBy: { createdAt: "desc" },
+                take: 5,
+            }),
+            prisma.incidentReport.count({ where: { status: "OPEN" } }),
         ]);
 
         // Calculate percentage changes
@@ -163,6 +175,7 @@ export async function GET(request: NextRequest) {
                 pendingPaymentTotal: pendingPayments._sum.totalAmount || 0,
                 pendingPickups,
                 completedPickups,
+                openIncidentsCount,
             },
             recentShipments: {
                 dry: dryShipments.slice(0, 5),
@@ -172,6 +185,7 @@ export async function GET(request: NextRequest) {
             recentActivity,
             recentPassengerBookings,
             upcomingVoyages,
+            recentIncidents,
         });
     } catch (error) {
         console.error("Dashboard stats error:", error);

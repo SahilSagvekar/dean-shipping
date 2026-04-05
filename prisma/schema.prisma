@@ -553,6 +553,15 @@ model CargoBooking {
   deficiencyComment String?            // Additional notes about damage
 
   // =========================================
+  // ADDITIONAL SERVICES
+  // =========================================
+  hasTape                Boolean @default(false)
+  wrapType               String? // PARTIAL, FULL
+  hasTags                Boolean @default(false)
+  insuranceAmount       Float?
+  additionalServicePrice Float @default(0)
+
+  // =========================================
   // PAYMENT & TOTALS
   // =========================================
   paymentStatus PaymentStatus @default(UNPAID)

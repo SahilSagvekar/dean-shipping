@@ -19,7 +19,7 @@ export default function DashboardLayout({
 
                     {/* Content Wrapper */}
                     <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
-                        <BottomNav />
+                        {/* <BottomNav /> */}
 
                         {/* Mobile Header (hidden on lg) */}
                         <header className="lg:hidden px-4 h-16 sticky top-0 left-0 right-0 bg-white/80 backdrop-blur-md z-30 border-b border-gray-100 flex items-center justify-between">

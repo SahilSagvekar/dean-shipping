@@ -19,7 +19,10 @@ import {
   Phone,
   FileText,
   Edit2,
-  Save
+  Save,
+  Ship,
+  ArrowRight,
+  Anchor
 } from "lucide-react";
 import image2 from "@/app/assets/cc1821c6ea8a81adb203fcf9b1bb2ee371bbcbed.png";
 import imgLogo from "@/app/assets/0630bc807bbd9122cb449e66c33d18d13536d121.png";
@@ -52,6 +55,24 @@ interface Pagination {
   limit: number;
   total: number;
   totalPages: number;
+}
+
+interface VoyageStop {
+  id: string;
+  location: Location;
+  stopOrder?: number;
+  order?: number;
+}
+
+interface Voyage {
+  id: string;
+  voyageNo: string | number;
+  date?: string;
+  departureDate?: string;
+  ship?: { name: string };
+  from?: Location;
+  to?: Location;
+  stops?: VoyageStop[];
 }
 
 // Vehicle Status Configuration
@@ -393,6 +414,11 @@ export default function VehicleWaitlistPage() {
   const [locations, setLocations] = useState<Location[]>([]);
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
+  // Voyage state
+  const [upcomingVoyages, setUpcomingVoyages] = useState<Voyage[]>([]);
+  const [isLoadingVoyages, setIsLoadingVoyages] = useState(false);
+  const [selectedVoyageId, setSelectedVoyageId] = useState<string>("");
+
   // Add form state
   const [newVehicle, setNewVehicle] = useState({
     ownerName: '',
@@ -451,6 +477,25 @@ export default function VehicleWaitlistPage() {
     fetchLocations();
   }, []);
 
+  // Fetch Voyages
+  useEffect(() => {
+    async function fetchVoyages() {
+      setIsLoadingVoyages(true);
+      try {
+        const res = await apiFetch('/api/voyages?upcoming=true&limit=50');
+        if (res.ok) {
+          const data = await res.json();
+          setUpcomingVoyages(data.voyages || []);
+        }
+      } catch (err) {
+        console.error("Failed to fetch voyages:", err);
+      } finally {
+        setIsLoadingVoyages(false);
+      }
+    }
+    fetchVoyages();
+  }, [apiFetch]);
+
   // Pre-fill user details
   useEffect(() => {
     if (user) {
@@ -462,6 +507,75 @@ export default function VehicleWaitlistPage() {
       }));
     }
   }, [user]);
+
+  // Helper to get locations for a specific voyage
+  const getVoyageLocationsForVoyage = (voyage: Voyage): Location[] => {
+    const voyageLocations: Location[] = [];
+    
+    if (voyage.from) {
+      voyageLocations.push(voyage.from);
+    }
+    
+    if (voyage.stops && voyage.stops.length > 0) {
+      voyage.stops
+        .sort((a, b) => (a.stopOrder || a.order || 0) - (b.stopOrder || b.order || 0))
+        .forEach((stop: VoyageStop) => {
+          if (!voyageLocations.find(l => l.id === stop.location.id)) {
+            voyageLocations.push(stop.location);
+          }
+        });
+    }
+    
+    if (voyage.to && !voyageLocations.find(l => l.id === voyage.to?.id)) {
+      voyageLocations.push(voyage.to);
+    }
+    
+    return voyageLocations;
+  };
+
+  // Handle voyage selection
+  const handleVoyageSelect = (voyageId: string) => {
+    setSelectedVoyageId(voyageId);
+    
+    if (voyageId) {
+      const voyage = upcomingVoyages.find(v => v.id === voyageId);
+      if (voyage) {
+        // Auto-set booking date to voyage departure date if available
+        const voyageDate = voyage.date || voyage.departureDate;
+        if (voyageDate) {
+          try {
+            const depDate = new Date(voyageDate).toISOString().split('T')[0];
+            setNewVehicle(prev => ({ ...prev, bookingDate: depDate }));
+          } catch (e) {
+            console.error("Error parsing voyage date:", e);
+          }
+        }
+        
+        // Get voyage locations and set defaults
+        const voyageLocations = getVoyageLocationsForVoyage(voyage);
+        if (voyageLocations.length >= 2) {
+          setNewVehicle(prev => ({
+            ...prev,
+            fromLocation: voyageLocations[0].code,
+            toLocation: voyageLocations[voyageLocations.length - 1].code
+          }));
+        } else if (voyageLocations.length === 1) {
+          setNewVehicle(prev => ({ ...prev, fromLocation: voyageLocations[0].code }));
+        }
+      }
+    } else {
+      // Cleared selection
+      if (locations.length > 0) {
+        setNewVehicle(prev => ({
+          ...prev,
+          fromLocation: locations[0].code,
+          toLocation: locations.length > 1 ? locations[1].code : locations[0].code
+        }));
+      }
+    }
+  };
+
+  const selectedVoyage = upcomingVoyages.find(v => v.id === selectedVoyageId);
 
   // Add vehicle
   const handleAddVehicle = async () => {
@@ -627,6 +741,57 @@ export default function VehicleWaitlistPage() {
             <h2 className="text-xl font-medium text-black">ADD VEHICLE TO WAITLIST</h2>
           </div>
           <div className="w-48 h-1 bg-[#132540] rounded-full mb-4" />
+
+          <div className="bg-[#e5f7f1] rounded-[10px] p-6 mb-4">
+            <div className="flex flex-col gap-2">
+              <label className="text-sm font-bold text-[#296341] uppercase tracking-wider">
+                 Linked Voyage (Optional)
+              </label>
+              <div className="relative group">
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-[#296341]">
+                  <Ship className="w-5 h-5" />
+                </div>
+                <select 
+                  value={selectedVoyageId}
+                  onChange={(e) => handleVoyageSelect(e.target.value)}
+                  disabled={isLoadingVoyages}
+                  className="w-full bg-white border-2 border-[#296341] rounded-xl pl-12 pr-10 py-3 text-lg font-bold text-gray-800 outline-none focus:ring-4 focus:ring-[#296341]/10 transition-all appearance-none cursor-pointer disabled:opacity-60"
+                >
+                  <option value="">-- No Voyage Selected --</option>
+                  {upcomingVoyages.map(v => (
+                    <option key={v.id} value={v.id}>
+                      {v.voyageNo} - {v.ship?.name || 'Vessel'} ({v.date ? new Date(v.date).toLocaleDateString() : 'No date'})
+                    </option>
+                  ))}
+                </select>
+                <div className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none transition-transform group-focus-within:rotate-180">
+                  <ChevronDown className="w-5 h-5" />
+                </div>
+              </div>
+
+              {selectedVoyage && (
+                <div className="mt-4 bg-white/60 rounded-xl p-4 border border-[#296341]/20 animate-in fade-in slide-in-from-top-2 duration-300">
+                  <div className="flex flex-wrap items-center gap-6">
+                    <div className="flex items-center gap-2">
+                      <Anchor className="w-4 h-4 text-[#296341]" />
+                      <span className="text-sm font-bold text-gray-900">
+                        {selectedVoyage.ship?.name || 'Ship'}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm font-black text-[#296341] bg-[#eef6f2] px-3 py-1 rounded-full uppercase">
+                        {selectedVoyage.from?.name || selectedVoyage.from?.code}
+                      </span>
+                      <ArrowRight className="w-4 h-4 text-gray-400" />
+                      <span className="text-sm font-black text-[#296341] bg-[#eef6f2] px-3 py-1 rounded-full uppercase">
+                        {selectedVoyage.to?.name || selectedVoyage.to?.code}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
 
           <div className="bg-[#e5f7f1] rounded-[10px] p-4 space-y-4">
             {/* Row 1: Name, Email, Contact */}

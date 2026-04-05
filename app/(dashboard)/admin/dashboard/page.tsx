@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { Menu, Search, ChevronDown, Package, DollarSign, Clock, CheckCircle, FileText, Box, Printer, Ship, MapPin, Calendar, Users, ArrowRight } from 'lucide-react';
+import Link from 'next/link';
+import { Menu, Search, ChevronDown, Package, DollarSign, Clock, CheckCircle, FileText, Box, Printer, Ship, MapPin, Calendar, Users, ArrowRight, AlertTriangle, ShieldAlert } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useAuth } from '@/lib/auth-context';
 import imgLogo from "@/app/assets/ffb62b7af25544291ca34f641dc70191ad198db6.png";
@@ -215,6 +216,7 @@ export default function App() {
   const recentShipments = data?.recentShipments || { dry: [], frozen: [], cooler: [] };
   const recentActivity = data?.recentActivity || [];
   const upcomingVoyages = data?.upcomingVoyages || [];
+  const recentIncidents = data?.recentIncidents || [];
 
   return (
     <div className="bg-white">
@@ -252,7 +254,7 @@ export default function App() {
           />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <StatCard
             icon={Clock}
             title="Pending Pickup"
@@ -265,6 +267,13 @@ export default function App() {
             title="Completed Pickup"
             value={stats.completedPickups || "0"}
             subtitle="Today's deliveries"
+          />
+          <StatCard
+            icon={AlertTriangle}
+            title="Active Incidents"
+            value={stats.openIncidentsCount || "0"}
+            subtitle="Require attention"
+            positive={false}
           />
         </div>
 
@@ -395,6 +404,66 @@ export default function App() {
                         <p className="text-[10px] font-bold text-gray-400 uppercase">Pax</p>
                         <p className="text-[18px] font-black text-purple-700">{paxCount}</p>
                       </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Incident Reports Section */}
+        {recentIncidents.length > 0 && (
+          <div className="border-2 border-red-500/20 bg-red-50/10 rounded-[5px] p-6 mb-8 shadow-sm">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-6 gap-4">
+              <div>
+                <h2 className="text-[20px] font-black italic mb-1 uppercase tracking-widest text-red-600 flex items-center gap-2">
+                  <ShieldAlert className="w-6 h-6" /> Recent Incident Reports
+                </h2>
+                <p className="text-[14px] text-gray-500 font-medium">Unresolved safety and operational issues</p>
+              </div>
+              <div className="flex items-center gap-4">
+                <div className="px-4 py-1 bg-red-600 text-white rounded-full text-sm font-black uppercase tracking-wider">
+                  High Priority
+                </div>
+                <Link href="/admin/incidents" className="flex items-center gap-2 text-red-600 font-black uppercase text-xs hover:underline decoration-2">
+                  View All Reports <ArrowRight className="w-4 h-4" />
+                </Link>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {recentIncidents.map((incident: any) => {
+                const severityColors: any = {
+                  CRITICAL: 'bg-red-600 text-white',
+                  HIGH: 'bg-orange-500 text-white',
+                  MEDIUM: 'bg-yellow-400 text-black',
+                  LOW: 'bg-blue-400 text-white'
+                };
+                return (
+                  <div key={incident.id} className="bg-white border border-red-100 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow cursor-pointer group">
+                    <div className="flex justify-between items-start mb-3">
+                      <div className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter ${severityColors[incident.severity] || severityColors.MEDIUM}`}>
+                        {incident.severity}
+                      </div>
+                      <span className="text-[11px] font-bold text-gray-400 tabular-nums">
+                        {new Date(incident.createdAt).toLocaleDateString()}
+                      </span>
+                    </div>
+                    <h3 className="text-lg font-black text-gray-900 mb-1 group-hover:text-red-600 transition-colors">{incident.title}</h3>
+                    <p className="text-sm text-gray-500 line-clamp-2 mb-4 font-medium h-10">
+                      {incident.description}
+                    </p>
+                    <div className="flex items-center justify-between mt-auto pt-3 border-t border-gray-50">
+                      <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center text-[10px] font-black">
+                          {incident.reportedBy?.firstName[0]}
+                        </div>
+                        <span className="text-[12px] font-bold text-gray-600">{incident.reportedBy?.firstName} {incident.reportedBy?.lastName}</span>
+                      </div>
+                      <span className="text-[12px] font-black text-[#296341] flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                        Details <ArrowRight className="w-3 h-3" />
+                      </span>
                     </div>
                   </div>
                 );

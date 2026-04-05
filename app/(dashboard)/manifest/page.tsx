@@ -185,7 +185,7 @@ function TypeBadge({ type }: { type: string }) {
 
 // ── Booking Row (Mobile Card + Desktop Table Row) ──────
 
-function BookingRow({
+function MobileBookingCard({
   booking,
   action,
 }: {
@@ -197,67 +197,77 @@ function BookingRow({
     : booking.contactName || booking.name || "—";
 
   return (
-    <>
-      {/* Mobile-only Card View */}
-      <div className="md:hidden p-4 rounded-xl border border-gray-200/60 bg-white/40 mb-2 space-y-3">
-        <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-                {action === "load" && <ArrowDown className="w-4 h-4 text-emerald-600 flex-shrink-0" />}
-                {action === "unload" && <ArrowUp className="w-4 h-4 text-amber-600 flex-shrink-0" />}
-                {action === "stays" && <Minus className="w-4 h-4 text-blue-500 flex-shrink-0" />}
-                <span className="text-sm font-mono font-bold text-gray-800">
-                    {booking.invoiceNo || "—"}
-                </span>
-            </div>
-            <PaymentBadge status={booking.paymentStatus} />
-        </div>
-        
-        <div className="flex justify-between items-start gap-2">
-            <div className="flex-1">
-                <p className="text-sm font-bold text-gray-900">{senderName}</p>
-                <p className="text-xs text-gray-500 mt-0.5">{booking.itemSummary}</p>
-            </div>
-            <div className="text-right">
-                <p className="text-sm font-black text-gray-900">${booking.totalAmount.toFixed(2)}</p>
-                <TypeBadge type={booking.bookingType} />
-            </div>
-        </div>
-        
-        <div className="text-[11px] font-bold text-gray-400 uppercase flex items-center gap-1">
-            <MapPin className="w-3 h-3" /> {booking.fromLocation} → {booking.toLocation}
-        </div>
-      </div>
-
-      {/* Desktop-only Table Row */}
-      <tr className="hidden lg:table-row border-b border-gray-200/60 hover:bg-white/60 transition-colors">
-        <td className="py-2.5 px-3">
+    <div className="md:hidden p-4 rounded-xl border border-gray-200/60 bg-white/40 mb-2 space-y-3">
+      <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            {action === "load" && <ArrowDown className="w-4 h-4 text-emerald-600 flex-shrink-0" />}
-            {action === "unload" && <ArrowUp className="w-4 h-4 text-amber-600 flex-shrink-0" />}
-            {action === "stays" && <Minus className="w-4 h-4 text-blue-500 flex-shrink-0" />}
-            <span className="text-sm font-mono font-bold text-gray-800">
-              {booking.invoiceNo || "—"}
-            </span>
+              {action === "load" && <ArrowDown className="w-4 h-4 text-emerald-600 flex-shrink-0" />}
+              {action === "unload" && <ArrowUp className="w-4 h-4 text-amber-600 flex-shrink-0" />}
+              {action === "stays" && <Minus className="w-4 h-4 text-blue-500 flex-shrink-0" />}
+              <span className="text-sm font-mono font-bold text-gray-800">
+                  {booking.invoiceNo || "—"}
+              </span>
           </div>
-        </td>
-        <td className="py-2.5 px-3">
-          <TypeBadge type={booking.bookingType} />
-        </td>
-        <td className="py-2.5 px-3 text-sm text-gray-700 font-medium">{senderName}</td>
-        <td className="py-2.5 px-3 text-sm text-gray-700 max-w-[200px] truncate">
-          {booking.itemSummary}
-        </td>
-        <td className="py-2.5 px-3 text-sm font-medium text-gray-800">
-          {booking.fromLocation} → {booking.toLocation}
-        </td>
-        <td className="py-2.5 px-3 text-sm font-bold text-gray-800">
-          ${booking.totalAmount.toFixed(2)}
-        </td>
-        <td className="py-2.5 px-3">
           <PaymentBadge status={booking.paymentStatus} />
-        </td>
-      </tr>
-    </>
+      </div>
+      
+      <div className="flex justify-between items-start gap-2">
+          <div className="flex-1">
+              <p className="text-sm font-bold text-gray-900">{senderName}</p>
+              <p className="text-xs text-gray-500 mt-0.5">{booking.itemSummary}</p>
+          </div>
+          <div className="text-right">
+              <p className="text-sm font-black text-gray-900">${booking.totalAmount.toFixed(2)}</p>
+              <TypeBadge type={booking.bookingType} />
+          </div>
+      </div>
+      
+      <div className="text-[11px] font-bold text-gray-400 uppercase flex items-center gap-1">
+          <MapPin className="w-3 h-3" /> {booking.fromLocation} → {booking.toLocation}
+      </div>
+    </div>
+  );
+}
+
+function DesktopBookingRow({
+  booking,
+  action,
+}: {
+  booking: StopBooking;
+  action: "load" | "unload" | "stays";
+}) {
+  const senderName = booking.user
+    ? `${booking.user.firstName} ${booking.user.lastName}`
+    : booking.contactName || booking.name || "—";
+
+  return (
+    <tr className="hidden lg:table-row border-b border-gray-200/60 hover:bg-white/60 transition-colors">
+      <td className="py-2.5 px-3">
+        <div className="flex items-center gap-2">
+          {action === "load" && <ArrowDown className="w-4 h-4 text-emerald-600 flex-shrink-0" />}
+          {action === "unload" && <ArrowUp className="w-4 h-4 text-amber-600 flex-shrink-0" />}
+          {action === "stays" && <Minus className="w-4 h-4 text-blue-500 flex-shrink-0" />}
+          <span className="text-sm font-mono font-bold text-gray-800">
+            {booking.invoiceNo || "—"}
+          </span>
+        </div>
+      </td>
+      <td className="py-2.5 px-3">
+        <TypeBadge type={booking.bookingType} />
+      </td>
+      <td className="py-2.5 px-3 text-sm text-gray-700 font-medium">{senderName}</td>
+      <td className="py-2.5 px-3 text-sm text-gray-700 max-w-[200px] truncate">
+        {booking.itemSummary}
+      </td>
+      <td className="py-2.5 px-3 text-sm font-medium text-gray-800">
+        {booking.fromLocation} → {booking.toLocation}
+      </td>
+      <td className="py-2.5 px-3 text-sm font-bold text-gray-800">
+        ${booking.totalAmount.toFixed(2)}
+      </td>
+      <td className="py-2.5 px-3">
+        <PaymentBadge status={booking.paymentStatus} />
+      </td>
+    </tr>
   );
 }
 
@@ -307,15 +317,15 @@ function StopSection({
           </thead>
           <tbody>
             {bookings.map((b) => (
-              <BookingRow key={b.id} booking={b} action={action} />
+              <DesktopBookingRow key={b.id} booking={b} action={action} />
             ))}
           </tbody>
         </table>
 
-        {/* Mobile View: Rendered inside BookingRow as card */}
+        {/* Mobile View: Rendered as card list */}
         <div className="lg:hidden">
             {bookings.map((b) => (
-              <BookingRow key={b.id} booking={b} action={action} />
+              <MobileBookingCard key={b.id} booking={b} action={action} />
             ))}
         </div>
       </div>
