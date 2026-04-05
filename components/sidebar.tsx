@@ -21,6 +21,7 @@ import {
   Settings,
   LogOut,
   MapPin,
+  ChevronRight,
 } from "lucide-react";
 
 // ============================================
@@ -48,12 +49,14 @@ export function useSidebar() {
 // ============================================
 
 export function SidebarProvider({ children }: { children: React.ReactNode }) {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(true);
 
   // Close sidebar on route change (mobile)
   const pathname = usePathname();
   useEffect(() => {
-    setIsOpen(false);
+    if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+      setIsOpen(false);
+    }
   }, [pathname]);
 
   // Close on Escape key
@@ -153,7 +156,7 @@ export const navigationItems: NavItem[] = [
   },
   {
     title: "Manifest",
-    href: "/manifest", // Updated to match manifest concept
+    href: "/manifest",
     icon: FileText,
   },
   {
@@ -166,20 +169,15 @@ export const navigationItems: NavItem[] = [
     href: "/incident-report",
     icon: AlertTriangle,
   },
-  // {
-  //   title: "Setting",
-  //   href: "/admin/settings",
-  //   icon: Settings,
-  // },
   {
     title: "Cashier",
     href: "/cashier",
-    icon: Settings,
+    icon: Banknote,
   },
   {
     title: "Notifications",
     href: "/notification",
-    icon: Settings,
+    icon: AlertTriangle,
   },
 ];
 
@@ -187,7 +185,7 @@ export const navigationItems: NavItem[] = [
 // SIDEBAR NAV ITEM
 // ============================================
 
-function SidebarNavItem({ item }: { item: NavItem }) {
+function SidebarNavItem({ item, onClick }: { item: NavItem; onClick?: () => void }) {
   const pathname = usePathname();
   const isActive = pathname === item.href;
   const Icon = item.icon;
@@ -195,13 +193,17 @@ function SidebarNavItem({ item }: { item: NavItem }) {
   return (
     <Link
       href={item.href}
-      className={`flex items-center gap-4 px-6 py-3 transition-colors group
-        ${isActive ? "bg-[#e2f0ea]" : "hover:bg-[#e2f0ea]"}`}
+      onClick={onClick}
+      className={`flex items-center justify-between gap-4 px-6 py-4 transition-all active:scale-[0.98]
+        ${isActive ? "bg-blue-50/80 border-r-4 border-[#296341]" : "hover:bg-gray-50"}`}
     >
-      <Icon className={`w-7 h-7 flex-shrink-0 transition-colors ${isActive ? "text-[#1a365d]" : "text-[#1a365d]/80 group-hover:text-[#1a365d]"}`} />
-      <span className={`text-[17px] font-bold transition-colors ${isActive ? "text-[#1a365d]" : "text-[#1a365d]/80 group-hover:text-[#1a365d]"}`}>
-        {item.title}
-      </span>
+      <div className="flex items-center gap-4">
+        <Icon className={`w-6 h-6 flex-shrink-0 transition-colors ${isActive ? "text-[#296341]" : "text-gray-500"}`} />
+        <span className={`text-[16px] font-semibold transition-colors ${isActive ? "text-[#296341]" : "text-gray-700"}`}>
+          {item.title}
+        </span>
+      </div>
+      {isActive && <ChevronRight className="w-4 h-4 text-[#296341]" />}
     </Link>
   );
 }
@@ -227,43 +229,61 @@ export function Sidebar({
     <>
       {/* Backdrop */}
       <div
-        className={`fixed inset-0 bg-black/40 z-40 transition-opacity duration-300 
+        className={`fixed inset-0 bg-black/50 backdrop-blur-sm z-40 transition-opacity duration-300 
           ${isOpen ? "opacity-100" : "opacity-0 pointer-events-none"}`}
         onClick={close}
       />
 
       {/* Sidebar Panel */}
       <aside
-        className={`fixed top-0 left-0 h-full w-[320px] bg-[#f4fbf9] z-50 
-          flex flex-col shadow-2xl
-          transition-transform duration-300 ease-in-out
-          ${isOpen ? "translate-x-0" : "-translate-x-full"}`}
+        className={`fixed lg:relative top-0 left-0 h-full bg-white z-50 
+          flex flex-col shadow-2xl lg:shadow-none border-r border-gray-100
+          transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]
+          ${isOpen 
+            ? "w-[300px] sm:w-[320px] translate-x-0" 
+            : "-translate-x-full lg:translate-x-0 lg:w-[0px] lg:opacity-0 lg:pointer-events-none"}`}
       >
-        {/* Header - Hamburger box from image */}
-        <div className="px-6 py-8">
+        {/* Header with Title and Close */}
+        <div className="px-6 py-8 flex items-center justify-between border-b border-gray-50">
+          <div className="flex items-center gap-3">
+             <div className="w-10 h-10 bg-[#296341] rounded-lg flex items-center justify-center">
+                <Ship className="text-white w-6 h-6" />
+             </div>
+             <div className="font-bold text-xl text-gray-900 leading-tight">
+                Dean's<br/><span className="text-[#296341]">Shipping</span>
+             </div>
+          </div>
           <button
             onClick={close}
-            className="w-12 h-12 flex items-center justify-center border-2 border-[#1a73e8] rounded-sm bg-white hover:bg-gray-50 transition-colors"
+            className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-50 text-gray-500 active:bg-gray-200 transition-colors"
             aria-label="Close menu"
           >
-            <Menu className="w-8 h-8 text-[#1a365d]" />
+            <X className="w-6 h-6" />
           </button>
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 overflow-y-auto py-2 space-y-1">
+        <nav className="flex-1 overflow-y-auto py-4 space-y-0.5">
           {navigationItems.map((item) => (
-            <SidebarNavItem key={item.href} item={item} />
+            <SidebarNavItem key={item.href} item={item} onClick={close} />
           ))}
         </nav>
 
-        {/* Optional: User/Logout (Hidden to match image strictly, but kept for partial visibility) */}
-        {/* <div className="px-6 py-4 border-t border-[#e0e8e3] opacity-40 hover:opacity-100 transition-opacity">
-          <button className="flex items-center gap-3 text-[#cf5d5d]">
-            <LogOut className="w-5 h-5" />
-            <span className="text-[15px] font-medium">Logout</span>
-          </button>
-        </div> */}
+        {/* User Footer */}
+        <div className="p-6 border-t border-gray-100 bg-gray-50/50">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-[#296341] font-bold">
+              {userName.split(' ').map(n => n[0]).join('')}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-bold text-gray-900 truncate">{userName}</p>
+              <p className="text-xs text-gray-500 truncate">{userRole}</p>
+            </div>
+            <button className="text-gray-400 hover:text-red-500 transition-colors">
+              <LogOut className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
       </aside>
     </>
   );
@@ -280,18 +300,22 @@ interface HamburgerButtonProps {
 
 export function HamburgerButton({
   className = "",
-  iconSize = 28,
+  iconSize = 24,
 }: HamburgerButtonProps) {
   const { toggle, isOpen } = useSidebar();
 
   return (
     <button
       onClick={toggle}
-      className={`w-12 h-12 flex items-center justify-center border-2 border-[#1a73e8] rounded-sm bg-white hover:bg-gray-50 transition-colors ${className}`}
+      className={`w-11 h-11 flex items-center justify-center rounded-xl bg-white border border-gray-200 shadow-sm active:scale-95 transition-all ${className}`}
       aria-label={isOpen ? "Close menu" : "Open menu"}
       aria-expanded={isOpen}
     >
-      <Menu className="text-[#1a365d]" style={{ width: iconSize, height: iconSize }} />
+      {isOpen ? (
+        <X className="text-gray-900" style={{ width: iconSize, height: iconSize }} />
+      ) : (
+        <Menu className="text-gray-900" style={{ width: iconSize, height: iconSize }} />
+      )}
     </button>
   );
 }

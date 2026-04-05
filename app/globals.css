@@ -1,12 +1,13 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
- @import "tailwindcss";
+@import "tailwindcss";
 
 :root {
-  /* --background: #000000;
-  --foreground: #ffffff; */
-
-   --background: #ffffff;
-  --foreground: #000000;
+  --background: #ffffff;
+  --foreground: #0f172a;
+  --primary: #1e3a8a;
+  --accent: #111827;
+  --muted: #f8fafc;
+  --border: #e2e8f0;
 }
 
 @theme inline {
@@ -16,60 +17,88 @@
   --font-mono: var(--font-geist-mono);
 }
 
+* {
+  -webkit-tap-highlight-color: transparent;
+  outline-color: var(--primary);
+}
+
+html {
+  scroll-behavior: smooth;
+  height: 100%;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: 'Outfit', 'Inter', sans-serif;
+  height: 100%;
+  overflow-x: hidden;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
 }
 
-/* Print styles for invoice */
+/* --- Mobile Performance & Touch Optimizations --- */
+input, select, textarea {
+  font-size: 16px !important; /* Prevents auto-zoom on iOS */
+}
+
+.touch-action-none {
+  touch-action: none;
+}
+
+/* --- Premium Scrollbars (for desktop/tablet views) --- */
+@media (min-width: 768px) {
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 10px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+  }
+}
+
+/* --- Mobile List Cards (Utility) --- */
+@media (max-width: 768px) {
+  .responsive-container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  
+  /* Generic mobile card style */
+  .mobile-card {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    margin-bottom: 0.75rem;
+  }
+}
+
+/* --- Print styles (Kept for invoices) --- */
 @media print {
   body * {
     visibility: hidden;
   }
-  
   #invoice-content,
   #invoice-content * {
     visibility: visible;
   }
-  
   #invoice-content {
     position: absolute;
     left: 0;
     top: 0;
     width: 100%;
-    padding: 20px;
+    padding: 0;
   }
-  
   [data-print-hidden="true"] {
     display: none !important;
   }
 }
-
-
- /* @import "tailwindcss";
-
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
-} */

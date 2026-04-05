@@ -205,8 +205,8 @@ interface InputFieldProps {
 }
 
 const InputField = ({ label, value, onChange, placeholder, type = 'text', required, className = '' }: InputFieldProps) => (
-  <div className={`space-y-2 ${className}`}>
-    <label className="text-[14px] font-bold text-gray-500 uppercase tracking-wide">
+  <div className={`space-y-1 sm:space-y-2 ${className}`}>
+    <label className="text-[12px] lg:text-[20px] font-bold text-gray-400 lg:text-black uppercase lg:normal-case tracking-wider lg:tracking-normal">
       {label} {required && <span className="text-red-500">*</span>}
     </label>
     <input
@@ -214,7 +214,7 @@ const InputField = ({ label, value, onChange, placeholder, type = 'text', requir
       value={value}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
-      className="w-full h-[48px] border-b-2 border-gray-200 outline-none focus:border-[#296341] text-[16px] font-medium transition-colors bg-transparent"
+      className="w-full h-[44px] lg:h-auto border-b-2 border-gray-100 lg:border-gray-200 outline-none focus:border-blue-600 lg:focus:border-[#296341] text-[16px] lg:text-[20px] font-medium lg:font-bold transition-colors bg-transparent placeholder:text-gray-300"
     />
   </div>
 );
@@ -429,13 +429,18 @@ const ContainerFormFields = ({
   contents, setContents
 }: ContainerFormProps) => (
   <div className="space-y-8">
-    <h3 className="text-[20px] font-bold text-gray-800 uppercase tracking-wide">Container Inspection</h3>
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div className="border-l-4 border-blue-600 pl-4">
+        <h3 className="text-xl sm:text-2xl font-black text-gray-900 uppercase">Container Inspection</h3>
+        <p className="text-sm text-gray-500">Physical details and environment settings</p>
+    </div>
+    
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
       <InputField label="Container#" value={containerNo} onChange={setContainerNo} placeholder="e.g., 134" />
       <InputField label="Chassis#" value={chassisNo} onChange={setChassisNo} placeholder="e.g., 2" />
       <InputField label="Temperature" value={temperature} onChange={setTemperature} placeholder="e.g., 70°" />
     </div>
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+    
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 text-blue-900">
       <InputField label="Value" value={value} onChange={setValue} placeholder="$5,000" />
       <SelectField
         label="Size"
@@ -462,10 +467,10 @@ const ContainerFormFields = ({
         ]}
       />
     </div>
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
       <InputField label="Price" value={price} onChange={setPrice} placeholder="$500" />
+      <InputField label="Contents" value={contents} onChange={setContents} placeholder="Describe container contents..." />
     </div>
-    <InputField label="Contents" value={contents} onChange={setContents} placeholder="Describe container contents..." />
   </div>
 );
 
@@ -506,12 +511,12 @@ const PalletFormFields = ({
 }: PalletFormProps) => (
   <div className="space-y-8">
     <h3 className="text-[20px] font-bold text-gray-800 uppercase tracking-wide">Pallet Inspection</h3>
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
       <InputField label="Pallet#" value={palletNo} onChange={setPalletNo} placeholder="Enter pallet number" />
       <InputField label="Reefer#" value={reeferNo} onChange={setReeferNo} placeholder="e.g., 2" />
       <InputField label="Container#" value={containerNo} onChange={setContainerNo} placeholder="e.g., 2" />
     </div>
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
       <SelectField
         label="Height"
         value={height}
@@ -543,7 +548,7 @@ const PalletFormFields = ({
       onFlagChange={(flag, val) => setFlags({ ...flags, [flag]: val })}
     />
 
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
       <InputField label="Value" value={value} onChange={setValue} placeholder="Enter value" />
       <InputField label="Price" value={price} onChange={setPrice} placeholder="Enter price" />
     </div>
@@ -578,7 +583,7 @@ const LuggageFormFields = ({
 }: LuggageFormProps) => (
   <div className="space-y-8">
     <h3 className="text-[20px] font-bold text-gray-800 uppercase tracking-wide">Luggage Inspection</h3>
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
       <InputField label="Material" value={material} onChange={setMaterial} placeholder="e.g., Leather, Fabric" />
       <SelectField
         label="Color"
@@ -606,7 +611,7 @@ const LuggageFormFields = ({
       onFlagChange={(flag, val) => setFlags({ ...flags, [flag]: val })}
     />
 
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
       <InputField label="Value" value={value} onChange={setValue} placeholder="Enter value" />
       <InputField label="Price" value={price} onChange={setPrice} placeholder="Enter price" />
     </div>
@@ -675,7 +680,7 @@ const BoxFormFields = ({
       onFlagChange={(flag, val) => setFlags({ ...flags, [flag]: val })}
     />
 
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
       <InputField label="Value" value={value} onChange={setValue} placeholder="Enter value" />
       <InputField label="Price" value={price} onChange={setPrice} placeholder="Enter price" />
       <InputField label="Pallet#" value={palletNo} onChange={setPalletNo} placeholder="Enter pallet number" />
@@ -2054,39 +2059,37 @@ export default function CargoBooking() {
         </div>
 
         {/* Summary Section */}
-        <div className="bg-[#c2dccf] rounded-3xl p-8 mb-8">
-          <h3 className="text-[14px] font-bold text-gray-600 uppercase tracking-wider mb-6">Total Amount</h3>
+        <div className="bg-[#c2dccf] lg:bg-[#d4e0d9] rounded-3xl lg:rounded-none p-6 lg:p-8 mb-8 border border-[#296341]/20 lg:border-[#296341]">
+          <h3 className="text-sm lg:text-[20px] font-bold text-gray-600 lg:text-black uppercase lg:normal-case tracking-wider mb-6">Total Amount</h3>
 
-          <div className="grid grid-cols-3 gap-4 mb-6">
-            <div>
-              <p className="text-[12px] text-gray-500 uppercase">Quantity</p>
-              <p className="text-2xl font-black">{items.reduce((sum, i) => sum + i.quantity, 0)}</p>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+            <div className="bg-white/40 lg:bg-transparent p-4 lg:p-0 rounded-xl lg:rounded-none border border-white/20 lg:border-none">
+              <p className="text-[10px] lg:text-[14px] text-gray-500 lg:text-black uppercase lg:normal-case font-black lg:font-bold">Quantity Total</p>
+              <p className="text-2xl lg:text-[32px] font-black">{items.reduce((sum, i) => sum + i.quantity, 0)}</p>
             </div>
-            <div>
-              <p className="text-[12px] text-gray-500 uppercase">Value</p>
-              <p className="text-2xl font-black">${subtotal.toFixed(2)}</p>
+            <div className="bg-white/40 lg:bg-transparent p-4 lg:p-0 rounded-xl lg:rounded-none border border-white/20 lg:border-none">
+              <p className="text-[10px] lg:text-[14px] text-gray-500 lg:text-black uppercase lg:normal-case font-black lg:font-bold">Declared Value</p>
+              <p className="text-2xl lg:text-[32px] font-black">${subtotal.toFixed(2)}</p>
             </div>
-            <div>
-              <p className="text-[12px] text-gray-500 uppercase">
+            <div className="bg-white/40 lg:bg-transparent p-4 lg:p-0 rounded-xl lg:rounded-none border border-white/20 lg:border-none">
+              <p className="text-[10px] lg:text-[14px] text-gray-500 lg:text-black uppercase lg:normal-case font-black lg:font-bold">
                 {service === 'PALLET' ? 'Pallet#' : service === 'LUGGAGE' ? 'Luggage#' : 'Item#'}
               </p>
-              <p className="text-2xl font-black">{items.length > 0 ? items.map((_, i) => 134 + i).join(', ') : '-'}</p>
+              <p className="text-2xl lg:text-[32px] font-black truncate">{items.length > 0 ? items.map((_, i) => 134 + i).join(', ') : '-'}</p>
             </div>
           </div>
 
-          <div className="flex items-center gap-4 mb-6">
-            <div className="flex items-center gap-2">
+          <div className="flex flex-col lg:flex-row lg:items-center gap-4 lg:gap-8 border-t border-[#296341]/10 lg:border-none pt-6 lg:pt-0">
+            <div className="flex items-center gap-3">
               <MapPin className="w-5 h-5 text-[#296341]" />
-              <span className="font-bold">{fromLocation || 'NAS'}</span>
-            </div>
-            <ArrowRight className="w-5 h-5 text-gray-400" />
-            <div className="flex items-center gap-2">
+              <span className="font-bold lg:text-[20px]">{fromLocation || 'NAS'}</span>
+              <ArrowRight className="w-5 h-5 text-gray-400 mx-2" />
               <MapPin className="w-5 h-5 text-[#296341]" />
-              <span className="font-bold">{toLocation || 'MAH'}</span>
+              <span className="font-bold lg:text-[20px]">{toLocation || 'MAH'}</span>
             </div>
-            <div className="ml-auto">
-              <p className="text-[12px] text-gray-500 uppercase">Price</p>
-              <p className="text-2xl font-black">${grandTotal.toFixed(2)}</p>
+            <div className="lg:ml-auto flex items-center lg:flex-col lg:items-end gap-3 lg:gap-0">
+              <p className="text-[12px] lg:text-[14px] text-gray-500 lg:text-black uppercase lg:normal-case font-black lg:font-bold">Total Price</p>
+              <p className="text-3xl lg:text-[50px] font-black text-[#296341] lg:text-black leading-none">${grandTotal.toFixed(2)}</p>
             </div>
           </div>
         </div>

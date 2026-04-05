@@ -17,12 +17,22 @@ const revenueData = [
 
 function StatCard({ icon: Icon, title, value, subtitle, positive = true }: any) {
   return (
-    <div className="border border-[#296341] rounded-[5px] p-6 flex items-center gap-4">
-      <Icon className="w-11 h-11 text-[#296341] flex-shrink-0" />
-      <div className="flex-1">
-        <p className="text-[20px] leading-tight mb-2 font-bold">{title}</p>
-        <p className="text-[26px] mb-2 font-black">{value}</p>
-        <p className={`text-[16px] font-bold ${positive ? 'text-[#70cf5d]' : 'text-[#cf665d]'}`}>{subtitle}</p>
+    <div className="border border-[#296341]/20 lg:border-[#296341] bg-white rounded-2xl lg:rounded-[5px] p-4 lg:p-6 flex items-center gap-4 shadow-sm hover:shadow-md lg:hover:shadow-none transition-shadow">
+      <div className="w-12 h-12 lg:w-11 lg:h-11 bg-[#296341]/10 lg:bg-transparent rounded-xl lg:rounded-none flex items-center justify-center flex-shrink-0">
+        <Icon className="w-6 h-6 lg:w-11 lg:h-11 text-[#296341]" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-xs lg:text-[20px] text-gray-500 lg:text-black uppercase lg:normal-case font-black lg:font-bold tracking-widest lg:tracking-normal mb-1 lg:mb-2 truncate">
+          {title}
+        </p>
+        <p className="text-xl lg:text-[26px] font-black lg:font-black leading-tight mb-1 lg:mb-2 truncate">
+          {value}
+        </p>
+        <p className={`text-[11px] lg:text-[16px] font-bold px-2 lg:px-0 py-0.5 lg:py-0 rounded-full lg:rounded-none inline-block lg:block ${
+          positive ? 'bg-green-100 lg:bg-transparent text-[#296341] lg:text-[#70cf5d]' : 'bg-red-100 lg:bg-transparent text-red-600 lg:text-[#cf665d]'
+        }`}>
+          {subtitle}
+        </p>
       </div>
     </div>
   );
@@ -30,23 +40,28 @@ function StatCard({ icon: Icon, title, value, subtitle, positive = true }: any) 
 
 function ShipmentTable({ title, badge, shipments, showCount }: any) {
   return (
-    <div className="border border-[#296341] rounded-[5px] p-6 mb-8">
-      <div className="flex items-center justify-between mb-6">
+    <div className="border border-[#296341]/20 lg:border-[#296341] bg-white rounded-2xl lg:rounded-[5px] p-4 lg:p-6 mb-8 shadow-sm lg:shadow-none">
+      <div className="flex items-center justify-between mb-6 gap-4">
         <div>
-          <h2 className="text-[20px] mb-1 font-bold italic">{title}</h2>
-          <p className="text-[14px] text-[#3b3b3b]">Latest shipment records and status</p>
+          <h2 className="text-lg lg:text-[20px] font-black lg:font-bold italic uppercase lg:normal-case tracking-widest lg:tracking-normal text-[#296341] lg:text-black">
+            {title}
+          </h2>
+          <p className="text-xs lg:text-[14px] text-gray-400 lg:text-[#3b3b3b] font-medium lg:font-normal">
+            Latest shipment records and status
+          </p>
         </div>
-        <div className="flex items-center gap-4">
-          <div className={`px-6 py-2 rounded-[10px] text-white text-[30px] font-black tracking-tighter bg-[#296341]`}>
+        <div className="flex items-center gap-2 lg:gap-4 flex-shrink-0">
+          <div className="px-3 lg:px-6 py-1 lg:py-2 rounded-xl lg:rounded-[10px] text-white text-lg lg:text-[30px] font-black tracking-tighter bg-[#296341]">
             {badge}
           </div>
-          <button className="p-2 hover:bg-gray-100 rounded transition-colors active:scale-95">
-            <Printer className="w-10 h-10 text-[#296341]" />
+          <button className="p-2 lg:p-0 bg-gray-50 lg:bg-transparent hover:bg-gray-100 lg:hover:bg-transparent rounded-xl lg:rounded-none transition-all active:scale-95 text-[#296341]">
+            <Printer className="w-5 lg:w-10 h-5 lg:h-10" />
           </button>
         </div>
       </div>
 
-      <div className="overflow-x-auto">
+      {/* Desktop Table View */}
+      <div className="hidden lg:block overflow-x-scroll custom-scrollbar">
         <div className="min-w-[1000px]">
           <div className="bg-[#d4e0d9] border border-[#296341] px-4 py-3 grid grid-cols-[100px_130px_130px_180px_140px_110px_110px_180px] gap-4 mb-4">
             <div className="font-bold text-[16px]">Invoice</div>
@@ -61,48 +76,101 @@ function ShipmentTable({ title, badge, shipments, showCount }: any) {
             <div className="font-bold text-[16px]">Updated at</div>
           </div>
 
-          {shipments.length === 0 ? (
-            <div className="py-12 text-center text-gray-500 font-medium">No {badge.toLowerCase()} shipments found.</div>
-          ) : (
-            shipments.map((shipment: any, idx: number) => {
-              // Map API data to UI structure
-              const invoiceNo = shipment.invoiceNo || shipment.invoice || 'N/A';
-              const sender = shipment.user ? `${shipment.user.firstName} ${shipment.user.lastName}` : (shipment.contactName || 'N/A');
-              const receiver = shipment.contactName || 'N/A';
-              const itemsStr = shipment.items?.map((i: any) => i.itemType).join(', ') || shipment.item || 'N/A';
-              const paymentMode = shipment.invoice?.paymentMode || shipment.payment || '---';
-              const amount = `$${(shipment.totalAmount || 0).toLocaleString()}`;
-              const status = shipment.paymentStatus || shipment.status || 'Unpaid';
-              const date = shipment.updatedAt ? new Date(shipment.updatedAt).toLocaleString() : (shipment.date || 'N/A');
+          <div className="space-y-0">
+            {shipments.length === 0 ? (
+              <div className="py-12 text-center text-gray-500 font-medium">No {badge.toLowerCase()} shipments found.</div>
+            ) : (
+              shipments.map((shipment: any, idx: number) => {
+                const invoiceNo = shipment.invoiceNo || shipment.invoice || 'N/A';
+                const sender = shipment.user ? `${shipment.user.firstName} ${shipment.user.lastName}` : (shipment.contactName || 'N/A');
+                const receiver = shipment.contactName || 'N/A';
+                const itemsStr = shipment.items?.map((i: any) => i.itemType).join(', ') || shipment.item || 'N/A';
+                const paymentMode = shipment.invoice?.paymentMode || shipment.payment || '---';
+                const amount = `$${(shipment.totalAmount || 0).toLocaleString()}`;
+                const status = shipment.paymentStatus || shipment.status || 'Unpaid';
+                const date = shipment.updatedAt ? new Date(shipment.updatedAt).toLocaleString() : (shipment.date || 'N/A');
 
-              return (
-                <div key={idx}>
-                  <div className="px-4 py-3 grid grid-cols-[100px_130px_130px_180px_140px_110px_110px_180px] gap-4 items-center hover:bg-gray-50 transition-colors cursor-pointer">
-                    <div className="text-[15px] font-black italic">#{invoiceNo}</div>
-                    <div className="text-[15px] font-bold">{sender}</div>
-                    <div className="text-[15px] font-bold">{receiver}</div>
-                    <div className="text-[15px] font-medium">{itemsStr}</div>
-                    <div className="text-[15px] font-medium">{paymentMode}</div>
-                    <div className="text-[15px] font-black">{amount}</div>
-                    <div className="flex justify-center">
-                      <div className={`border-2 border-black w-full py-1 text-center text-[15px] font-black ${status === 'PAID' || status === 'Paid' ? 'text-[#70cf5d]' : 'text-[#cf5d5d]'
-                        }`}>
-                        {status}
+                return (
+                  <div key={idx}>
+                    <div className="px-4 py-3 grid grid-cols-[100px_130px_130px_180px_140px_110px_110px_180px] gap-4 items-center hover:bg-gray-50 transition-colors cursor-pointer">
+                      <div className="text-[15px] font-black italic">#{invoiceNo}</div>
+                      <div className="text-[15px] font-bold truncate">{sender}</div>
+                      <div className="text-[15px] font-bold truncate">{receiver}</div>
+                      <div className="text-[15px] font-medium truncate">{itemsStr}</div>
+                      <div className="text-[15px] font-medium">{paymentMode}</div>
+                      <div className="text-[15px] font-black">{amount}</div>
+                      <div className="flex justify-center">
+                        <div className={`border-2 border-black w-full py-1 text-center text-[11px] font-black tracking-widest uppercase ${status === 'PAID' || status === 'Paid' ? 'text-[#70cf5d]' : 'text-[#cf5d5d]'
+                          }`}>
+                          {status}
+                        </div>
                       </div>
+                      <div className="text-[15px] font-medium opacity-60">{date}</div>
                     </div>
-                    <div className="text-[15px] font-medium opacity-60">{date}</div>
+                    {idx < shipments.length - 1 && <div className="border-t border-[#d4e0d9]" />}
                   </div>
-                  {idx < shipments.length - 1 && <div className="border-t border-[#d4e0d9]" />}
-                </div>
-              );
-            })
-          )}
+                );
+              })
+            )}
+          </div>
         </div>
       </div>
 
-      <div className="flex items-center justify-between mt-4">
-        <p className="text-[14px] text-[#3b3b3b]">Showing {shipments.length} records</p>
-        <button className="border-2 border-[#296341] rounded-[10px] px-6 py-2 text-[15px] font-black text-[#296341] hover:bg-[#296341] hover:text-white transition-all transform active:scale-95">
+      {/* Mobile Card View */}
+      <div className="lg:hidden space-y-3">
+        {shipments.length === 0 ? (
+          <div className="py-12 text-center text-gray-300 font-black italic tracking-widest uppercase">No {badge.toLowerCase()} shipments found.</div>
+        ) : (
+          shipments.map((shipment: any, idx: number) => {
+            const invoiceNo = shipment.invoiceNo || shipment.invoice || 'N/A';
+            const sender = shipment.user ? `${shipment.user.firstName} ${shipment.user.lastName}` : (shipment.contactName || 'N/A');
+            const receiver = shipment.contactName || 'N/A';
+            const itemsStr = shipment.items?.map((i: any) => i.itemType).join(', ') || shipment.item || 'N/A';
+            const paymentMode = shipment.invoice?.paymentMode || shipment.payment || '---';
+            const amount = `$${(shipment.totalAmount || 0).toLocaleString()}`;
+            const status = shipment.paymentStatus || shipment.status || 'Unpaid';
+            const isPaid = status === 'PAID' || status === 'Paid';
+            const date = shipment.updatedAt ? new Date(shipment.updatedAt).toLocaleString() : (shipment.date || 'N/A');
+
+            return (
+              <div key={idx} className="bg-white/50 border border-gray-100 rounded-2xl p-4">
+                  <div className="flex items-center justify-between border-b border-gray-100 pb-3 mb-3">
+                    <div className="flex items-center gap-3">
+                      <div className="bg-[#296341] text-white px-3 py-1 rounded-lg text-sm font-black italic">#{invoiceNo}</div>
+                      <div className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest border ${isPaid ? 'border-green-200 text-green-700 bg-green-50' : 'border-red-100 text-red-600 bg-red-50'}`}>
+                        {status}
+                      </div>
+                    </div>
+                    <span className="text-[10px] font-bold text-gray-400 tabular-nums">{date.split(',')[0]}</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4 mb-3">
+                    <div className="min-w-0">
+                      <p className="text-[9px] text-gray-400 font-black uppercase tracking-widest mb-0.5">Sender</p>
+                      <p className="text-[13px] font-bold text-gray-800 truncate">{sender}</p>
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[9px] text-gray-400 font-black uppercase tracking-widest mb-0.5">Receiver</p>
+                      <p className="text-[13px] font-bold text-gray-800 truncate">{receiver}</p>
+                    </div>
+                  </div>
+                  <div className="bg-gray-50 p-3 rounded-xl">
+                    <div className="flex justify-between items-center mb-1">
+                       <span className="text-[9px] text-gray-400 font-black uppercase">Details: {paymentMode}</span>
+                       <span className="text-[16px] font-black text-[#296341]">{amount}</span>
+                    </div>
+                    <p className="text-[12px] font-bold text-gray-500 truncate">{itemsStr}</p>
+                  </div>
+              </div>
+            );
+          })
+        )}
+      </div>
+
+      <div className="flex flex-col lg:flex-row items-center justify-between mt-6 gap-4 lg:gap-0 border-t lg:border-none border-gray-100 pt-6 lg:pt-0">
+        <p className="text-[14px] text-gray-400 lg:text-[#3b3b3b] font-bold lg:font-normal uppercase lg:normal-case tracking-widest lg:tracking-normal">
+          Showing {shipments.length} records
+        </p>
+        <button className="w-full lg:w-auto bg-[#296341] lg:bg-transparent border-2 border-[#296341] text-white lg:text-[#296341] rounded-xl lg:rounded-[10px] px-8 py-3.5 lg:py-2 text-[15px] font-black hover:bg-[#1e4c30] lg:hover:bg-[#296341] lg:hover:text-white transition-all transform active:scale-95 shadow-xl lg:shadow-none shadow-[#296341]/20">
           View all Shipments
         </button>
       </div>
