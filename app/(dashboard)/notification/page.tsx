@@ -85,13 +85,13 @@ function RadioButton({
   return (
     <button
       onClick={onClick}
-      className="flex items-center gap-3 cursor-pointer group"
+      className="flex items-center gap-3 cursor-pointer group w-full sm:w-auto"
     >
-      <div className={`w-[30px] h-[30px] rounded-full border-[3px] flex items-center justify-center transition-colors ${selected ? 'border-black bg-black' : 'border-black bg-white group-hover:bg-gray-100'
+      <div className={`w-[24px] h-[24px] sm:w-[30px] sm:h-[30px] rounded-full border-[3px] flex items-center justify-center transition-colors ${selected ? 'border-black bg-black' : 'border-black bg-white group-hover:bg-gray-100'
         }`}>
-        {selected && <div className="w-3 h-3 rounded-full bg-white" />}
+        {selected && <div className="w-2 h-2 sm:w-3 sm:h-3 rounded-full bg-white" />}
       </div>
-      <span className="text-xl md:text-2xl font-medium text-black">{label}</span>
+      <span className="text-base sm:text-lg md:text-2xl font-bold text-black uppercase tracking-tight">{label}</span>
     </button>
   );
 }
@@ -107,17 +107,17 @@ function PaymentStatusToggle({
   disabled?: boolean;
 }) {
   return (
-    <div className="relative bg-white border border-[#296341] rounded-full h-[27px] w-[210px] flex items-center">
+    <div className="relative bg-white border border-[#296341] rounded-full h-[32px] w-full max-w-[210px] flex items-center overflow-hidden">
       {/* Sliding background */}
       <div
-        className={`absolute h-[27px] w-[114px] rounded-full transition-all duration-200 ${isPaid ? 'left-0 bg-green-500' : 'left-[96px] bg-[#ff4747]'
-          } border border-black`}
+        className={`absolute h-full w-[55%] rounded-full transition-all duration-300 shadow-sm ${isPaid ? 'left-0 bg-green-500' : 'left-[45%] bg-[#ff4747]'
+          } border border-black z-0`}
       />
       {/* Labels */}
       <button
         onClick={() => !disabled && onChange(true)}
         disabled={disabled}
-        className={`relative z-10 flex-1 text-center text-sm font-semibold transition-colors ${isPaid ? 'text-white' : 'text-gray-500'
+        className={`relative z-10 flex-1 text-center text-xs font-black uppercase tracking-widest transition-all ${isPaid ? 'text-white' : 'text-gray-400'
           }`}
       >
         PAID
@@ -125,7 +125,7 @@ function PaymentStatusToggle({
       <button
         onClick={() => !disabled && onChange(false)}
         disabled={disabled}
-        className={`relative z-10 flex-1 text-center text-sm font-semibold transition-colors ${!isPaid ? 'text-white' : 'text-gray-500'
+        className={`relative z-10 flex-1 text-center text-xs font-black uppercase tracking-widest transition-all ${!isPaid ? 'text-white' : 'text-gray-400'
           }`}
       >
         UNPAID
@@ -176,37 +176,41 @@ function PendingPaymentCard({
   const quantity = cargo?.items?.reduce((sum, item) => sum + item.quantity, 0) || 1;
 
   return (
-    <div className="bg-[#effaf6] border border-[#296341] rounded-[10px] p-4 space-y-3">
+    <div className="bg-[#effaf6] border border-[#296341] rounded-xl p-4 sm:p-5 space-y-4 hover:shadow-md transition-all active:scale-[0.99] group border-l-8">
       {/* Row 1: Name, Invoice, Date, Location */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-3">
         <FieldDisplay
           label="Name"
           value={user ? `${user.firstName} ${user.lastName}` : 'Unknown'}
         />
         <FieldDisplay
-          label="Invoice no."
+          label="Invoice"
           value={`#${invoice.invoiceNo}`}
         />
         <FieldDisplay
           label="Date"
           value={new Date(invoice.createdAt).toLocaleDateString('en-GB', {
             day: '2-digit',
-            month: '2-digit',
-            year: 'numeric'
-          }).replace(/\//g, ' / ')}
+            month: '2-digit'
+          })}
         />
         <FieldDisplay
-          label="Location"
+          label="Route"
           value={`${fromCode} → ${toCode}`}
         />
       </div>
 
       {/* Row 2: Product, Quantity, Amount, Status */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 items-center">
-        <InlineField label="Product" value={product} />
-        <InlineField label="Quantity" value={String(quantity)} />
-        <InlineField label="Amount" value={`$${invoice.totalAmount.toFixed(2)}`} />
-        <div className="flex justify-end">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6 border-t border-[#296341]/10 pt-4">
+        <div className="grid grid-cols-3 sm:flex flex-1 gap-4 items-center">
+          <InlineField label="Type" value={product} />
+          <InlineField label="Qty" value={String(quantity)} />
+          <div className="flex items-center gap-1">
+             <span className="text-[10px] font-black text-gray-400 uppercase tracking-tighter">Amount:</span>
+             <span className="text-sm font-black text-[#132540]">${invoice.totalAmount.toFixed(0)}</span>
+          </div>
+        </div>
+        <div className="w-full sm:w-auto flex justify-end pt-2 sm:pt-0">
           <PaymentStatusToggle
             isPaid={invoice.paymentStatus === 'PAID'}
             onChange={(paid) => onStatusChange(invoice.id, paid)}
@@ -216,9 +220,15 @@ function PendingPaymentCard({
       </div>
 
       {/* Row 3: Email, Contact */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <InlineField label="Email" value={user?.email || 'N/A'} />
-        <InlineField label="Contact" value={user?.mobileNumber || 'N/A'} />
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs font-medium text-gray-500 pt-1">
+        <div className="flex items-center gap-2">
+            <Mail className="w-3.5 h-3.5 text-[#296341]/60" />
+            <span className="truncate">{user?.email || 'No email'}</span>
+        </div>
+        <div className="flex items-center gap-2">
+            <Phone className="w-3.5 h-3.5 text-[#296341]/60" />
+            <span>{user?.mobileNumber || 'No contact'}</span>
+        </div>
       </div>
     </div>
   );
@@ -396,22 +406,22 @@ export default function NotificationsPage() {
   return (
     <div className="min-h-screen bg-white">
       {/* Header Image */}
-      <header className="relative">
+      <header className="relative bg-[#effaf6] py-8 sm:py-0">
         <div className="flex justify-center">
           <img
             src={imgUntitled71.src}
             alt="Notification"
-            className="h-64 md:h-80 object-contain"
+            className="h-48 sm:h-64 md:h-80 object-contain hover:scale-105 transition-transform duration-500"
           />
         </div>
       </header>
 
       {/* Main Content */}
-      <div className="px-4 md:px-8 lg:px-12 max-w-[1400px] mx-auto">
+      <div className="px-4 sm:px-8 md:px-12 max-w-[1400px] mx-auto py-6 sm:py-10">
         {/* Section Title */}
-        <div className="mb-6">
-          <h1 className="text-3xl md:text-4xl font-medium text-black">NOTIFICATION</h1>
-          <div className="w-52 h-1.5 bg-black rounded-full mt-2" />
+        <div className="mb-8">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-black text-black tracking-tight uppercase">NOTIFICATION CENTER</h1>
+          <div className="w-32 sm:w-52 h-1.5 bg-black rounded-full mt-3" />
         </div>
 
         {/* Automation Settings Section */}
@@ -520,9 +530,9 @@ export default function NotificationsPage() {
               </div>
 
               {/* Footer with count and view all */}
-              <div className="flex items-center justify-between mt-6">
-                <p className="text-gray-600 text-lg">
-                  Showing {pendingInvoices.length} of {totalPending} Pending Payment
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-8 border-t border-gray-100 pt-6">
+                <p className="text-gray-500 text-sm sm:text-lg font-bold">
+                  Showing {pendingInvoices.length} of {totalPending} Pending Payments
                 </p>
 
                 <button
@@ -530,10 +540,10 @@ export default function NotificationsPage() {
                     // Navigate to full invoices page or load more
                     window.location.href = '/cashier?status=UNPAID';
                   }}
-                  className="border border-[#296341] text-[#296341] rounded-[10px] px-6 py-2 font-medium hover:bg-[#effaf6] transition-colors flex items-center gap-2"
+                  className="w-full sm:w-auto bg-white border-2 border-[#296341] text-[#296341] rounded-xl px-8 py-3 font-black text-xs uppercase tracking-widest hover:bg-[#effaf6] transition-all active:scale-95 flex items-center justify-center gap-2 shadow-sm"
                 >
-                  View all Shipments
-                  <ChevronRight className="w-5 h-5" />
+                  View all Transactions
+                  <ChevronRight className="w-4 h-4 sm:w-5 h-5" />
                 </button>
               </div>
             </>

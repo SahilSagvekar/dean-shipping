@@ -471,11 +471,11 @@ function PassengerBookingContent() {
       />
 
       {/* Hero Illustration */}
-      <div className="flex justify-center mb-6 md:mb-8 px-4 sm:px-8">
+      <div className="flex justify-center mb-4 sm:mb-8 px-4 sm:px-8 bg-white/50 py-4 sm:py-0">
         <img
           src={imgBookingIllustration.src}
           alt="Passenger Booking Illustration"
-          className="w-full max-w-[800px] h-auto object-contain"
+          className="w-full max-w-[800px] h-auto object-contain max-h-[300px] md:max-h-none"
         />
       </div>
 
@@ -485,10 +485,11 @@ function PassengerBookingContent() {
           {/* Left Column: Form Details */}
           <div className="w-full lg:w-[60%] space-y-6 md:space-y-8">
             {/* Title Section */}
-            <div className="mb-6 md:mb-10 text-center md:text-left">
-              <h1 className="text-2xl md:text-[32px] font-bold text-black tracking-wide">
+            <div className="mb-6 md:mb-10 text-center lg:text-left">
+              <h1 className="text-2xl sm:text-3xl md:text-[32px] font-bold text-black tracking-wide">
                 <span className="border-b-4 border-black pb-1">PASSENGER</span> BOOKING
               </h1>
+              <p className="text-gray-500 mt-3 text-sm sm:text-base hidden sm:block">Register new passengers and manage their travel details</p>
             </div>
 
             {/* Form Fields */}
@@ -552,25 +553,27 @@ function PassengerBookingContent() {
                 { label: "Child (3 - 12 yr old)", sublabel: `$${PRICING.child}/person`, count: childCount, setCount: setChildCount, icon: Users },
                 { label: "Adult (13+ yr old)", sublabel: `$${PRICING.adult}/person`, count: adultCount, setCount: setAdultCount, icon: User }
               ].map((group, idx) => (
-                <div key={idx} className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6 bg-white/50 p-4 rounded-xl border border-gray-100">
-                  <div className="flex items-center gap-3 flex-1">
-                    <group.icon className="w-6 h-6 md:w-8 md:h-8 text-[#296341]" />
+                <div key={idx} className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6 bg-white/50 p-4 sm:p-5 rounded-xl border border-gray-100 shadow-sm transition-all hover:bg-white/80">
+                  <div className="flex items-center gap-4 flex-1">
+                    <div className="p-2 sm:p-3 bg-white rounded-lg shadow-sm">
+                      <group.icon className="w-6 h-6 sm:w-7 sm:h-7 text-[#296341]" />
+                    </div>
                     <div>
-                      <span className="text-lg md:text-[20px] font-bold text-gray-800">{group.label}</span>
-                      <p className="text-sm text-gray-500">{group.sublabel}</p>
+                      <span className="text-lg sm:text-[20px] font-bold text-gray-800 leading-tight">{group.label}</span>
+                      <p className="text-xs sm:text-sm text-gray-500 font-medium uppercase tracking-wider mt-0.5">{group.sublabel}</p>
                     </div>
                   </div>
-                  <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden bg-white shadow-sm w-full sm:w-[150px]">
+                  <div className="flex items-center border border-gray-200 rounded-xl overflow-hidden bg-white shadow-inner w-full sm:w-[150px]">
                     <button
                       onClick={() => group.setCount(Math.max(0, group.count - 1))}
-                      className="flex-1 py-2 md:py-3 flex items-center justify-center hover:bg-gray-50 text-gray-400"
+                      className="flex-1 py-3 flex items-center justify-center hover:bg-gray-50 text-gray-400 transition-colors"
                     >
                       <Minus className="w-5 h-5" />
                     </button>
-                    <span className="w-[50px] text-center text-xl md:text-[22px] font-black text-[#296341]">{group.count}</span>
+                    <span className="w-[50px] text-center text-xl sm:text-[22px] font-black text-[#296341]">{group.count}</span>
                     <button
                       onClick={() => group.setCount(group.count + 1)}
-                      className="flex-1 py-2 md:py-3 flex items-center justify-center hover:bg-gray-50 text-[#296341]"
+                      className="flex-1 py-3 flex items-center justify-center hover:bg-gray-50 text-[#296341] transition-colors"
                     >
                       <Plus className="w-5 h-5" />
                     </button>
@@ -702,23 +705,23 @@ function PassengerBookingContent() {
               </div>
 
               {/* ID Image Gallery */}
-              <div className="flex flex-col sm:flex-row gap-4 items-start py-4">
-                <div className="flex sm:flex-col gap-4 mt-2 w-full sm:w-auto justify-center">
+              <div className="flex flex-col sm:flex-row gap-6 items-start py-4">
+                <div className="flex sm:flex-col gap-4 w-full sm:w-auto">
                   <button
                     onClick={() => idImageRef.current?.click()}
-                    className="w-12 h-12 flex items-center justify-center bg-[#eef6f2] rounded-lg hover:bg-[#d1e5da] transition-colors"
+                    className="flex-1 sm:w-14 sm:h-14 py-3 sm:py-0 flex items-center justify-center bg-[#eef6f2] rounded-xl hover:bg-[#d1e5da] transition-all border border-[#296341]/10 group"
                   >
-                    <Camera className="w-6 h-6 text-[#296341]" />
+                    <Camera className="w-6 h-6 text-[#296341] group-hover:scale-110 transition-transform" />
                   </button>
                   <button
                     onClick={() => idImageRef.current?.click()}
-                    className="w-12 h-12 flex items-center justify-center bg-[#eef6f2] rounded-lg hover:bg-[#d1e5da] transition-colors"
+                    className="flex-1 sm:w-14 sm:h-14 py-3 sm:py-0 flex items-center justify-center bg-[#eef6f2] rounded-xl hover:bg-[#d1e5da] transition-all border border-[#296341]/10 group"
                   >
-                    <Paperclip className="w-6 h-6 text-[#296341]" />
+                    <Paperclip className="w-6 h-6 text-[#296341] group-hover:rotate-12 transition-transform" />
                   </button>
                 </div>
 
-                <div className="flex flex-wrap gap-4 flex-1 w-full">
+                <div className="grid grid-cols-2 xs:grid-cols-3 sm:flex sm:flex-wrap gap-4 flex-1 w-full">
                   {idImages.length === 0 ? (
                     <div
                       onClick={() => idImageRef.current?.click()}
@@ -935,22 +938,27 @@ function PassengerBookingContent() {
               </div>
 
               {/* Overlapping Total Card */}
-              <div className="static md:absolute md:left-[10%] md:right-[10%] md:-bottom-16 bg-white rounded-[24px] md:rounded-[32px] p-6 md:p-8 shadow-2xl border border-gray-50 flex flex-col items-center mt-8 md:mt-0">
+              <div className="mt-8 md:mt-0 md:absolute md:left-[10%] md:right-[10%] md:-bottom-20 bg-white rounded-[24px] md:rounded-[32px] p-6 md:p-8 shadow-2xl border border-gray-50 flex flex-col items-center">
                 <p className="text-base md:text-[18px] font-bold text-gray-400 tracking-wider">Total Amount</p>
-                <p className="text-4xl md:text-[48px] font-black text-black leading-tight">
-                  ${grandTotal.toFixed(2)}
-                </p>
-                <p className="text-[10px] md:text-[12px] text-gray-400 font-bold uppercase tracking-tight">
+                <div className="flex items-baseline gap-1">
+                  <span className="text-2xl md:text-3xl font-black text-[#296341]">$</span>
+                  <p className="text-4xl md:text-[56px] font-black text-black leading-tight">
+                    {grandTotal.toFixed(2)}
+                  </p>
+                </div>
+                <p className="text-[10px] md:text-[12px] text-gray-400 font-bold uppercase tracking-tight text-center">
                   (Including {PRICING.vatRate * 100}% VAT)
                 </p>
-                <p className="text-xs text-gray-500 mt-1">
-                  Subtotal: ${subtotal.toFixed(2)} + VAT: ${vatAmount.toFixed(2)}
-                </p>
+                <div className="mt-2 flex items-center gap-4 text-[10px] sm:text-xs font-semibold text-gray-500 bg-gray-50 px-4 py-1.5 rounded-full">
+                  <span>Subtotal: ${subtotal.toFixed(2)}</span>
+                  <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
+                  <span>VAT: ${vatAmount.toFixed(2)}</span>
+                </div>
               </div>
             </div>
 
             {/* Action Buttons */}
-            <div className="mt-8 md:mt-32 space-y-4">
+            <div className="mt-12 md:mt-40 space-y-4">
               <button
                 onClick={handleSubmit}
                 disabled={isSubmitting}

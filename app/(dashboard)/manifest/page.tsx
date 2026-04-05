@@ -585,59 +585,59 @@ function VoyageDetailView({
         </div>
 
         {/* Summary Bar */}
-        <div className="bg-white border-b px-8 py-5 flex flex-wrap gap-8">
-          <div className="text-center">
-            <p className="text-xs text-gray-400 font-bold uppercase">Total Bookings</p>
-            <p className="text-2xl font-black text-gray-800">{summary.totalBookings}</p>
+        <div className="bg-white border-b px-4 sm:px-8 py-5 flex flex-wrap gap-x-6 gap-y-4 sm:gap-8 justify-center sm:justify-start">
+          <div className="text-center min-w-[80px]">
+            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-tight">Total Bookings</p>
+            <p className="text-xl sm:text-2xl font-black text-gray-800">{summary.totalBookings}</p>
           </div>
-          <div className="text-center">
-            <p className="text-xs text-gray-400 font-bold uppercase">Cargo</p>
-            <p className="text-2xl font-black text-indigo-600">{summary.totalCargo}</p>
+          <div className="text-center min-w-[60px]">
+            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-tight">Cargo</p>
+            <p className="text-xl sm:text-2xl font-black text-indigo-600">{summary.totalCargo}</p>
           </div>
-          <div className="text-center">
-            <p className="text-xs text-gray-400 font-bold uppercase">Passengers</p>
-            <p className="text-2xl font-black text-purple-600">{summary.totalPassengers}</p>
+          <div className="text-center min-w-[80px]">
+            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-tight">Passengers</p>
+            <p className="text-xl sm:text-2xl font-black text-purple-600">{summary.totalPassengers}</p>
           </div>
-          <div className="h-12 w-px bg-gray-200" />
-          <div className="text-center">
-            <p className="text-xs text-gray-400 font-bold uppercase">Total Revenue</p>
-            <p className="text-2xl font-black text-gray-800">${summary.totalAmount.toFixed(2)}</p>
+          <div className="hidden sm:block h-12 w-px bg-gray-200" />
+          <div className="text-center min-w-[100px]">
+            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-tight">Total Revenue</p>
+            <p className="text-xl sm:text-2xl font-black text-gray-800">${summary.totalAmount.toFixed(0)}</p>
           </div>
-          <div className="text-center">
-            <p className="text-xs text-green-500 font-bold uppercase">Paid</p>
-            <p className="text-2xl font-black text-green-600">${summary.paidAmount.toFixed(2)}</p>
+          <div className="text-center min-w-[80px]">
+            <p className="text-[10px] text-green-500 font-bold uppercase tracking-tight">Paid</p>
+            <p className="text-xl sm:text-2xl font-black text-green-600">${summary.paidAmount.toFixed(0)}</p>
           </div>
-          <div className="text-center">
-            <p className="text-xs text-red-400 font-bold uppercase">Unpaid</p>
-            <p className="text-2xl font-black text-red-600">${summary.unpaidAmount.toFixed(2)}</p>
+          <div className="text-center min-w-[80px]">
+            <p className="text-[10px] text-red-400 font-bold uppercase tracking-tight">Unpaid</p>
+            <p className="text-xl sm:text-2xl font-black text-red-600">${summary.unpaidAmount.toFixed(0)}</p>
           </div>
           {summary.cargo.dry > 0 && (
-            <div className="text-center">
-              <p className="text-xs text-gray-400 font-bold uppercase">Dry</p>
+            <div className="text-center min-w-[40px]">
+              <p className="text-[10px] text-gray-400 font-bold uppercase tracking-tight">Dry</p>
               <p className="text-lg font-black">{summary.cargo.dry}</p>
             </div>
           )}
           {summary.cargo.frozen > 0 && (
-            <div className="text-center">
-              <p className="text-xs text-gray-400 font-bold uppercase">Frozen</p>
+            <div className="text-center min-w-[40px]">
+              <p className="text-[10px] text-gray-400 font-bold uppercase tracking-tight">Froze</p>
               <p className="text-lg font-black">{summary.cargo.frozen}</p>
             </div>
           )}
           {summary.cargo.cooler > 0 && (
-            <div className="text-center">
-              <p className="text-xs text-gray-400 font-bold uppercase">Cooler</p>
+            <div className="text-center min-w-[40px]">
+              <p className="text-[10px] text-gray-400 font-bold uppercase tracking-tight">Cool</p>
               <p className="text-lg font-black">{summary.cargo.cooler}</p>
             </div>
           )}
         </div>
 
         {/* Stop-by-Stop Manifest */}
-        <div ref={printRef} className="px-8 py-6 space-y-2">
+        <div ref={printRef} className="px-4 sm:px-8 py-6 space-y-2">
           {/* Print-only header (hidden on screen) */}
           <div className="hidden print:block mb-6">
-            <h1>MANIFEST — Voyage #{voyage.voyageNo}</h1>
-            <p>{voyage.shipName} | {formattedDate}</p>
-            <p>Route: {stops.map((s) => s.location.code).join(" → ")}</p>
+            <h1 className="text-xl font-bold">MANIFEST — Voyage #{voyage.voyageNo}</h1>
+            <p className="text-sm">{voyage.shipName} | {formattedDate}</p>
+            <p className="text-sm">Route: {stops.map((s) => s.location.code).join(" → ")}</p>
           </div>
 
           {stops.length === 0 ? (
@@ -689,49 +689,49 @@ function VoyageListCard({
 
   return (
     <div
-      className={`${colorClass} border border-black rounded-lg overflow-hidden mb-3 hover:shadow-lg transition-shadow`}
+      className={`${colorClass} border border-black rounded-xl overflow-hidden mb-4 hover:shadow-lg transition-all active:scale-[0.99]`}
     >
-      <div className="flex flex-col md:flex-row items-stretch">
+      <div className="flex flex-col lg:flex-row items-stretch">
         {/* Left: Voyage info */}
-        <div className="flex-1 px-6 py-4 flex flex-col md:flex-row md:items-center gap-4">
-          <div className="flex items-center gap-4 min-w-[160px]">
-            <Ship className="w-7 h-7 text-black/70" />
+        <div className="flex-1 px-4 sm:px-6 py-4 flex flex-col sm:flex-row sm:items-center gap-4">
+          <div className="flex items-center gap-4 min-w-[140px]">
+            <Ship className="w-7 h-7 sm:w-8 sm:h-8 text-black/70" />
             <div>
-              <p className="text-xl font-black text-black">
+              <p className="text-lg sm:text-xl font-black text-black leading-tight uppercase">
                 VOYAGE {voyage.voyageNo}
               </p>
-              <p className="text-sm text-black/60">{voyage.shipName}</p>
+              <p className="text-[12px] sm:text-sm text-black/60 font-medium">{voyage.shipName}</p>
             </div>
           </div>
           <div className="flex items-center gap-2 text-black/80">
-            <Calendar className="w-5 h-5" />
-            <span className="text-lg font-semibold">{formattedDate}</span>
+            <Calendar className="w-4 h-4 sm:w-5 sm:h-5" />
+            <span className="text-base sm:text-lg font-bold">{formattedDate}</span>
           </div>
           <div className="flex items-center gap-2 text-black/80 flex-1 min-w-0">
-            <MapPin className="w-5 h-5 flex-shrink-0" />
-            <span className="text-sm font-medium truncate">{routeStr}</span>
+            <MapPin className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
+            <span className="text-sm font-bold truncate tracking-tight">{routeStr}</span>
           </div>
         </div>
 
         {/* Right: Summary + button */}
-        <div className="flex items-center gap-6 px-6 py-3 border-t md:border-t-0 md:border-l border-black/20">
-          <div className="flex items-center gap-4 text-sm">
+        <div className="flex items-center justify-between sm:justify-end gap-6 px-4 sm:px-6 py-3 border-t lg:border-t-0 lg:border-l border-black/10 bg-black/5">
+          <div className="flex items-center gap-4 sm:gap-6 text-sm">
             <div className="text-center">
-              <p className="text-black/50 text-xs font-bold">Bookings</p>
-              <p className="font-black text-black text-lg">
+              <p className="text-black/50 text-[10px] font-black uppercase tracking-tighter">Bookings</p>
+              <p className="font-black text-black text-base sm:text-lg underline decoration-black/20 underline-offset-4">
                 {voyage.summary.totalBookings}
               </p>
             </div>
             <div className="text-center">
-              <p className="text-black/50 text-xs font-bold">Revenue</p>
-              <p className="font-black text-black">
+              <p className="text-black/50 text-[10px] font-black uppercase tracking-tighter">Revenue</p>
+              <p className="font-black text-black text-base sm:text-lg">
                 ${voyage.summary.totalAmount.toFixed(0)}
               </p>
             </div>
             {voyage.summary.unpaidAmount > 0 && (
               <div className="text-center">
-                <p className="text-red-700/70 text-xs font-bold">Unpaid</p>
-                <p className="font-black text-red-800">
+                <p className="text-red-900/40 text-[10px] font-black uppercase tracking-tighter">Unpaid</p>
+                <p className="font-black text-red-900 text-base sm:text-lg">
                   ${voyage.summary.unpaidAmount.toFixed(0)}
                 </p>
               </div>
@@ -739,9 +739,9 @@ function VoyageListCard({
           </div>
           <button
             onClick={() => onViewManifest(voyage.id)}
-            className="bg-[#296341] hover:bg-[#1e4c30] text-white px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 transition-colors whitespace-nowrap shadow-md"
+            className="bg-[#132540] hover:bg-[#1e3a63] text-white px-4 sm:px-6 py-3 rounded-xl font-black text-xs sm:text-sm flex items-center gap-2 transition-all shadow-md active:scale-95 uppercase tracking-widest"
           >
-            <Eye className="w-5 h-5" /> View Manifest
+            <Eye className="w-4 h-4 sm:w-5 sm:h-5" /> <span className="hidden sm:inline">Manifest</span><span className="sm:hidden">View</span>
           </button>
         </div>
       </div>

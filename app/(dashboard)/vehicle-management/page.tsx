@@ -208,30 +208,32 @@ function WaitlistCardCollapsed({
 }) {
   return (
     <div 
-      className="bg-[#e5f7f1] rounded-[10px] p-4 cursor-pointer hover:shadow-md transition-shadow"
+      className="bg-[#e5f7f1] rounded-xl p-4 sm:p-5 cursor-pointer hover:shadow-md transition-all border border-[#296341]/5 hover:border-[#296341]/20 active:scale-[0.99] group"
       onClick={onExpand}
     >
       <div className="flex items-center justify-between">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 flex-1">
-          <div>
-            <p className="text-sm font-medium text-gray-500">Name</p>
-            <p className="text-sm font-semibold text-black">{vehicle.ownerName}</p>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 flex-1">
+          <div className="col-span-2 sm:col-span-1">
+            <p className="text-[10px] sm:text-xs font-black text-[#296341]/60 uppercase tracking-tighter">Owner Name</p>
+            <p className="text-sm sm:text-base font-bold text-gray-900 truncate">{vehicle.ownerName}</p>
           </div>
           <div>
-            <p className="text-sm font-medium text-gray-500">Invoice No.</p>
-            <p className="text-sm font-semibold text-black">#{vehicle.invoiceNo || vehicle.id.slice(-6)}</p>
+            <p className="text-[10px] sm:text-xs font-black text-[#296341]/60 uppercase tracking-tighter">Invoice No.</p>
+            <p className="text-sm sm:text-base font-mono font-bold text-gray-900">
+              #{vehicle.invoiceNo || vehicle.id.slice(-6)}
+            </p>
           </div>
-          <div>
-            <p className="text-sm font-medium text-gray-500">Vehicle</p>
-            <p className="text-sm font-semibold text-black">{vehicle.vehicleType}</p>
+          <div className="hidden sm:block">
+            <p className="text-[10px] sm:text-xs font-black text-[#296341]/60 uppercase tracking-tighter">Vehicle Type</p>
+            <p className="text-sm sm:text-base font-bold text-gray-900">{vehicle.vehicleType}</p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center sm:justify-end">
             <StatusBadge status={vehicle.status} />
           </div>
         </div>
-        <button className="ml-4 p-2 hover:bg-white/50 rounded-lg transition-colors">
-          <ChevronDown className="w-6 h-6 text-[#296341]" />
-        </button>
+        <div className="ml-4 p-2 bg-white/40 rounded-lg group-hover:bg-white transition-colors">
+          <ChevronDown className="w-5 h-5 sm:w-6 h-6 text-[#296341]" />
+        </div>
       </div>
     </div>
   );
@@ -272,30 +274,30 @@ function WaitlistCardExpanded({
   }));
 
   return (
-    <div className="bg-[#e5f7f1] rounded-[10px] p-4 space-y-4">
+    <div className="bg-[#e5f7f1] rounded-2xl p-4 sm:p-6 space-y-6 shadow-inner border border-[#296341]/10">
       {/* Row 1: Name, Email, Contact */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
         <InputField 
-          label="Name" 
+          label="Owner Name" 
           value={editData.ownerName}
           onChange={(v) => setEditData(prev => ({ ...prev, ownerName: v }))}
           required
         />
         <InputField 
-          label="Email" 
+          label="Email Address" 
           value={editData.ownerEmail}
           onChange={(v) => setEditData(prev => ({ ...prev, ownerEmail: v }))}
           type="email"
         />
         <InputField 
-          label="Contact" 
+          label="Contact Number" 
           value={editData.contactNo}
           onChange={(v) => setEditData(prev => ({ ...prev, contactNo: v }))}
         />
       </div>
 
       {/* Row 2: Invoice no, Date Added, License plate */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
         <InputField 
           label="Invoice No." 
           value={`#${vehicle.invoiceNo || vehicle.id.slice(-6)}`}
@@ -307,7 +309,7 @@ function WaitlistCardExpanded({
             day: '2-digit',
             month: '2-digit',
             year: 'numeric'
-          }).replace(/\//g, ' / ')}
+          })}
           readonly
         />
         <InputField 
@@ -319,13 +321,15 @@ function WaitlistCardExpanded({
       </div>
 
       {/* Vehicle Details Header */}
-      <div>
-        <h3 className="text-lg font-semibold text-[#296341]">VEHICLE DETAILS</h3>
-        <div className="w-32 h-0.5 bg-black mt-1" />
+      <div className="pt-2">
+        <h3 className="text-base sm:text-lg font-black text-[#296341] flex items-center gap-2">
+          <Car className="w-5 h-5" /> VEHICLE DETAILS
+        </h3>
+        <div className="w-24 h-1 bg-[#132540] mt-1 rounded-full" />
       </div>
 
       {/* Vehicle Details Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
         <InputField 
           label="Vehicle Type" 
           value={editData.vehicleType}
@@ -333,14 +337,14 @@ function WaitlistCardExpanded({
           required
         />
         <SelectField 
-          label="From" 
+          label="From Location" 
           value={editData.fromLocation}
           onChange={(v) => setEditData(prev => ({ ...prev, fromLocation: v }))}
           options={locationOptions}
           required
         />
         <SelectField 
-          label="To" 
+          label="To Location" 
           value={editData.toLocation}
           onChange={(v) => setEditData(prev => ({ ...prev, toLocation: v }))}
           options={locationOptions}
@@ -349,55 +353,65 @@ function WaitlistCardExpanded({
       </div>
 
       {/* Status & Notes */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
         <SelectField 
-          label="Status" 
+          label="Registry Status" 
           value={editData.status}
           onChange={(v) => setEditData(prev => ({ ...prev, status: v as Vehicle['status'] }))}
           options={statusOptions}
         />
         <div className="flex flex-col gap-1">
-          <label className="text-sm font-medium text-black">Notes</label>
+          <label className="text-sm font-bold text-gray-700">Additional Notes</label>
           <textarea
             value={editData.notes}
             onChange={(e) => setEditData(prev => ({ ...prev, notes: e.target.value }))}
-            className="bg-white border border-[#296341] rounded-[5px] px-3 py-2.5 text-sm text-black outline-none focus:ring-2 focus:ring-[#296341]/30 min-h-[80px] resize-none"
-            placeholder="Additional notes..."
+            className="bg-white border border-[#296341] rounded-xl px-4 py-3 text-sm text-black outline-none focus:ring-4 focus:ring-[#296341]/10 min-h-[100px] resize-none shadow-sm"
+            placeholder="Enter any additional details here..."
           />
         </div>
       </div>
 
       {/* Action Buttons */}
-      <div className="flex items-center justify-between pt-2">
-        <button 
-          onClick={onDelete}
-          disabled={isSubmitting}
-          className="p-2 hover:bg-red-50 rounded-lg transition-colors"
-        >
-          <Trash2 className="w-7 h-7 text-[#132540] hover:text-red-500" />
-        </button>
-        <div className="flex gap-4">
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-[#296341]/10">
+        <div className="flex items-center gap-4 w-full sm:w-auto">
+          <button 
+            onClick={onDelete}
+            disabled={isSubmitting}
+            className="p-3 bg-white hover:bg-red-50 rounded-xl transition-all border border-gray-100 flex items-center justify-center group"
+            title="Delete Vehicle"
+          >
+            <Trash2 className="w-6 h-6 text-[#132540] group-hover:text-red-500 transition-colors" />
+          </button>
           <button 
             onClick={onCollapse}
-            className="bg-[#e4ebf4] border border-[#132540] text-black rounded-[10px] px-8 py-3 text-lg font-medium hover:bg-gray-200 transition-colors"
+            className="flex-1 sm:hidden p-3 bg-white text-[#132540] rounded-xl font-bold border border-gray-200"
+          >
+            Close Detail
+          </button>
+        </div>
+        
+        <div className="flex gap-3 w-full sm:w-auto">
+          <button 
+            onClick={onCollapse}
+            className="hidden sm:block bg-white border border-gray-200 text-[#132540] rounded-xl px-6 py-3 font-bold hover:bg-gray-50 transition-all active:scale-95"
           >
             Cancel
           </button>
           <button 
             onClick={() => onSave(editData)}
             disabled={isSubmitting}
-            className="bg-[#132540] border border-[#296341] text-white rounded-[10px] px-8 py-3 text-lg font-medium hover:bg-[#1a3254] transition-colors disabled:opacity-50 flex items-center gap-2"
+            className="flex-1 sm:flex-none bg-[#132540] text-white rounded-xl px-8 py-3 font-bold hover:bg-[#1a3254] transition-all shadow-lg active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
           >
-            {isSubmitting && <Loader2 className="w-5 h-5 animate-spin" />}
-            Save
+            {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
+            Save Changes
+          </button>
+          <button 
+            onClick={onCollapse}
+            className="hidden sm:flex p-3 hover:bg-white rounded-xl transition-all"
+          >
+            <ChevronUp className="w-6 h-6 text-[#296341]" />
           </button>
         </div>
-        <button 
-          onClick={onCollapse}
-          className="p-2 hover:bg-white/50 rounded-lg transition-colors"
-        >
-          <ChevronUp className="w-6 h-6 text-[#296341]" />
-        </button>
       </div>
     </div>
   );
@@ -692,41 +706,42 @@ export default function VehicleWaitlistPage() {
   return (
     <div className="min-h-screen bg-white">
       {/* Header */}
-      <header className="flex items-start justify-between p-4">
-        <div className="flex-1 flex justify-center">
+      <header className="flex items-center justify-center p-4 sm:p-6 bg-white/50 backdrop-blur-sm border-b border-gray-100">
+        <div className="flex flex-col items-center gap-2">
           <img
             src={image2.src}
             alt="Vehicle"
-            className="h-40 object-contain"
+            className="h-24 sm:h-32 md:h-40 object-contain transition-all hover:scale-105 duration-300"
           />
+          <h1 className="text-xl sm:text-2xl font-black text-[#132540] tracking-tight sm:hidden">VEHICLE MANAGEMENT</h1>
         </div>
       </header>
 
       {/* Action Buttons */}
-      <div className="px-6 flex gap-4 mb-8 max-w-[1200px] mx-auto">
+      <div className="px-4 sm:px-6 flex flex-col sm:flex-row gap-3 sm:gap-4 mb-6 sm:mb-8 max-w-[1200px] mx-auto mt-4 sm:mt-6">
         <button 
           onClick={() => setActiveView('add')}
-          className={`flex-1 rounded-[10px] py-4 flex items-center justify-center gap-2 text-lg font-medium transition-colors ${
+          className={`flex-1 rounded-xl py-3 sm:py-4 flex items-center justify-center gap-3 text-base sm:text-lg font-bold tracking-wide transition-all active:scale-[0.98] ${
             activeView === 'add' 
-              ? 'bg-[#296341] text-white' 
-              : 'bg-[#e5f7f1] text-[#296341] border-2 border-[#296341]'
+              ? 'bg-[#296341] text-white shadow-lg shadow-[#296341]/20' 
+              : 'bg-[#e5f7f1] text-[#296341] border-2 border-[#296341] hover:bg-[#d1f0e5]'
           }`}
         >
           <VehicleIcon variant="plus" />
-          ADD VEHICLE
+          <span className="uppercase">Add Vehicle</span>
         </button>
         <button 
           onClick={() => setActiveView('list')}
-          className={`flex-1 rounded-[10px] py-4 flex items-center justify-center gap-2 text-lg font-medium transition-colors ${
+          className={`flex-1 rounded-xl py-3 sm:py-4 flex items-center justify-center gap-3 text-base sm:text-lg font-bold tracking-wide transition-all active:scale-[0.98] ${
             activeView === 'list' 
-              ? 'bg-[#296341] text-white' 
-              : 'bg-[#e5f7f1] text-[#296341] border-2 border-[#296341]'
+              ? 'bg-[#296341] text-white shadow-lg shadow-[#296341]/20' 
+              : 'bg-[#e5f7f1] text-[#296341] border-2 border-[#296341] hover:bg-[#d1f0e5]'
           }`}
         >
           <VehicleIcon variant="list" />
-          VEHICLE WAITLIST
+          <span className="uppercase">Vehicle Waitlist</span>
           {vehicles.length > 0 && (
-            <span className="ml-2 bg-white text-[#296341] rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold">
+            <span className="ml-1 sm:ml-2 bg-white text-[#296341] rounded-full min-w-[24px] sm:min-w-[32px] h-6 sm:h-8 px-1 flex items-center justify-center text-xs sm:text-sm font-black shadow-sm">
               {vehicles.length}
             </span>
           )}

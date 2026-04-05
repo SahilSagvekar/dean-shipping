@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Camera,
   Paperclip,
@@ -241,7 +241,7 @@ interface InputFieldProps {
 
 const InputField = ({ label, value, onChange, placeholder, type = 'text', required, className = '' }: InputFieldProps) => (
   <div className={`space-y-1 sm:space-y-2 ${className}`}>
-    <label className="text-[12px] lg:text-[20px] font-bold text-gray-400 lg:text-black uppercase lg:normal-case tracking-wider lg:tracking-normal">
+    <label className="text-[14px] lg:text-[20px] font-bold text-gray-400 lg:text-black uppercase lg:normal-case tracking-wider lg:tracking-normal">
       {label} {required && <span className="text-red-500">*</span>}
     </label>
     <input
@@ -249,7 +249,7 @@ const InputField = ({ label, value, onChange, placeholder, type = 'text', requir
       value={value}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
-      className="w-full h-[44px] lg:h-auto border-b-2 border-gray-100 lg:border-gray-200 outline-none focus:border-blue-600 lg:focus:border-[#296341] text-[16px] lg:text-[20px] font-medium lg:font-bold transition-colors bg-transparent placeholder:text-gray-300"
+      className="w-full h-[48px] lg:h-auto border-b-2 border-gray-100 lg:border-gray-200 outline-none focus:border-blue-600 lg:focus:border-[#296341] text-[18px] lg:text-[20px] font-medium lg:font-bold transition-colors bg-transparent placeholder:text-gray-300"
     />
   </div>
 );
@@ -264,7 +264,7 @@ interface SelectFieldProps {
 }
 
 const SelectField = ({ label, value, onChange, options, required, className = '' }: SelectFieldProps) => (
-  <div className={`space-y-2 ${className}`}>
+  <div className={`space-y-1 sm:space-y-2 ${className}`}>
     <label className="text-[14px] font-bold text-gray-500 uppercase tracking-wide">
       {label} {required && <span className="text-red-500">*</span>}
     </label>
@@ -272,7 +272,7 @@ const SelectField = ({ label, value, onChange, options, required, className = ''
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full h-[48px] border-b-2 border-gray-200 outline-none focus:border-[#296341] text-[16px] font-bold appearance-none bg-transparent cursor-pointer transition-colors"
+        className="w-full h-[48px] border-b-2 border-gray-200 outline-none focus:border-[#296341] text-[18px] font-bold appearance-none bg-transparent cursor-pointer transition-colors"
       >
         {options.map(opt => (
           <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -346,7 +346,7 @@ const PriceInputField = ({ label, value, onChange, placeholder, availablePrices,
   
   return (
     <div className={`space-y-1 sm:space-y-2 ${className}`}>
-      <label className="text-[12px] lg:text-[20px] font-bold text-gray-400 lg:text-black uppercase lg:normal-case tracking-wider lg:tracking-normal flex items-center gap-2">
+      <label className="text-[14px] lg:text-[20px] font-bold text-gray-400 lg:text-black uppercase lg:normal-case tracking-wider lg:tracking-normal flex items-center gap-2">
         {label}
         {isLoading && <Loader2 className="w-4 h-4 animate-spin text-[#296341]" />}
       </label>
@@ -357,7 +357,7 @@ const PriceInputField = ({ label, value, onChange, placeholder, availablePrices,
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder || "Enter or pick price"}
-          className="w-full h-[44px] lg:h-auto border-b-2 border-gray-100 lg:border-gray-200 outline-none focus:border-blue-600 lg:focus:border-[#296341] text-[16px] lg:text-[20px] font-medium lg:font-bold transition-colors bg-transparent placeholder:text-gray-300"
+          className="w-full h-[48px] lg:h-auto border-b-2 border-gray-100 lg:border-gray-200 outline-none focus:border-blue-600 lg:focus:border-[#296341] text-[18px] lg:text-[20px] font-medium lg:font-bold transition-colors bg-transparent placeholder:text-gray-300"
         />
         <datalist id={datalistId}>
           {availablePrices.map((p: any) => (
@@ -393,31 +393,35 @@ const SizeFlagsSection = ({ size, onSizeChange, flags, onFlagChange }: SizeFlags
   ];
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 gap-y-4 gap-x-8">
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-y-4 gap-x-8">
       {/* Size options */}
-      {sizes.map((s) => (
-        <label key={s} className="flex items-center gap-3 cursor-pointer group">
-          <div
-            className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${size === s ? 'border-[#296341]' : 'border-gray-300 group-hover:border-gray-400'}`}
-            onClick={() => onSizeChange(s)}
-          >
-            {size === s && <div className="w-3 h-3 rounded-full bg-[#296341]" />}
-          </div>
-          <span className="text-[16px] font-medium text-gray-700 group-hover:text-black transition-colors">{s}</span>
-        </label>
-      ))}
+      <div className="grid grid-cols-3 sm:contents gap-2">
+        {sizes.map((s) => (
+          <label key={s} className="flex items-center gap-3 cursor-pointer group">
+            <div
+              className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${size === s ? 'border-[#296341]' : 'border-gray-300 group-hover:border-gray-400'}`}
+              onClick={() => onSizeChange(s)}
+            >
+              {size === s && <div className="w-3 h-3 rounded-full bg-[#296341]" />}
+            </div>
+            <span className="text-[16px] font-medium text-gray-700 group-hover:text-black transition-colors">{s}</span>
+          </label>
+        ))}
+      </div>
       {/* Flag options */}
-      {flagOptions.map(({ key, label }) => (
-        <label key={key} className="flex items-center gap-3 cursor-pointer group">
-          <div
-            className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${flags[key] ? 'border-[#296341]' : 'border-gray-300 group-hover:border-gray-400'}`}
-            onClick={() => onFlagChange(key, !flags[key])}
-          >
-            {flags[key] && <div className="w-3 h-3 rounded-full bg-[#296341]" />}
-          </div>
-          <span className="text-[16px] font-medium text-gray-700 group-hover:text-black transition-colors">{label}</span>
-        </label>
-      ))}
+      <div className="grid grid-cols-2 sm:contents gap-4">
+        {flagOptions.map(({ key, label }) => (
+          <label key={key} className="flex items-center gap-3 cursor-pointer group">
+            <div
+              className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${flags[key] ? 'border-[#296341]' : 'border-gray-300 group-hover:border-gray-400'}`}
+              onClick={() => onFlagChange(key, !flags[key])}
+            >
+              {flags[key] && <div className="w-3 h-3 rounded-full bg-[#296341]" />}
+            </div>
+            <span className="text-[16px] font-medium text-gray-700 group-hover:text-black transition-colors">{label}</span>
+          </label>
+        ))}
+      </div>
     </div>
   );
 };
@@ -442,22 +446,17 @@ const DeficiencySection = ({
   onCommentChange,
   showDamageLocation = true
 }: DeficiencySectionProps) => (
-  <div className="bg-[#f0f7f3] rounded-2xl p-6 space-y-6">
-    <h3 className="text-[20px] font-bold text-[#296341] border-b-2 border-[#296341] pb-2 inline-block">
+  <div className="bg-[#f0f7f3] rounded-2xl p-4 sm:p-6 space-y-6">
+    <h3 className="text-[18px] sm:text-[20px] font-bold text-[#296341] border-b-2 border-[#296341] pb-2 inline-block">
       DEFICIENCY
     </h3>
-    <div className="space-y-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:gap-6">
       <SelectField
         label="Damages Found"
         value={damageFound}
         onChange={onDamageFoundChange}
         options={DAMAGE_TYPES}
       />
-      {damageFound && (
-        <p className="text-sm text-gray-500 italic">
-          {DAMAGE_TYPES.filter(d => d.value && d.value !== damageFound).map(d => d.label).join(', ')}
-        </p>
-      )}
       {showDamageLocation && (
         <SelectField
           label="Damage Location"
@@ -756,8 +755,8 @@ const BoxFormFields = ({
   <div className="space-y-8">
     {/* Box Sub-Type Selector */}
     <div className="space-y-4">
-      <h3 className="text-[20px] font-bold text-gray-800 uppercase tracking-wide">Select Box Type</h3>
-      <div className="grid grid-cols-3 gap-4">
+      <h3 className="text-[18px] sm:text-[20px] font-bold text-gray-800 uppercase tracking-wide">Select Box Type</h3>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
         {(Object.keys(BOX_SUBTYPE_CONFIGS) as BoxSubType[]).map((subType) => {
           const config = BOX_SUBTYPE_CONFIGS[subType];
           const isSelected = boxSubType === subType;
@@ -765,7 +764,7 @@ const BoxFormFields = ({
             <button
               key={subType}
               onClick={() => setBoxSubType(subType)}
-              className={`relative p-4 rounded-xl border-2 transition-all flex items-center gap-3 ${isSelected
+              className={`relative p-3 sm:p-4 rounded-xl border-2 transition-all flex items-center gap-3 ${isSelected
                   ? 'border-[#296341] bg-[#eef6f2] shadow-md'
                   : 'border-gray-200 bg-white hover:border-gray-300'
                 }`}
@@ -773,7 +772,7 @@ const BoxFormFields = ({
               <div className={`p-2 rounded-lg ${config.bgColor}`}>
                 {config.icon}
               </div>
-              <span className="font-bold text-gray-700">{config.label}</span>
+              <span className="font-bold text-gray-700 text-sm sm:text-base">{config.label}</span>
               {isSelected && (
                 <div className="absolute top-2 right-2 w-3 h-3 rounded-full bg-[#296341]" />
               )}
@@ -783,7 +782,7 @@ const BoxFormFields = ({
       </div>
     </div>
 
-    <h3 className="text-[20px] font-bold text-gray-800 uppercase tracking-wide">Item Inspection</h3>
+    <h3 className="text-[18px] sm:text-[20px] font-bold text-gray-800 uppercase tracking-wide">Item Inspection</h3>
 
     <SizeFlagsSection
       size={cargoSize}
@@ -2152,35 +2151,35 @@ export default function CargoBooking() {
       />
 
       {/* Hero Section with Service Title */}
-      <div className={`bg-gradient-to-r ${currentServiceConfig.headerBg} text-white py-8 px-4 sm:px-8`}>
+      <div className={`bg-gradient-to-r ${currentServiceConfig.headerBg} text-white py-6 sm:py-8 px-4 sm:px-8`}>
         <div className="max-w-[1400px] mx-auto">
-          <div className="flex items-center gap-4 mb-4">
+          <div className="flex items-center gap-4 mb-3 sm:mb-4">
             <button className="p-2 hover:bg-white/10 rounded-lg transition-colors">
-              <ChevronDown className="w-6 h-6 rotate-90" />
+              <ChevronDown className="w-5 h-5 sm:w-6 sm:h-6 rotate-90" />
             </button>
-            <span className="text-sm font-medium uppercase tracking-wider opacity-80">ENTRY</span>
+            <span className="text-[12px] sm:text-sm font-medium uppercase tracking-wider opacity-80">ENTRY</span>
           </div>
-          <div className="flex items-center gap-4">
-            <div className="p-3 bg-white/20 rounded-xl">
+          <div className="flex items-center gap-3 sm:gap-4">
+            <div className="p-2 sm:p-3 bg-white/20 rounded-xl [&>svg]:w-6 [&>svg]:h-6 sm:[&>svg]:w-8 sm:[&>svg]:h-8">
               {service === 'BOX' ? BOX_SUBTYPE_CONFIGS[boxSubType].icon : currentServiceConfig.icon}
             </div>
-            <h1 className="text-3xl md:text-4xl font-black tracking-wide">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-black tracking-wide">
               {getServiceTitle()}
             </h1>
           </div>
         </div>
       </div>
 
-      <main className="max-w-[1400px] mx-auto px-4 sm:px-8 py-8 pb-32">
+      <main className="max-w-[1400px] mx-auto px-4 sm:px-8 py-6 sm:py-8 pb-32">
 
         {/* Service Type Selector */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-8">
-          <div className="flex flex-col md:flex-row md:items-center gap-4 md:gap-6">
-            <label className="text-lg font-bold text-gray-800 md:min-w-[120px]">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6 mb-6 sm:mb-8">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-6">
+            <label className="text-base sm:text-lg font-bold text-gray-800 sm:min-w-[120px]">
               Service Type <span className="text-red-500">*</span>
             </label>
-            <div className="relative w-full max-w-[400px]">
-              <div className="absolute left-4 top-1/2 -translate-y-1/2 text-[#296341]">
+            <div className="relative w-full sm:max-w-[400px]">
+              <div className="absolute left-4 top-1/2 -translate-y-1/2 text-[#296341] [&>svg]:w-5 [&>svg]:h-5 sm:[&>svg]:w-6 sm:[&>svg]:h-6">
                 {currentServiceConfig.icon}
               </div>
               <select
@@ -2525,13 +2524,13 @@ export default function CargoBooking() {
           {selectedVoyage && (
             <div className="bg-white/50 rounded-xl p-3 mb-4 flex items-center gap-3">
               <Ship className="w-5 h-5 text-blue-600" />
-              <span className="font-medium text-gray-700">
+              <span className="font-medium text-gray-700 text-sm sm:text-base">
                 Voyage: {selectedVoyage.voyageNo} - {selectedVoyage.ship?.name || 'Unknown Ship'}
               </span>
             </div>
           )}
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-4 mb-6">
             <div className="bg-white/40 lg:bg-transparent p-4 lg:p-0 rounded-xl lg:rounded-none border border-white/20 lg:border-none">
               <p className="text-[10px] lg:text-[14px] text-gray-500 lg:text-black uppercase lg:normal-case font-black lg:font-bold">Quantity Total</p>
               <p className="text-2xl lg:text-[32px] font-black">{items.reduce((sum, i) => sum + i.quantity, 0)}</p>
@@ -2540,7 +2539,7 @@ export default function CargoBooking() {
               <p className="text-[10px] lg:text-[14px] text-gray-500 lg:text-black uppercase lg:normal-case font-black lg:font-bold">Declared Value</p>
               <p className="text-2xl lg:text-[32px] font-black">${subtotal.toFixed(2)}</p>
             </div>
-            <div className="bg-white/40 lg:bg-transparent p-4 lg:p-0 rounded-xl lg:rounded-none border border-white/20 lg:border-none">
+            <div className="bg-white/40 lg:bg-transparent p-4 lg:p-0 rounded-xl lg:rounded-none border border-white/20 lg:border-none sm:col-span-2 lg:col-span-1">
               <p className="text-[10px] lg:text-[14px] text-gray-500 lg:text-black uppercase lg:normal-case font-black lg:font-bold">
                 {service === 'PALLET' ? 'Pallet#' : service === 'LUGGAGE' ? 'Luggage#' : 'Item#'}
               </p>
@@ -2549,16 +2548,16 @@ export default function CargoBooking() {
           </div>
 
           <div className="flex flex-col lg:flex-row lg:items-center gap-4 lg:gap-8 border-t border-[#296341]/10 lg:border-none pt-6 lg:pt-0">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 flex-wrap">
               <MapPin className="w-5 h-5 text-[#296341]" />
-              <span className="font-bold lg:text-[20px]">{fromLocation || 'NAS'}</span>
-              <ArrowRight className="w-5 h-5 text-gray-400 mx-2" />
+              <span className="font-bold text-lg lg:text-[20px]">{fromLocation || 'NAS'}</span>
+              <ArrowRight className="w-5 h-5 text-gray-400 mx-1 lg:mx-2" />
               <MapPin className="w-5 h-5 text-[#296341]" />
-              <span className="font-bold lg:text-[20px]">{toLocation || 'MAH'}</span>
+              <span className="font-bold text-lg lg:text-[20px]">{toLocation || 'MAH'}</span>
             </div>
             <div className="lg:ml-auto flex items-center lg:flex-col lg:items-end gap-3 lg:gap-0">
               <p className="text-[12px] lg:text-[14px] text-gray-500 lg:text-black uppercase lg:normal-case font-black lg:font-bold">Total Price</p>
-              <p className="text-3xl lg:text-[50px] font-black text-[#296341] lg:text-black leading-none">${grandTotal.toFixed(2)}</p>
+              <p className="text-3xl sm:text-4xl lg:text-[50px] font-black text-[#296341] lg:text-black leading-none">${grandTotal.toFixed(2)}</p>
             </div>
           </div>
         </div>
