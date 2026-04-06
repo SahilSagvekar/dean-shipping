@@ -471,25 +471,26 @@ function PassengerBookingContent() {
       />
 
       {/* Hero Illustration */}
-      <div className="flex justify-center mb-4 sm:mb-8 px-4 sm:px-8 bg-white/50 py-4 sm:py-0">
+      <div className="flex justify-center px-4 sm:px-8 bg-[#effaf6] py-6 sm:py-10 border-b border-[#296341]/10">
         <img
           src={imgBookingIllustration.src}
           alt="Passenger Booking Illustration"
-          className="w-full max-w-[800px] h-auto object-contain max-h-[300px] md:max-h-none"
+          className="w-full max-w-[800px] h-auto object-contain max-h-[220px] sm:max-h-[300px] md:max-h-none hover:scale-105 transition-transform duration-700"
         />
       </div>
 
-      <main className="max-w-[1400px] mx-auto px-4 sm:px-8 pb-16 md:pb-32 flex-1 w-full relative">
-        <div className="flex flex-col lg:flex-row gap-8 lg:gap-12">
+      <main className="max-w-[1400px] mx-auto px-4 sm:px-8 pb-16 md:pb-32 flex-1 w-full relative pt-8 sm:pt-12">
+        <div className="flex flex-col lg:flex-row gap-8 lg:gap-16">
 
           {/* Left Column: Form Details */}
           <div className="w-full lg:w-[60%] space-y-6 md:space-y-8">
             {/* Title Section */}
-            <div className="mb-6 md:mb-10 text-center lg:text-left">
-              <h1 className="text-2xl sm:text-3xl md:text-[32px] font-bold text-black tracking-wide">
-                <span className="border-b-4 border-black pb-1">PASSENGER</span> BOOKING
+            <div className="mb-10 text-center lg:text-left">
+              <h1 className="text-2xl sm:text-4xl font-black text-black tracking-tight uppercase">
+                PASSENGER <span className="text-[#296341]">BOOKING</span>
               </h1>
-              <p className="text-gray-500 mt-3 text-sm sm:text-base hidden sm:block">Register new passengers and manage their travel details</p>
+              <div className="w-32 h-1.5 bg-black rounded-full mt-4 mx-auto lg:mx-0" />
+              <p className="text-gray-500 mt-6 text-sm sm:text-base font-medium italic">Register new passengers and manage their travel details with precision.</p>
             </div>
 
             {/* Form Fields */}
@@ -547,33 +548,33 @@ function PassengerBookingContent() {
 
             {/* Passenger Counter Section */}
             <div className="space-y-4 pt-4">
-              <h3 className="text-lg font-bold text-gray-700">Passengers <span className="text-red-500">*</span></h3>
+              <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4">Passenger Selection <span className="text-red-500">*</span></h3>
               {[
-                { label: "Infant (0 - 2 yr old)", sublabel: "Free", count: infantCount, setCount: setInfantCount, icon: Baby },
-                { label: "Child (3 - 12 yr old)", sublabel: `$${PRICING.child}/person`, count: childCount, setCount: setChildCount, icon: Users },
-                { label: "Adult (13+ yr old)", sublabel: `$${PRICING.adult}/person`, count: adultCount, setCount: setAdultCount, icon: User }
+                { label: "Infant (0 - 2 yr old)", sublabel: "Complimentary Traveling", count: infantCount, setCount: setInfantCount, icon: Baby },
+                { label: "Child (3 - 12 yr old)", sublabel: `$${PRICING.child}/person fare`, count: childCount, setCount: setChildCount, icon: Users },
+                { label: "Adult (13+ yr old)", sublabel: `$${PRICING.adult}/person fare`, count: adultCount, setCount: setAdultCount, icon: User }
               ].map((group, idx) => (
-                <div key={idx} className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6 bg-white/50 p-4 sm:p-5 rounded-xl border border-gray-100 shadow-sm transition-all hover:bg-white/80">
+                <div key={idx} className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6 bg-white border border-gray-100 p-4 sm:p-5 rounded-2xl shadow-sm transition-all hover:border-[#296341]/30 hover:shadow-md group">
                   <div className="flex items-center gap-4 flex-1">
-                    <div className="p-2 sm:p-3 bg-white rounded-lg shadow-sm">
+                    <div className="p-3 bg-[#effaf6] rounded-xl group-hover:scale-110 transition-transform">
                       <group.icon className="w-6 h-6 sm:w-7 sm:h-7 text-[#296341]" />
                     </div>
                     <div>
-                      <span className="text-lg sm:text-[20px] font-bold text-gray-800 leading-tight">{group.label}</span>
-                      <p className="text-xs sm:text-sm text-gray-500 font-medium uppercase tracking-wider mt-0.5">{group.sublabel}</p>
+                      <span className="text-lg sm:text-[20px] font-black text-[#132540] leading-tight block">{group.label}</span>
+                      <p className="text-[10px] sm:text-xs text-gray-400 font-black uppercase tracking-widest mt-1">{group.sublabel}</p>
                     </div>
                   </div>
-                  <div className="flex items-center border border-gray-200 rounded-xl overflow-hidden bg-white shadow-inner w-full sm:w-[150px]">
+                  <div className="flex items-center border-2 border-[#132540] rounded-full overflow-hidden bg-white w-full sm:w-[160px] h-14">
                     <button
                       onClick={() => group.setCount(Math.max(0, group.count - 1))}
-                      className="flex-1 py-3 flex items-center justify-center hover:bg-gray-50 text-gray-400 transition-colors"
+                      className="flex-1 h-full flex items-center justify-center hover:bg-gray-50 text-gray-400 transition-colors active:scale-90"
                     >
                       <Minus className="w-5 h-5" />
                     </button>
-                    <span className="w-[50px] text-center text-xl sm:text-[22px] font-black text-[#296341]">{group.count}</span>
+                    <span className="w-[50px] text-center text-xl sm:text-2xl font-black text-[#132540]">{group.count}</span>
                     <button
                       onClick={() => group.setCount(group.count + 1)}
-                      className="flex-1 py-3 flex items-center justify-center hover:bg-gray-50 text-[#296341] transition-colors"
+                      className="flex-1 h-full flex items-center justify-center hover:bg-[#effaf6] text-[#296341] transition-colors active:scale-90"
                     >
                       <Plus className="w-5 h-5" />
                     </button>
@@ -583,9 +584,9 @@ function PassengerBookingContent() {
             </div>
 
             {/* Voyage Picker */}
-            <div className="space-y-2 mt-4">
-              <label className="text-base md:text-[18px] font-bold text-gray-800">
-                Select Voyage <span className="text-red-500">*</span>
+            <div className="space-y-4 mt-8 bg-[#132540]/5 p-6 rounded-2xl border border-dashed border-[#132540]/20">
+              <label className="block text-xs font-black text-gray-400 uppercase tracking-widest">
+                Voyage Assignment <span className="text-red-500">*</span>
               </label>
               <div className="relative">
                 <select
@@ -603,37 +604,40 @@ function PassengerBookingContent() {
                     }
                   }}
                   disabled={isLoadingVoyages}
-                  className="w-full h-12 md:h-[50px] bg-white border border-gray-200 rounded-md px-4 shadow-sm appearance-none outline-none focus:ring-2 focus:ring-[#296341] text-base md:text-[18px] font-bold disabled:bg-gray-100"
+                  className="w-full h-14 bg-white border-2 border-[#132540] rounded-xl px-6 shadow-sm appearance-none outline-none focus:ring-4 focus:ring-[#296341]/10 text-lg font-black text-[#132540] disabled:bg-gray-100 disabled:opacity-50"
                 >
-                  <option value="">-- Select an upcoming voyage --</option>
+                  <option value="">SELECT UPCOMING VOYAGE</option>
                   {upcomingVoyages.map(v => (
                     <option key={v.id} value={v.id}>
-                      Voyage #{v.voyageNo} - {v.shipName} ({new Date(v.date).toLocaleDateString()})
+                      VOYAGE #{v.voyageNo} — {v.shipName} ({new Date(v.date).toLocaleDateString()})
                     </option>
                   ))}
                 </select>
-                <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-[#296341]" />
+                <ChevronDown className="absolute right-6 top-1/2 -translate-y-1/2 text-[#296341] w-6 h-6 pointer-events-none" />
               </div>
-              {isLoadingVoyages && <p className="text-sm text-gray-500">Loading voyages...</p>}
+              {isLoadingVoyages && (
+                <div className="flex items-center gap-2 text-gray-400 font-bold italic text-sm">
+                  <Loader2 className="w-4 h-4 animate-spin text-[#296341]" /> Synchronizing voyage schedules...
+                </div>
+              )}
             </div>
 
             <div className="flex flex-col sm:flex-row gap-6 md:gap-8 pt-4">
-              <div className="flex-1 space-y-2">
-                <label className="text-base md:text-[18px] font-bold text-gray-800 flex items-center gap-2">
-                  <MapPin className="text-[#296341] w-5 h-5 fill-[#296341]/10" />
-                  From <span className="text-red-500">*</span>
+              <div className="flex-1 space-y-4">
+                <label className="block text-xs font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                  <MapPin className="text-[#296341] w-4 h-4" /> Port of Departure <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
                   <select
                     value={fromLocation}
                     onChange={(e) => setFromLocation(e.target.value)}
                     disabled={isLoadingLocations}
-                    className="w-full h-12 md:h-[50px] bg-white border border-gray-200 rounded-md px-4 shadow-sm appearance-none outline-none focus:ring-2 focus:ring-[#296341] text-base md:text-[18px] font-bold disabled:bg-gray-100"
+                    className="w-full h-14 bg-white border-2 border-[#132540] rounded-xl px-6 shadow-sm appearance-none outline-none focus:ring-4 focus:ring-[#296341]/10 text-lg font-black text-[#132540] disabled:bg-gray-100"
                   >
                     {isLoadingLocations ? (
-                      <option>Loading...</option>
+                      <option>LOADING PORTS...</option>
                     ) : locations.length === 0 ? (
-                      <option>No locations available</option>
+                      <option>NO PORTS AVAILABLE</option>
                     ) : (
                       // If a voyage is selected, only show locations from its stops
                       (selectedVoyageId
@@ -641,32 +645,31 @@ function PassengerBookingContent() {
                           code: s.location.code,
                           name: s.location.name,
                           id: s.location.id
-                        })) || locations
+                        })) || []
                         : locations
                       ).map((loc: any) => (
-                        <option key={loc.id} value={loc.code}>{loc.code} - {loc.name}</option>
+                        <option key={loc.id} value={loc.code}>{loc.code} — {loc.name}</option>
                       ))
                     )}
                   </select>
-                  <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-[#296341]" />
+                  <ChevronDown className="absolute right-6 top-1/2 -translate-y-1/2 text-[#296341] w-6 h-6 pointer-events-none" />
                 </div>
               </div>
-              <div className="flex-1 space-y-2">
-                <label className="text-base md:text-[18px] font-bold text-gray-800 flex items-center gap-2">
-                  <MapPin className="text-[#296341] w-5 h-5 fill-[#296341]/10" />
-                  To <span className="text-red-500">*</span>
+              <div className="flex-1 space-y-4">
+                <label className="block text-xs font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                  <MapPin className="text-[#296341] w-4 h-4" /> Destination Port <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
                   <select
                     value={toLocation}
                     onChange={(e) => setToLocation(e.target.value)}
                     disabled={isLoadingLocations}
-                    className="w-full h-12 md:h-[50px] bg-white border border-gray-200 rounded-md px-4 shadow-sm appearance-none outline-none focus:ring-2 focus:ring-[#296341] text-base md:text-[18px] font-bold disabled:bg-gray-100"
+                    className="w-full h-14 bg-white border-2 border-[#132540] rounded-xl px-6 shadow-sm appearance-none outline-none focus:ring-4 focus:ring-[#296341]/10 text-lg font-black text-[#132540] disabled:bg-gray-100"
                   >
                     {isLoadingLocations ? (
-                      <option>Loading...</option>
+                      <option>LOADING PORTS...</option>
                     ) : locations.length === 0 ? (
-                      <option>No locations available</option>
+                      <option>NO PORTS AVAILABLE</option>
                     ) : (
                       // If a voyage is selected, only show locations from its stops
                       (selectedVoyageId
@@ -674,14 +677,14 @@ function PassengerBookingContent() {
                           code: s.location.code,
                           name: s.location.name,
                           id: s.location.id
-                        })) || locations
+                        })) || []
                         : locations
                       ).map((loc: any) => (
-                        <option key={loc.id} value={loc.code}>{loc.code} - {loc.name}</option>
+                        <option key={loc.id} value={loc.code}>{loc.code} — {loc.name}</option>
                       ))
                     )}
                   </select>
-                  <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-[#296341]" />
+                  <ChevronDown className="absolute right-6 top-1/2 -translate-y-1/2 text-[#296341] w-6 h-6 pointer-events-none" />
                 </div>
               </div>
             </div>
@@ -938,21 +941,23 @@ function PassengerBookingContent() {
               </div>
 
               {/* Overlapping Total Card */}
-              <div className="mt-8 md:mt-0 md:absolute md:left-[10%] md:right-[10%] md:-bottom-20 bg-white rounded-[24px] md:rounded-[32px] p-6 md:p-8 shadow-2xl border border-gray-50 flex flex-col items-center">
-                <p className="text-base md:text-[18px] font-bold text-gray-400 tracking-wider">Total Amount</p>
+              <div className="mt-8 md:mt-0 md:absolute md:left-[10%] md:right-[10%] md:-bottom-24 bg-white rounded-[32px] p-6 md:p-8 shadow-2xl border border-gray-100 flex flex-col items-center">
+                <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-1">Estimated Total Amount</p>
                 <div className="flex items-baseline gap-1">
-                  <span className="text-2xl md:text-3xl font-black text-[#296341]">$</span>
-                  <p className="text-4xl md:text-[56px] font-black text-black leading-tight">
+                  <span className="text-2xl md:text-3xl font-black text-[#296341] opacity-60">$</span>
+                  <p className="text-4xl md:text-6xl font-black text-[#132540] tracking-tight leading-tight">
                     {grandTotal.toFixed(2)}
                   </p>
                 </div>
-                <p className="text-[10px] md:text-[12px] text-gray-400 font-bold uppercase tracking-tight text-center">
-                  (Including {PRICING.vatRate * 100}% VAT)
-                </p>
-                <div className="mt-2 flex items-center gap-4 text-[10px] sm:text-xs font-semibold text-gray-500 bg-gray-50 px-4 py-1.5 rounded-full">
-                  <span>Subtotal: ${subtotal.toFixed(2)}</span>
-                  <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
-                  <span>VAT: ${vatAmount.toFixed(2)}</span>
+                <div className="mt-4 flex flex-col items-center gap-2">
+                  <p className="text-[10px] text-gray-400 font-bold uppercase tracking-tight text-center">
+                    VAT SURCHARGE ({PRICING.vatRate * 100}%) INCLUDED
+                  </p>
+                  <div className="flex items-center gap-4 text-[10px] font-black text-gray-500 bg-gray-100 px-6 py-2 rounded-full border border-gray-200/50">
+                    <span className="flex items-center gap-1.5"><div className="w-1.5 h-1.5 rounded-full bg-[#296341]" /> Sub: ${subtotal.toFixed(0)}</span>
+                    <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
+                    <span className="flex items-center gap-1.5"><div className="w-1.5 h-1.5 rounded-full bg-blue-500" /> Tax: ${vatAmount.toFixed(0)}</span>
+                  </div>
                 </div>
               </div>
             </div>

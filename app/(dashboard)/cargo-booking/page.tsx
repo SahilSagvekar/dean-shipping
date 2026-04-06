@@ -343,7 +343,7 @@ interface PriceInputFieldProps extends InputFieldProps {
 
 const PriceInputField = ({ label, value, onChange, placeholder, availablePrices, isLoading, className = '' }: PriceInputFieldProps) => {
   const datalistId = `prices-${label.replace(/\s+/g, '-')}`;
-  
+
   return (
     <div className={`space-y-1 sm:space-y-2 ${className}`}>
       <label className="text-[14px] lg:text-[20px] font-bold text-gray-400 lg:text-black uppercase lg:normal-case tracking-wider lg:tracking-normal flex items-center gap-2">
@@ -508,16 +508,16 @@ const ContainerFormFields = ({
 }: ContainerFormProps) => (
   <div className="space-y-8">
     <div className="border-l-4 border-blue-600 pl-4">
-        <h3 className="text-xl sm:text-2xl font-black text-gray-900 uppercase">Container Inspection</h3>
-        <p className="text-sm text-gray-500">Physical details and environment settings</p>
+      <h3 className="text-xl sm:text-2xl font-black text-gray-900 uppercase">Container Inspection</h3>
+      <p className="text-sm text-gray-500">Physical details and environment settings</p>
     </div>
-    
+
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
       <InputField label="Container#" value={containerNo} onChange={setContainerNo} placeholder="e.g., 134" />
       <InputField label="Chassis#" value={chassisNo} onChange={setChassisNo} placeholder="e.g., 2" />
       <InputField label="Temperature" value={temperature} onChange={setTemperature} placeholder="e.g., 70°" />
     </div>
-    
+
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 text-blue-900">
       <InputField label="Value" value={value} onChange={setValue} placeholder="$5,000" />
       <SelectField
@@ -546,11 +546,11 @@ const ContainerFormFields = ({
       />
     </div>
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-      <PriceInputField 
-        label="Price" 
-        value={price} 
-        onChange={setPrice} 
-        placeholder="$500" 
+      <PriceInputField
+        label="Price"
+        value={price}
+        onChange={setPrice}
+        placeholder="$500"
         availablePrices={availablePrices}
         isLoading={isLoadingPrices}
       />
@@ -639,11 +639,11 @@ const PalletFormFields = ({
 
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
       <InputField label="Value" value={value} onChange={setValue} placeholder="Enter value" />
-      <PriceInputField 
-        label="Price" 
-        value={price} 
-        onChange={setPrice} 
-        placeholder="Enter price" 
+      <PriceInputField
+        label="Price"
+        value={price}
+        onChange={setPrice}
+        placeholder="Enter price"
         availablePrices={availablePrices}
         isLoading={isLoadingPrices}
       />
@@ -713,11 +713,11 @@ const LuggageFormFields = ({
 
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
       <InputField label="Value" value={value} onChange={setValue} placeholder="Enter value" />
-      <PriceInputField 
-        label="Price" 
-        value={price} 
-        onChange={setPrice} 
-        placeholder="Enter price" 
+      <PriceInputField
+        label="Price"
+        value={price}
+        onChange={setPrice}
+        placeholder="Enter price"
         availablePrices={availablePrices}
         isLoading={isLoadingPrices}
       />
@@ -765,8 +765,8 @@ const BoxFormFields = ({
               key={subType}
               onClick={() => setBoxSubType(subType)}
               className={`relative p-3 sm:p-4 rounded-xl border-2 transition-all flex items-center gap-3 ${isSelected
-                  ? 'border-[#296341] bg-[#eef6f2] shadow-md'
-                  : 'border-gray-200 bg-white hover:border-gray-300'
+                ? 'border-[#296341] bg-[#eef6f2] shadow-md'
+                : 'border-gray-200 bg-white hover:border-gray-300'
                 }`}
             >
               <div className={`p-2 rounded-lg ${config.bgColor}`}>
@@ -793,11 +793,11 @@ const BoxFormFields = ({
 
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
       <InputField label="Value" value={value} onChange={setValue} placeholder="Enter value" />
-      <PriceInputField 
-        label="Price" 
-        value={price} 
-        onChange={setPrice} 
-        placeholder="Enter price" 
+      <PriceInputField
+        label="Price"
+        value={price}
+        onChange={setPrice}
+        placeholder="Enter price"
         availablePrices={availablePrices}
         isLoading={isLoadingPrices}
       />
@@ -850,11 +850,11 @@ const EnvelopeFormFields = ({
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <InputField label="Value" value={value} onChange={setValue} placeholder="Enter value" />
-        <PriceInputField 
-          label="Price" 
-          value={price} 
-          onChange={setPrice} 
-          placeholder="Enter price" 
+        <PriceInputField
+          label="Price"
+          value={price}
+          onChange={setPrice}
+          placeholder="Enter price"
           availablePrices={availablePrices}
           isLoading={isLoadingPrices}
         />
@@ -934,11 +934,11 @@ const BundleFormFields = ({
 
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       <InputField label="Value" value={value} onChange={setValue} placeholder="Enter value" />
-      <PriceInputField 
-        label="Price" 
-        value={price} 
-        onChange={setPrice} 
-        placeholder="Enter price" 
+      <PriceInputField
+        label="Price"
+        value={price}
+        onChange={setPrice}
+        placeholder="Enter price"
         availablePrices={availablePrices}
         isLoading={isLoadingPrices}
       />
@@ -998,11 +998,11 @@ const OtherFormFields = ({
 
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       <InputField label="Value" value={value} onChange={setValue} placeholder="Enter value" />
-      <PriceInputField 
-        label="Price" 
-        value={price} 
-        onChange={setPrice} 
-        placeholder="Enter price" 
+      <PriceInputField
+        label="Price"
+        value={price}
+        onChange={setPrice}
+        placeholder="Enter price"
         availablePrices={availablePrices}
         isLoading={isLoadingPrices}
       />
@@ -1147,29 +1147,29 @@ export default function CargoBooking() {
   useEffect(() => {
     async function fetchPrices() {
       if (!fromLocation || !toLocation) return;
-      
+
       setIsLoadingPrices(true);
       try {
         const category = getPriceCategory(service, boxSubType);
         const res = await apiFetch(`/api/prices?category=${category}&from=${fromLocation}&to=${toLocation}`);
-        
+
         if (res.ok) {
           const data = await res.json();
           const prices = data.prices || [];
           setAvailablePrices(prices);
-          
+
           // Auto-fill price based on size matching
           let matchedPrice = null;
-          
+
           // Determine current size string to match
-          let currentSize = cargoSize;
+          let currentSize: string = cargoSize;
           if (service === 'CONTAINER' && containerSize) currentSize = containerSize;
           if (service === 'PALLET' && palletHeight) currentSize = palletHeight;
           if (service === 'BUNDLE' && bundleLength) currentSize = bundleLength;
           if (service === 'ENVELOPE' && envelopeType) currentSize = envelopeType;
 
           // Attempt matching (exact string match or case-insensitive)
-          matchedPrice = prices.find((p: any) => 
+          matchedPrice = prices.find((p: any) =>
             p.size.toLowerCase() === currentSize.toLowerCase()
           );
 
@@ -1246,14 +1246,14 @@ export default function CargoBooking() {
   // Get voyage locations (stops) for the selected voyage
   const getVoyageLocations = (): Location[] => {
     if (!selectedVoyage) return [];
-    
+
     const voyageLocations: Location[] = [];
-    
+
     // Add from location if exists
     if (selectedVoyage.from) {
       voyageLocations.push(selectedVoyage.from);
     }
-    
+
     // Add stops
     if (selectedVoyage.stops && selectedVoyage.stops.length > 0) {
       selectedVoyage.stops
@@ -1265,25 +1265,25 @@ export default function CargoBooking() {
           }
         });
     }
-    
+
     // Add to location if not already there
     if (selectedVoyage.to && !voyageLocations.find(l => l.id === selectedVoyage.to?.id)) {
       voyageLocations.push(selectedVoyage.to);
     }
-    
+
     return voyageLocations;
   };
 
   // Handle voyage selection
   const handleVoyageSelect = (voyageId: string) => {
     setSelectedVoyageId(voyageId);
-    
+
     if (voyageId) {
       const voyage = upcomingVoyages.find(v => v.id === voyageId);
       if (voyage) {
         // Auto-populate voyage number
         setVoyageNo(String(voyage.voyageNo));
-        
+
         // Auto-set booking date to voyage departure date if available
         const voyageDate = voyage.date || voyage.departureDate;
         if (voyageDate) {
@@ -1294,7 +1294,7 @@ export default function CargoBooking() {
             console.error("Error parsing voyage date:", e);
           }
         }
-        
+
         // Get voyage locations and set defaults
         const voyageLocations = getVoyageLocationsForVoyage(voyage);
         if (voyageLocations.length >= 2) {
@@ -1319,11 +1319,11 @@ export default function CargoBooking() {
   // Helper to get locations for a specific voyage
   const getVoyageLocationsForVoyage = (voyage: Voyage): Location[] => {
     const voyageLocations: Location[] = [];
-    
+
     if (voyage.from) {
       voyageLocations.push(voyage.from);
     }
-    
+
     if (voyage.stops && voyage.stops.length > 0) {
       voyage.stops
         .sort((a, b) => (a.stopOrder || a.order || 0) - (b.stopOrder || b.order || 0))
@@ -1333,11 +1333,11 @@ export default function CargoBooking() {
           }
         });
     }
-    
+
     if (voyage.to && !voyageLocations.find(l => l.id === voyage.to?.id)) {
       voyageLocations.push(voyage.to);
     }
-    
+
     return voyageLocations;
   };
 
@@ -1691,7 +1691,7 @@ export default function CargoBooking() {
       // For single item bookings, use the item's stored data
       // For multi-item bookings, the items array contains all the details
       const primaryItem = items.length === 1 ? items[0] : null;
-      
+
       const payload = {
         // Use primary item's service type, or the current form state for multi-item
         service: primaryItem?.service || service,
@@ -2097,10 +2097,10 @@ export default function CargoBooking() {
     ...upcomingVoyages.map(v => {
       const shipName = v.ship?.name || v.shipName || 'Unknown Ship';
       const voyageDateStr = v.date || v.departureDate;
-      const depDate = voyageDateStr 
+      const depDate = voyageDateStr
         ? new Date(voyageDateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
         : '';
-      const route = v.from && v.to 
+      const route = v.from && v.to
         ? `${v.from.code} → ${v.to.code}`
         : '';
       return {
@@ -2497,7 +2497,7 @@ export default function CargoBooking() {
 
         {/* Additional Services Button */}
         <div className="mb-8">
-          <button 
+          <button
             onClick={() => {
               // Pre-fill temp state with current values
               setTempHasTape(hasTape);
@@ -2808,7 +2808,7 @@ export default function CargoBooking() {
                   <span className="text-[20px] font-bold text-gray-500 w-24">Tape</span>
                   <div className="flex-1 flex justify-around">
                     <label className="flex items-center gap-3 cursor-pointer group">
-                      <div 
+                      <div
                         onClick={() => {
                           setTempHasTape(true);
                           setTempWrapType('PARTIAL');
@@ -2820,7 +2820,7 @@ export default function CargoBooking() {
                       <span className="text-[18px] font-bold text-gray-700">Partial Wrap</span>
                     </label>
                     <label className="flex items-center gap-3 cursor-pointer group">
-                      <div 
+                      <div
                         onClick={() => {
                           setTempHasTape(true);
                           setTempWrapType('FULL');
@@ -2839,7 +2839,7 @@ export default function CargoBooking() {
               <div className="flex items-center">
                 <span className="text-[20px] font-bold text-gray-500 w-24">Tags</span>
                 <div className="flex-1 px-12">
-                  <div 
+                  <div
                     onClick={() => setTempHasTags(!tempHasTags)}
                     className={`w-6 h-6 rounded-full border-2 transition-all flex items-center justify-center cursor-pointer ${tempHasTags ? 'border-[#296341]' : 'border-gray-200'}`}
                   >
@@ -2851,10 +2851,10 @@ export default function CargoBooking() {
               {/* Insurance Input */}
               <div className="space-y-3">
                 <label className="text-[16px] font-black text-gray-500 uppercase tracking-widest block">
-                   Insurance
+                  Insurance
                 </label>
                 <div className="relative">
-                   <input 
+                  <input
                     type="text"
                     value={tempInsuranceAmount}
                     onChange={(e) => setTempInsuranceAmount(e.target.value)}
@@ -2871,7 +2871,7 @@ export default function CargoBooking() {
               <div className="flex items-center justify-end gap-5 pt-4">
                 <span className="text-[20px] font-bold text-gray-500">Price</span>
                 <div className="relative">
-                  <input 
+                  <input
                     type="text"
                     value={tempAdditionalServicePrice}
                     onChange={(e) => setTempAdditionalServicePrice(e.target.value)}
@@ -2886,13 +2886,13 @@ export default function CargoBooking() {
 
               {/* Action Buttons */}
               <div className="flex gap-4 pt-8">
-                <button 
+                <button
                   onClick={() => setShowAdditionalServicesModal(false)}
                   className="flex-1 h-[64px] rounded-full bg-gray-100 text-gray-500 text-[18px] font-black hover:bg-gray-200 transition-colors uppercase tracking-widest shadow-sm"
                 >
                   cancel
                 </button>
-                <button 
+                <button
                   onClick={() => {
                     setHasTape(tempHasTape);
                     setWrapType(tempWrapType);
