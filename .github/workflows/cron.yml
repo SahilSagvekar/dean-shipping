@@ -1,0 +1,15 @@
+name: Remote Cron Job
+
+on:
+  schedule:
+    - cron: '*/15 * * * *' # Every 15 minutes
+  workflow_dispatch: # Allow manual triggering
+
+jobs:
+  trigger-cron:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Schedule Launch
+        run: |
+          curl -f -X GET "${{ secrets.CRON_URL }}/api/cron/launch-schedules" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}"
