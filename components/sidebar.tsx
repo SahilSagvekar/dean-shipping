@@ -23,6 +23,7 @@ import {
   MapPin,
   ChevronRight,
 } from "lucide-react";
+import { useAuth } from "@/lib/auth-context";
 
 // ============================================
 // SIDEBAR CONTEXT - Share state across components
@@ -219,11 +220,25 @@ interface SidebarProps {
 }
 
 export function Sidebar({
-  userName = "Cecily Dean",
-  userRole = "Administration",
+  userName: propUserName,
+  userRole: propUserRole,
   logoSrc,
 }: SidebarProps) {
   const { isOpen, close } = useSidebar();
+  const { user, logout } = useAuth();
+
+  // If user is available, use their data; otherwise fallback to props or defaults
+  const displayName = user 
+    ? `${user.firstName || ''} ${user.lastName || ''}`.trim() 
+    : (propUserName || "Cecily Dean");
+    
+  const displayRole = user 
+    ? (user.designation || user.role || "Administration") 
+    : (propUserRole || "Administration");
+
+  const initials = displayName
+    ? displayName.split(' ').map(n => n[0]).join('').toUpperCase()
+    : "CD";
 
   return (
     <>
@@ -273,13 +288,17 @@ export function Sidebar({
         <div className="p-6 border-t border-gray-100 bg-gray-50/50">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-[#296341] font-bold">
-              {userName.split(' ').map(n => n[0]).join('')}
+              {initials}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-bold text-gray-900 truncate">{userName}</p>
-              <p className="text-xs text-gray-500 truncate">{userRole}</p>
+              <p className="text-sm font-bold text-gray-900 truncate">{displayName}</p>
+              <p className="text-xs text-gray-500 truncate">{displayRole}</p>
             </div>
-            <button className="text-gray-400 hover:text-red-500 transition-colors">
+            <button 
+              onClick={logout}
+              className="text-gray-400 hover:text-red-500 transition-colors p-2 rounded-lg hover:bg-white active:scale-90"
+              title="Logout"
+            >
               <LogOut className="w-5 h-5" />
             </button>
           </div>
