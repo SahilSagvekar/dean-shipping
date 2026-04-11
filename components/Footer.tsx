@@ -84,7 +84,7 @@ export default function Footer() {
             <div className="mt-10 md:mt-8">
               <p className="text-2xl font-medium mb-4">Follow us on</p>
               <div className="flex items-center justify-center md:justify-start gap-6 md:gap-4">
-                <a href="#instagram" className="hover:scale-110 transition-transform" aria-label="Instagram">
+                <a href="https://www.instagram.com/deansshippingbahamas" className="hover:scale-110 transition-transform" aria-label="Instagram">
                   <svg className="w-8 h-8 md:w-6 md:h-6" fill="none" viewBox="0 0 24 24">
                     <path d={svgPaths.p24edac00} fill="url(#paint0_radial_footer)" />
                     <path d={svgPaths.p24edac00} fill="url(#paint1_radial_footer)" />
@@ -105,26 +105,26 @@ export default function Footer() {
                   </svg>
                 </a>
 
-                <a href="#facebook" className="hover:scale-110 transition-transform" aria-label="Facebook">
+                <a href="https://www.facebook.com/deansshipping242" className="hover:scale-110 transition-transform" aria-label="Facebook">
                   <svg className="w-8 h-8 md:w-6 md:h-6" fill="none" viewBox="0 0 24 24">
                     <path d={svgPaths.p1fdd2200} fill="#1877F2" />
                     <path d={svgPaths.p23faaa00} fill="white" />
                   </svg>
                 </a>
 
-                <a href="#linkedin" className="hover:scale-110 transition-transform" aria-label="LinkedIn">
+                {/* <a href="#linkedin" className="hover:scale-110 transition-transform" aria-label="LinkedIn">
                   <svg className="w-8 h-8 md:w-6 md:h-6" fill="none" viewBox="0 0 24 24">
                     <path d={svgPaths.p24edac00} fill="#0A66C2" />
                     <path d={svgPaths.pf9a8e00} fill="white" />
                   </svg>
-                </a>
+                </a> */}
 
-                <a href="#twitter" className="hover:scale-110 transition-transform" aria-label="Twitter">
+                {/* <a href="#twitter" className="hover:scale-110 transition-transform" aria-label="Twitter">
                   <svg className="w-8 h-8 md:w-6 md:h-6" fill="none" viewBox="0 0 24 24">
                     <rect fill="white" height="16" width="18" x="3" y="4" />
                     <path clipRule="evenodd" d={svgPaths.p2a062900} fill="#5F8A71" fillRule="evenodd" />
                   </svg>
-                </a>
+                </a> */}
               </div>
             </div>
           </div>
