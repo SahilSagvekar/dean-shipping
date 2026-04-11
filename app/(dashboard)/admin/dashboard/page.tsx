@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Menu, Search, ChevronDown, Package, DollarSign, Clock, CheckCircle, FileText, Box, Printer, Ship, MapPin, Calendar, Users, ArrowRight, AlertTriangle, ShieldAlert } from 'lucide-react';
+import { Menu, Search, ChevronDown, Package, DollarSign, Clock, CheckCircle, FileText, Box, Printer, Ship, MapPin, Calendar, Users, ArrowRight, AlertTriangle, ShieldAlert, Download, FileSpreadsheet } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useAuth } from '@/lib/auth-context';
 import imgLogo from "@/app/assets/ffb62b7af25544291ca34f641dc70191ad198db6.png";
@@ -183,11 +183,13 @@ export default function App() {
   const { apiFetch } = useAuth();
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<any>(null);
+  const [range, setRange] = useState('today');
 
   useEffect(() => {
     async function fetchData() {
+      setLoading(true);
       try {
-        const res = await apiFetch('/api/dashboard/stats');
+        const res = await apiFetch(`/api/dashboard/stats?range=${range}`);
         if (res.ok) {
           const stats = await res.json();
           setData(stats);
@@ -199,7 +201,42 @@ export default function App() {
       }
     }
     fetchData();
-  }, [apiFetch]);
+  }, [apiFetch, range]);
+
+  const exportToCSV = () => {
+    if (!data?.allRecentShipments) return;
+    
+    const headers = ['Invoice', 'Date', 'Sender', 'Receiver', 'Type', 'Status', 'Amount', 'Payment Mode'];
+    const rows = data.allRecentShipments.map((s: any) => [
+      s.invoiceNo,
+      new Date(s.createdAt).toLocaleDateString(),
+      `${s.user?.firstName || ''} ${s.user?.lastName || ''}`.trim(),
+      s.contactName || 'N/A',
+      s.type || 'N/A',
+      s.paymentStatus || 'N/A',
+      s.totalAmount || 0,
+      s.invoice?.paymentMode || 'N/A'
+    ]);
+
+    const csvContent = [
+      headers.join(','),
+      ...rows.map((r: any) => r.map((c: any) => `"${c}"`).join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `dean_shipping_dashboard_${range}_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handlePrint = () => {
+    window.print();
+  };
 
   if (loading) {
     return (
@@ -221,29 +258,70 @@ export default function App() {
   return (
     <div className="bg-white">
       <main className="max-w-[1400px] mx-auto px-4 sm:px-8 py-4 sm:py-8">
-        <h1 className="text-[40px] font-black text-[#296341] mb-8 italic tracking-tighter">
-          <span className="border-b-8 border-[#296341]/20">DASHBOARD</span> OVERVIEW
-        </h1>
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-10">
+          <h1 className="text-[40px] font-black text-[#296341] italic tracking-tighter">
+            <span className="border-b-8 border-[#296341]/20">DASHBOARD</span> OVERVIEW
+          </h1>
+
+          <div className="flex flex-wrap items-center gap-3">
+            {/* Range Filters */}
+            <div className="bg-gray-100 p-1.5 rounded-2xl flex items-center gap-1 shadow-inner">
+              {[
+                { label: 'Today', value: 'today' },
+                { label: '7 Days', value: '7d' },
+                { label: '30 Days', value: '30d' }
+              ].map((item) => (
+                <button
+                  key={item.value}
+                  onClick={() => setRange(item.value)}
+                  className={`px-6 py-2 rounded-xl text-sm font-black uppercase tracking-widest transition-all ${
+                    range === item.value 
+                      ? 'bg-[#296341] text-white shadow-lg shadow-[#296341]/30 -translate-y-0.5' 
+                      : 'text-gray-500 hover:text-gray-900 hover:bg-white/50'
+                  }`}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Export Buttons */}
+            <div className="flex items-center gap-2">
+              <button 
+                onClick={exportToCSV}
+                className="flex items-center gap-2 bg-white border-2 border-[#296341] text-[#296341] px-5 py-2.5 rounded-xl text-sm font-black uppercase tracking-widest hover:bg-[#296341] hover:text-white transition-all active:scale-95 shadow-lg shadow-gray-200"
+              >
+                <FileSpreadsheet className="w-4 h-4" /> CSV
+              </button>
+              <button 
+                onClick={handlePrint}
+                className="flex items-center gap-2 bg-[#296341] text-white px-5 py-2.5 rounded-xl text-sm font-black uppercase tracking-widest hover:bg-[#1e4c30] transition-all active:scale-95 shadow-lg shadow-[#296341]/30"
+              >
+                <Download className="w-4 h-4" /> PDF
+              </button>
+            </div>
+          </div>
+        </div>
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
           <StatCard
             icon={Package}
-            title="Total Shipment Today"
+            title={`Total Shipment ${range === 'today' ? 'Today' : `(${range.toUpperCase()})`}`}
             value={stats.totalShipmentsToday || "0"}
-            subtitle={`${stats.shipmentsChange >= 0 ? '+' : ''}${stats.shipmentsChange || 0}% from yesterday`}
+            subtitle={`${stats.shipmentsChange >= 0 ? '+' : ''}${stats.shipmentsChange || 0}% from prev. period`}
           />
           <StatCard
             icon={DollarSign}
-            title="Collected Cash Today"
+            title={`Collected Cash ${range === 'today' ? 'Today' : `(${range.toUpperCase()})`}`}
             value={`$${(stats.cashCollectedToday || 0).toLocaleString()}`}
-            subtitle={`${stats.cashChange >= 0 ? '+' : ''}${stats.cashChange || 0}% from yesterday`}
+            subtitle={`${stats.cashChange >= 0 ? '+' : ''}${stats.cashChange || 0}% from prev. period`}
           />
           <StatCard
             icon={DollarSign}
-            title="Total Revenue Today"
+            title={`Total Revenue ${range === 'today' ? 'Today' : `(${range.toUpperCase()})`}`}
             value={`$${(stats.totalRevenueToday || 0).toLocaleString()}`}
-            subtitle={`${stats.revenueChange >= 0 ? '+' : ''}${stats.revenueChange || 0}% from yesterday`}
+            subtitle={`${stats.revenueChange >= 0 ? '+' : ''}${stats.revenueChange || 0}% from prev. period`}
           />
           <StatCard
             icon={Clock}

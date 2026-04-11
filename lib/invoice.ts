@@ -3,12 +3,13 @@ import prisma from "./prisma";
 /**
  * Generates the next sequential invoice number using SystemSetting.
  * Template: DSL-YYYY-XXXX (e.g., DSL-2024-0001)
+ *
+ * Uses an atomic SQL upsert + increment to prevent race conditions
+ * when multiple bookings are created concurrently.
  */
 export async function getNextInvoiceNumber(): Promise<string> {
     const year = new Date().getFullYear();
     const settingKey = `last_invoice_number_${year}`;
-
-    let nextNumber = 1;
 
     try {
         // Safe check for systemSetting because Prisma client might be stale
@@ -17,32 +18,28 @@ export async function getNextInvoiceNumber(): Promise<string> {
             return `DSL-${year}-${Date.now().toString().slice(-4)}`;
         }
 
-        const setting = await prisma.systemSetting.upsert({
-            where: { key: settingKey },
-            create: {
-                key: settingKey,
-                value: "0",
-                type: "number",
-                description: `Last invoice sequence number for ${year}`
-            },
-            update: {},
-        });
+        // Atomic upsert + increment in a single SQL statement
+        // This prevents race conditions where two concurrent requests
+        // could read the same value before either increments it.
+        const result = await prisma.$queryRaw<{ value: string }[]>`
+            INSERT INTO "SystemSetting" ("id", "key", "value", "type", "description", "updatedAt")
+            VALUES (gen_random_uuid(), ${settingKey}, '1', 'number', ${`Last invoice sequence number for ${year}`}, NOW())
+            ON CONFLICT ("key")
+            DO UPDATE SET
+                "value" = (CAST("SystemSetting"."value" AS INTEGER) + 1)::TEXT,
+                "updatedAt" = NOW()
+            RETURNING "value"
+        `;
 
-        nextNumber = parseInt(setting.value) + 1;
+        const nextNumber = parseInt(result[0].value);
 
-        // Save and increment
-        await prisma.systemSetting.update({
-            where: { key: settingKey },
-            data: { value: nextNumber.toString() }
-        });
+        // Format: DSL-2024-0001
+        return `DSL-${year}-${nextNumber.toString().padStart(4, "0")}`;
     } catch (err) {
         console.error("Failed to generate sequential invoice number:", err);
         // Fallback to timestamp to prevent crash
         return `DSL-${year}-${Date.now().toString().slice(-4)}`;
     }
-
-    // Format: DSL-2024-0001
-    return `DSL-${year}-${nextNumber.toString().padStart(4, "0")}`;
 }
 
 
@@ -94,4 +91,3 @@ export async function syncInvoiceNumberEverywhere(
 
     await Promise.all(updates);
 }
-

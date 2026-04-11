@@ -105,9 +105,9 @@ export async function POST(request: NextRequest) {
             { status: 201 }
         );
     } catch (error: any) {
-        console.error("Registration error:", error);
+        console.error("Registration error:", error?.code || error?.message);
         return NextResponse.json(
-            { error: error.message || "Registration failed" },
+            { error: "Registration failed. Please try again." },
             { status: 500 }
         );
     }

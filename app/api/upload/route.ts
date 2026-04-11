@@ -83,9 +83,9 @@ export async function POST(request: NextRequest) {
             { status: 201 }
         );
     } catch (error: any) {
-        console.error("Upload error:", error);
+        console.error("Upload error:", error?.code || error?.message);
         return NextResponse.json(
-            { error: error.message || "Upload failed" },
+            { error: "Upload failed. Please try again." },
             { status: 500 }
         );
     }

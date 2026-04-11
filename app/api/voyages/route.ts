@@ -64,9 +64,9 @@ export async function GET(request: NextRequest) {
             },
         });
     } catch (error: any) {
-        console.error("Get voyages error:", error);
+        console.error("Get voyages error:", error?.code || error?.message);
         return NextResponse.json(
-            { error: error.message || "Failed to fetch voyages" },
+            { error: "Failed to fetch voyages" },
             { status: 500 }
         );
     }
@@ -264,9 +264,9 @@ export async function POST(request: NextRequest) {
             { status: 201 }
         );
     } catch (error: any) {
-        console.error("Create voyage error:", error);
+        console.error("Create voyage error:", error?.code || error?.message);
         return NextResponse.json(
-            { error: error.message || "Failed to create voyage" },
+            { error: "Failed to create voyage" },
             { status: 500 }
         );
     }

@@ -238,9 +238,9 @@ export async function POST(request: NextRequest) {
             { status: 201 }
         );
     } catch (error: any) {
-        console.error("Create passenger booking error:", error);
+        console.error("Create passenger booking error:", error?.code || error?.message);
         return NextResponse.json(
-            { error: error.message || "Failed to create booking" },
+            { error: "Failed to create booking. Please try again." },
             { status: 500 }
         );
     }

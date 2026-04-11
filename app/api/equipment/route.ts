@@ -158,9 +158,9 @@ export async function POST(request: NextRequest) {
             message: `${item.name} added successfully`
         }, { status: 201 });
     } catch (error: any) {
-        console.error("Add equipment error:", error);
+        console.error("Add equipment error:", error?.code || error?.message);
         return NextResponse.json(
-            { error: error.message || "Failed to add equipment" }, 
+            { error: "Failed to add equipment" }, 
             { status: 500 }
         );
     }

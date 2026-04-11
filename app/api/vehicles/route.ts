@@ -158,9 +158,9 @@ export async function POST(request: NextRequest) {
             message: `Vehicle ${vehicle.registrationNo} added to waitlist`
         }, { status: 201 });
     } catch (error: any) {
-        console.error("Add vehicle error:", error);
+        console.error("Add vehicle error:", error?.code || error?.message);
         return NextResponse.json(
-            { error: error.message || "Failed to add vehicle" },
+            { error: "Failed to add vehicle" },
             { status: 500 }
         );
     }

@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
         const body = await request.json();
         const { name, firstName, lastName, email, countryCode, mobileNumber, role, agentCode, password, designation } = body;
 
-        console.log("Creating user with data:", { name, firstName, lastName, email, countryCode, mobileNumber, role, agentCode, designation });
+
 
         // Support both single "name" field or split "firstName/lastName"
         let fName = firstName;
@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
             lName = parts.slice(1).join(" ") || " ";
         }
 
-        console.log("Parsed names:", { fName, lName, email, mobileNumber });
+
 
         if (!fName
             // || !lName 
@@ -120,7 +120,7 @@ export async function POST(request: NextRequest) {
 
         return NextResponse.json({ user }, { status: 201 });
     } catch (error: any) {
-        console.error("User creation error:", error);
+        console.error("User creation error:", error?.code || error?.message);
         if (error.code === "P2002") {
             return NextResponse.json(
                 { error: "Email or mobile number already exists" },
@@ -128,7 +128,7 @@ export async function POST(request: NextRequest) {
             );
         }
         return NextResponse.json(
-            { error: "Failed to create user", details: error.message },
+            { error: "Failed to create user" },
             { status: 500 }
         );
     }

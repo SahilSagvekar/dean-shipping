@@ -519,7 +519,7 @@ export async function POST(request: NextRequest) {
         }
 
         return NextResponse.json(
-            { error: error.message || "Failed to create booking" },
+            { error: "Failed to create booking. Please try again." },
             { status: 500 }
         );
     }
