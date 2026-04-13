@@ -4,6 +4,7 @@
 // Handles file uploads to Cloudinary
 
 import { v2 as cloudinary } from "cloudinary";
+import { retry, retryableChecks } from "./retry";
 
 const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
 const apiKey = process.env.CLOUDINARY_API_KEY;
@@ -30,29 +31,40 @@ export async function uploadToCloudinary(
     buffer: Buffer,
     path: string
 ): Promise<string> {
-    // Split path into folder and filename (excluding extension for public_id)
     const pathParts = path.split("/");
     const filenameWithExt = pathParts.pop() || "image";
     const folder = pathParts.join("/");
     const publicId = filenameWithExt.split(".")[0];
 
-    return new Promise((resolve, reject) => {
-        const uploadStream = cloudinary.uploader.upload_stream(
-            {
-                folder: folder || "general",
-                public_id: publicId,
-                resource_type: "auto",
+    return retry(
+        () =>
+            new Promise<string>((resolve, reject) => {
+                const uploadStream = cloudinary.uploader.upload_stream(
+                    {
+                        folder: folder || "general",
+                        public_id: publicId,
+                        resource_type: "auto",
+                        timeout: 30_000,
+                    },
+                    (error, result) => {
+                        if (error) {
+                            console.error("Cloudinary upload error:", error);
+                            return reject(new Error(`Cloudinary upload failed: ${error.message}`));
+                        }
+                        resolve(result!.secure_url);
+                    }
+                );
+                uploadStream.end(buffer);
+            }),
+        {
+            maxAttempts: 3,
+            initialDelayMs: 1_000,
+            isRetryable: retryableChecks.cloudinary,
+            onRetry: (attempt, err) => {
+                console.warn(`[Cloudinary] Retry #${attempt}:`, (err as Error).message);
             },
-            (error, result) => {
-                if (error) {
-                    console.error("Cloudinary upload error:", error);
-                    return reject(new Error(`Cloudinary upload failed: ${error.message}`));
-                }
-                resolve(result!.secure_url);
-            }
-        );
-        uploadStream.end(buffer);
-    });
+        }
+    );
 }
 
 /**

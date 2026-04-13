@@ -22,8 +22,12 @@ export async function GET(request: NextRequest) {
     // Calculate start date based on range
     let startDate = new Date(today);
     let prevStartDate = new Date(today);
+    const isAllTime = range === "all";
     
-    if (range === "7d") {
+    if (isAllTime) {
+        startDate = new Date(0); // epoch
+        prevStartDate = new Date(0);
+    } else if (range === "7d") {
         startDate.setDate(startDate.getDate() - 7);
         prevStartDate.setDate(prevStartDate.getDate() - 14);
     } else if (range === "30d") {
@@ -55,34 +59,39 @@ export async function GET(request: NextRequest) {
             upcomingVoyages,
             recentIncidents,
             openIncidentsCount,
+            revenueChartData,
         ] = await Promise.all([
             // Total shipments in range
             prisma.cargoBooking.count({
-                where: { createdAt: { gte: startDate, lt: tomorrow } },
+                where: isAllTime ? {} : { createdAt: { gte: startDate, lt: tomorrow } },
             }),
             // Total shipments in previous range
             prisma.cargoBooking.count({
-                where: { createdAt: { gte: prevStartDate, lt: startDate } },
+                where: isAllTime ? {} : { createdAt: { gte: prevStartDate, lt: startDate } },
             }),
             // Cash collected in range
             prisma.invoice.aggregate({
-                where: { paidAt: { gte: startDate, lt: tomorrow }, paymentStatus: "PAID" },
+                where: isAllTime
+                    ? { paymentStatus: "PAID" }
+                    : { paidAt: { gte: startDate, lt: tomorrow }, paymentStatus: "PAID" },
                 _sum: { totalAmount: true },
                 _count: true,
             }),
             // Cash collected in previous range
             prisma.invoice.aggregate({
-                where: { paidAt: { gte: prevStartDate, lt: startDate }, paymentStatus: "PAID" },
+                where: isAllTime
+                    ? { paymentStatus: "PAID" }
+                    : { paidAt: { gte: prevStartDate, lt: startDate }, paymentStatus: "PAID" },
                 _sum: { totalAmount: true },
             }),
             // Total revenue in range
             prisma.invoice.aggregate({
-                where: { createdAt: { gte: startDate, lt: tomorrow } },
+                where: isAllTime ? {} : { createdAt: { gte: startDate, lt: tomorrow } },
                 _sum: { totalAmount: true },
             }),
             // Total revenue in previous range
             prisma.invoice.aggregate({
-                where: { createdAt: { gte: prevStartDate, lt: startDate } },
+                where: isAllTime ? {} : { createdAt: { gte: prevStartDate, lt: startDate } },
                 _sum: { totalAmount: true },
             }),
             // Pending payments (Global)
@@ -93,17 +102,15 @@ export async function GET(request: NextRequest) {
             }),
             // Pending pickups in range
             prisma.cargoBooking.count({
-                where: {
-                    paymentStatus: "UNPAID",
-                    bookingDate: { gte: startDate, lt: tomorrow },
-                },
+                where: isAllTime
+                    ? { paymentStatus: "UNPAID" }
+                    : { paymentStatus: "UNPAID", bookingDate: { gte: startDate, lt: tomorrow } },
             }),
             // Completed pickups in range
             prisma.cargoBooking.count({
-                where: {
-                    paymentStatus: "PAID",
-                    bookingDate: { gte: startDate, lt: tomorrow },
-                },
+                where: isAllTime
+                    ? { paymentStatus: "PAID" }
+                    : { paymentStatus: "PAID", bookingDate: { gte: startDate, lt: tomorrow } },
             }),
             // Recent cargo bookings (limit for UI)
             prisma.cargoBooking.findMany({
@@ -117,7 +124,7 @@ export async function GET(request: NextRequest) {
             }),
             // All cargo bookings in range (for export)
             prisma.cargoBooking.findMany({
-                where: { createdAt: { gte: startDate, lt: tomorrow } },
+                where: isAllTime ? {} : { createdAt: { gte: startDate, lt: tomorrow } },
                 include: {
                     user: { select: { firstName: true, lastName: true } },
                     items: { select: { itemType: true, total: true } },
@@ -173,6 +180,36 @@ export async function GET(request: NextRequest) {
                 take: 5,
             }),
             prisma.incidentReport.count({ where: { status: "OPEN" } }),
+            // Revenue chart data - group invoices by week/month
+            (async () => {
+                const invoices = await prisma.invoice.findMany({
+                    where: {
+                        createdAt: isAllTime ? undefined : { gte: startDate, lt: tomorrow },
+                    },
+                    select: { totalAmount: true, createdAt: true },
+                    orderBy: { createdAt: "asc" },
+                });
+                // Group into buckets
+                if (invoices.length === 0) return [];
+                const bucketCount = Math.min(7, Math.max(3, invoices.length));
+                const earliest = invoices[0].createdAt.getTime();
+                const latest = invoices[invoices.length - 1].createdAt.getTime();
+                const span = latest - earliest || 1;
+                const bucketSize = span / bucketCount;
+                const buckets: { name: string; value: number }[] = [];
+                for (let i = 0; i < bucketCount; i++) {
+                    const bStart = new Date(earliest + i * bucketSize);
+                    const bEnd = new Date(earliest + (i + 1) * bucketSize);
+                    const total = invoices
+                        .filter((inv) => inv.createdAt >= bStart && inv.createdAt < bEnd)
+                        .reduce((sum, inv) => sum + (inv.totalAmount || 0), 0);
+                    buckets.push({
+                        name: bStart.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+                        value: Math.round(total * 100) / 100,
+                    });
+                }
+                return buckets;
+            })(),
         ]);
 
         // Calculate percentage changes
@@ -216,10 +253,10 @@ export async function GET(request: NextRequest) {
             recentPassengerBookings,
             upcomingVoyages,
             recentIncidents,
+            revenueChartData,
         });
     } catch (error) {
         console.error("Dashboard stats error:", error);
         return NextResponse.json({ error: "Failed to fetch stats" }, { status: 500 });
     }
 }
-

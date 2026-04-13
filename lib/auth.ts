@@ -3,6 +3,8 @@
 // ============================================
 // JWT-based auth with Firebase phone verification
 
+
+
 import { NextRequest, NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
 import prisma from "./prisma";
@@ -11,6 +13,81 @@ import bcrypt from "bcryptjs";
 
 const JWT_SECRET = process.env.JWT_SECRET!;
 const JWT_EXPIRES_IN = "7d";
+
+
+// ============================================
+// AUTH VALIDATION SCHEMAS
+// ============================================
+
+import { z } from "zod";
+
+const email = z
+    .string()
+    .min(1, "Email is required")
+    .email("Invalid email format")
+    .max(255, "Email must be under 255 characters");
+
+const mobileNumber = z
+    .string()
+    .min(1, "Mobile number is required")
+    .max(20, "Mobile number too long")
+    .regex(/^[0-9+\-\s()]+$/, "Invalid mobile number format");
+
+const name = z
+    .string()
+    .min(1, "Name is required")
+    .max(100, "Name must be under 100 characters")
+    .trim();
+
+export const loginSchema = z.object({
+    firebaseIdToken: z.string().optional(),
+    loginType: z.enum(["user", "agent", "admin", "USER", "AGENT", "ADMIN"]).optional(),
+    mobileNumber: z.string().max(20).optional(),
+    password: z.string().max(200).optional(),
+});
+
+export const registerSchema = z.object({
+    firebaseIdToken: z.string().min(1, "Firebase token is required"),
+    firstName: name,
+    lastName: name,
+    email,
+    countryCode: z
+        .string()
+        .max(5, "Country code too long")
+        .regex(/^\+\d{1,4}$/, "Invalid country code")
+        .optional()
+        .default("+1"),
+    mobileNumber,
+});
+
+export const createUserSchema = z.object({
+    name: z.string().max(200).optional(),
+    firstName: z.string().max(100).trim().optional(),
+    lastName: z.string().max(100).trim().optional(),
+    email,
+    countryCode: z.string().max(5).optional().default("+1"),
+    mobileNumber,
+    role: z.enum(["USER", "AGENT", "ADMIN"]).optional().default("USER"),
+    agentCode: z.string().max(20).optional(),
+    password: z.string().min(8, "Password must be at least 8 characters").max(200).optional(),
+    designation: z.string().max(100).optional(),
+}).refine(
+    (data) => data.firstName || data.name,
+    { message: "Either firstName or name is required", path: ["firstName"] }
+);
+
+export const updateUserSchema = z.object({
+    firstName: z.string().max(100).trim().optional(),
+    lastName: z.string().max(100).trim().optional(),
+    email: z.string().email().max(255).optional(),
+    avatarUrl: z.string().url().max(500).optional().nullable(),
+    role: z.enum(["USER", "AGENT", "ADMIN"]).optional(),
+    isActive: z.boolean().optional(),
+    agentCode: z.string().max(20).optional(),
+    mobileNumber: z.string().max(20).optional(),
+    countryCode: z.string().max(5).optional(),
+    password: z.string().min(8).max(200).optional(),
+});
 
 // Define Role type locally to avoid Prisma client generation issues on build
 type Role = "USER" | "AGENT" | "ADMIN";

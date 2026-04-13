@@ -587,6 +587,9 @@ model CargoBooking {
   @@index([bookingDate])
   @@index([userId])
   @@index([voyageId])
+  @@index([createdAt])
+  @@index([paymentStatus, bookingDate])
+  @@index([fromLocation, toLocation])
 }
 
 model CargoItem {
@@ -670,6 +673,7 @@ model PassengerBooking {
   @@index([bookingDate])
   @@index([userId])
   @@index([voyageId])
+  @@index([createdAt])
 }
 
 // ============================================
@@ -818,6 +822,8 @@ model Invoice {
   @@index([paymentStatus])
   @@index([userId])
   @@index([dueDate])
+  @@index([createdAt])
+  @@index([paidAt])
 }
 
 // ============================================

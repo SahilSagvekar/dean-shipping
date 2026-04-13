@@ -30,6 +30,7 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get("limit") || "20");
     const status = searchParams.get("status") || undefined;
     const service = searchParams.get("service") || undefined;
+    const type = searchParams.get("type") || undefined;
     const from = searchParams.get("from") || undefined;
     const to = searchParams.get("to") || undefined;
     const skip = (page - 1) * limit;
@@ -43,6 +44,7 @@ export async function GET(request: NextRequest) {
 
     if (status) where.paymentStatus = status;
     if (service) where.service = service;
+    if (type) where.type = type;
     if (from) where.fromLocation = from;
     if (to) where.toLocation = to;
 
@@ -55,6 +57,7 @@ export async function GET(request: NextRequest) {
                 },
                 items: true,
                 images: true,
+                invoice: { select: { paymentMode: true, paymentStatus: true } },
                 _count: { select: { images: true } },
             },
             orderBy: { createdAt: "desc" },
