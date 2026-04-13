@@ -291,29 +291,36 @@ async function main() {
     console.log(`  ✅ ${priceCount} prices created`);
 
     // ============================================
-    // 4. SCHEDULES (20 recurring schedules)
+    // 4. SCHEDULES (20 schedules)
     // ============================================
     console.log("\n📅 Creating schedules...");
     const scheduleData = [];
-    const daysOfWeek = ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"];
+    const weekdays = ["MON", "TUE", "WED", "THU", "FRI", "SAT"];
+    const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
     
     for (let i = 0; i < 20; i++) {
-        const from = randomElement(locations);
-        let to = randomElement(locations);
-        while (to.id === from.id) to = randomElement(locations);
-
+        const scheduleDate = randomDate(-30, 60);
         scheduleData.push({
-            name: `Route ${from.code} → ${to.code} #${i + 1}`,
+            date: scheduleDate,
+            weekday: weekdays[scheduleDate.getDay() === 0 ? 6 : scheduleDate.getDay() - 1] || "MON",
+            month: months[scheduleDate.getMonth()],
             shipName: randomElement(SHIP_NAMES),
-            departureDay: randomElement(daysOfWeek),
-            departureTime: `${randomInt(6, 18)}:${randomElement(["00", "30"])}`,
-            fromLocationId: from.id,
-            toLocationId: to.id,
-            isActive: Math.random() > 0.1,
+            isHoliday: Math.random() > 0.9,
+            isLaunched: Math.random() > 0.3,
+            isPublished: Math.random() > 0.4,
         });
     }
 
-    await batchInsert("schedule", scheduleData);
+    // Use individual creates to handle unique constraint
+    let scheduleCount = 0;
+    for (const sched of scheduleData) {
+        try {
+            await prisma.schedule.create({ data: sched });
+            scheduleCount++;
+        } catch (e) {
+            // Skip duplicates (same date + shipName)
+        }
+    }
     const schedules = await prisma.schedule.findMany();
     console.log(`  ✅ ${schedules.length} schedules created`);
 
@@ -354,6 +361,7 @@ async function main() {
     // ============================================
     console.log("\n📦 Creating 8000 cargo bookings...");
     const cargoBookings = [];
+    const idTypes = ["Passport", "Driver's License", "National ID", "Voter's Card"];
     
     for (let i = 1; i <= 8000; i++) {
         const user = randomElement(regularUsers);
@@ -375,13 +383,15 @@ async function main() {
             service,
             boxSubType: service === "BOX" ? randomElement(BOX_SUBTYPES) : null,
             containerNo: service === "CONTAINER" ? `CONT${randomInt(10000, 99999)}` : null,
-            type: service === "CONTAINER" ? randomElement(["DRY", "FROZEN", "COOLER"]) : null,
+            type: randomElement(["DRY", "FROZEN", "COOLER"]),
             bookingDate: randomDate(-120, 30),
             fromLocation: fromLoc.code,
             toLocation: toLoc.code,
             contactName: `${user.firstName} ${user.lastName}`,
             contactPhone: user.mobileNumber,
             contactEmail: user.email,
+            address: `${randomInt(1, 999)} ${randomElement(["Bay Street", "East Street", "Blue Hill Road", "Robinson Road", "Nassau Street", "Queen's Highway"])} ${randomElement(["Nassau", "Freeport", "Marsh Harbour"])}`,
+            idType: randomElement(idTypes),
             paymentStatus: randomElement(PAYMENT_STATUSES),
             subtotal,
             vatPercent,
@@ -400,6 +410,7 @@ async function main() {
     // ============================================
     console.log("\n📋 Creating cargo items...");
     const cargoItems = [];
+    const cargoCategories = ["DRY_BOX", "FROZEN_BOX", "COOLER_BOX", "ENVELOPE", "LUGGAGE", "PALLET", "CONTAINER"];
     
     for (const booking of createdCargoBookings) {
         const itemCount = randomInt(1, 4);
@@ -407,14 +418,14 @@ async function main() {
             const quantity = randomInt(1, 10);
             const unitPrice = randomFloat(10, 200);
             cargoItems.push({
-                cargoBookingId: booking.id,
-                itemType: randomElement([...CARGO_SIZES, "Fragile", "Hazardous", "Live"]),
-                quantity,
-                weight: randomFloat(0.5, 50),
-                dimensions: `${randomInt(10, 100)}x${randomInt(10, 100)}x${randomInt(10, 100)}`,
-                description: `Item ${j + 1} for booking`,
+                bookingId: booking.id,
+                itemType: randomElement(["DRY BOX(S)", "FROZEN BOX(M)", "Container (20ft)", "Pallet (4ft)", "Luggage", "Envelope"]),
+                category: randomElement(cargoCategories),
+                size: randomElement(["Small", "Medium", "Large"]),
                 unitPrice,
+                quantity,
                 total: quantity * unitPrice,
+                isPaid: booking.paymentStatus === "PAID",
             });
         }
     }
@@ -586,13 +597,13 @@ async function main() {
     const manifestItems = [];
     const cargoBookingsWithVoyage = await prisma.cargoBooking.findMany({
         where: { voyageId: { not: null } },
-        select: { id: true, voyageId: true, contactName: true, totalAmount: true },
+        select: { id: true, voyageId: true, contactName: true, totalAmount: true, invoiceNo: true },
         take: 6000,
     });
 
     const passengerBookingsWithVoyage = await prisma.passengerBooking.findMany({
         where: { voyageId: { not: null } },
-        select: { id: true, voyageId: true, name: true, totalAmount: true },
+        select: { id: true, voyageId: true, name: true, totalAmount: true, invoiceNo: true },
         take: 4000,
     });
 
@@ -600,6 +611,7 @@ async function main() {
         manifestItems.push({
             voyageId: booking.voyageId,
             cargoBookingId: booking.id,
+            invoiceNo: booking.invoiceNo,
             senderName: booking.contactName,
             receiverName: `${randomElement(FIRST_NAMES)} ${randomElement(LAST_NAMES)}`,
             itemDetails: `Cargo shipment`,
@@ -615,7 +627,9 @@ async function main() {
         manifestItems.push({
             voyageId: booking.voyageId,
             passengerBookingId: booking.id,
+            invoiceNo: booking.invoiceNo,
             senderName: booking.name,
+            receiverName: booking.name,
             itemDetails: `Passenger ticket`,
             quantity: 1,
             amount: booking.totalAmount,
