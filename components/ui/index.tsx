@@ -127,7 +127,7 @@ export function ServiceIcon({
 }) {
   const iconSvgs: Record<string, React.ReactNode> = {
     vehicle: (
-      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <svg className="w-6 h-6 md:w-10 md:h-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
         <rect x="1" y="3" width="15" height="13" rx="2"/>
         <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/>
         <circle cx="5.5" cy="18.5" r="2.5"/>
@@ -135,14 +135,14 @@ export function ServiceIcon({
       </svg>
     ),
     cargo: (
-      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <svg className="w-6 h-6 md:w-10 md:h-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
         <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
         <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
         <line x1="12" y1="22.08" x2="12" y2="12"/>
       </svg>
     ),
     passenger: (
-      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <svg className="w-6 h-6 md:w-10 md:h-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
         <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
         <circle cx="9" cy="7" r="4"/>
         <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
@@ -153,43 +153,14 @@ export function ServiceIcon({
 
   return (
     <div 
-      className={`fade-in ${delay} ${isLoaded ? 'visible' : ''}`} 
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        gap: '1rem',
-        cursor: 'pointer',
-        transition: 'transform 0.3s ease',
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.transform = 'translateY(-5px)';
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.transform = 'translateY(0)';
-      }}
+      className={`fade-in ${delay} ${isLoaded ? 'visible' : ''} flex flex-col items-center gap-2 md:gap-4 cursor-pointer transition-transform hover:-translate-y-1`}
     >
-      <div style={{
-        width: '90px',
-        height: '90px',
-        borderRadius: '50%',
-        border: '2px solid rgba(255,255,255,0.3)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        color: 'white',
-        transition: 'all 0.3s ease',
-        backgroundColor: 'rgba(255,255,255,0.05)',
-      }}>
+      <div className="w-16 h-16 md:w-[90px] md:h-[90px] rounded-full border-2 border-white/30 flex items-center justify-center text-white bg-white/5 transition-all">
         {iconSvgs[icon]}
       </div>
-      <span style={{
-        color: 'var(--text-light)',
-        fontSize: '0.95rem',
-        fontWeight: 500,
-        letterSpacing: '1px',
-        textTransform: 'uppercase',
-      }}>{label}</span>
+      <span className="text-[var(--text-light)] text-xs md:text-[0.95rem] font-medium tracking-[1px] uppercase">
+        {label}
+      </span>
     </div>
   );
 }

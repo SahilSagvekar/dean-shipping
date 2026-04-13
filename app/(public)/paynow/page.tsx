@@ -169,9 +169,9 @@ function PayNowContent() {
         (invoice.paymentStatus === "UNPAID" || invoice.paymentStatus === "PARTIAL");
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-[#f0f8f4] via-white to-[#f0f8f4]">
+        <div className="min-h-screen bg-gradient-to-br from-[#f0f8f4] via-white to-[#f0f8f4] pt-[72px] md:pt-[120px]">
             {/* ── Header Bar ─────────────────────────────────────────────────── */}
-            <div className="bg-[#296341] text-white py-12 px-4 text-center relative overflow-hidden">
+            <div className="bg-[#296341] text-white py-8 md:py-12 px-4 text-center relative overflow-hidden">
                 {/* Decorative circles */}
                 <div className="absolute -top-24 -left-16 w-64 h-64 rounded-full bg-white/5" />
                 <div className="absolute -bottom-16 -right-8 w-48 h-48 rounded-full bg-white/5" />
