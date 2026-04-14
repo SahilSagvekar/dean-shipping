@@ -356,7 +356,7 @@ export default function App() {
       <main className="max-w-[1400px] mx-auto px-4 sm:px-8 py-4 sm:py-8">
         {/* Top row: title left, user info right */}
         <div className="flex items-start justify-between mb-6">
-          <h1 className="text-[40px] font-black text-[#296341] italic tracking-tighter">
+          <h1 className="text-[40px] font-black text-[#296341] tracking-tighter">
             <span className="border-b-8 border-[#296341]/20">DASHBOARD</span> OVERVIEW
           </h1>
 

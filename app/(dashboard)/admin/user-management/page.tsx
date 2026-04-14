@@ -212,7 +212,7 @@ export default function UserManagement() {
       <main className="max-w-[1400px] mx-auto px-4 lg:px-8 pb-8 flex-1 w-full">
         {/* Title */}
         <div className="mb-6 lg:mb-8 text-center lg:text-left">
-          <h1 className="text-[28px] lg:text-[40px] font-black text-[#296341] mb-1 italic tracking-tighter uppercase leading-none">
+          <h1 className="text-[28px] lg:text-[40px] font-black text-[#296341] mb-1 tracking-tighter uppercase leading-none">
             USER MANAGEMENT
           </h1>
           <p className="text-[14px] lg:text-[18px] text-gray-500 font-bold uppercase tracking-widest mb-2">Passenger Booking Records</p>
