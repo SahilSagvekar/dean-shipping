@@ -13,7 +13,11 @@ import {
   Ship,
   Calendar,
   Loader2,
+  DollarSign,
+  Eye,
+  X,
 } from "lucide-react";
+import { DashboardBanner } from "@/components/ui/DashboardBanner";
 import imgIllustration from "@/app/assets/fc4d24c0a5d260c8ee523edd7416ec133186b7d1.png";
 import imgLogo from "@/app/assets/0630bc807bbd9122cb449e66c33d18d13536d121.png";
 
@@ -395,14 +399,13 @@ function VehicleBookingContent() {
         className="hidden"
       />
 
-      {/* Illustration */}
-      <div className="flex justify-center mb-6 md:mb-8 px-4 sm:px-8">
-        <img
-          src={imgIllustration.src}
-          alt="Vehicle Booking"
-          className="w-full max-w-[800px] h-auto object-contain"
-        />
-      </div>
+      {/* Standardized Hero Banner */}
+      <DashboardBanner 
+        imageSrc={imgIllustration.src} 
+        alt="Vehicle Booking" 
+        objectFit="contain"
+        className="mb-6 md:mb-8"
+      />
 
       {/* Main Content Area */}
       <main className="max-w-[1400px] mx-auto px-4 sm:px-8 pb-16 md:pb-32 flex-1 w-full relative">

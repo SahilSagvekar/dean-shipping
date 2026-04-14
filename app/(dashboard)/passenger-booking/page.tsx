@@ -20,6 +20,7 @@ import {
   Upload,
   Image as ImageIcon
 } from 'lucide-react';
+import { DashboardBanner } from "@/components/ui/DashboardBanner";
 import { useAuth } from '@/lib/auth-context';
 import { toast } from 'sonner';
 import imgBookingIllustration from "@/app/assets/cfa31b3ce2eb14a48a0ef2738b4164b16c74ab53.png";
@@ -470,14 +471,13 @@ function PassengerBookingContent() {
         className="hidden"
       />
 
-      {/* Hero Illustration */}
-      <div className="flex justify-center px-4 sm:px-8 bg-[#effaf6] py-6 sm:py-10 border-b border-[#296341]/10">
-        <img
-          src={imgBookingIllustration.src}
-          alt="Passenger Booking Illustration"
-          className="w-full max-w-[800px] h-auto object-contain max-h-[220px] sm:max-h-[300px] md:max-h-none hover:scale-105 transition-transform duration-700"
-        />
-      </div>
+      {/* Standardized Hero Banner */}
+      <DashboardBanner 
+        imageSrc={imgBookingIllustration.src} 
+        alt="Passenger Booking Illustration" 
+        objectFit="contain"
+        className="bg-[#effaf6] mb-0"
+      />
 
       <main className="max-w-[1400px] mx-auto px-4 sm:px-8 pb-16 md:pb-32 flex-1 w-full relative pt-8 sm:pt-12">
         <div className="flex flex-col lg:flex-row gap-8 lg:gap-16">

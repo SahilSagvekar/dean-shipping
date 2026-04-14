@@ -24,6 +24,7 @@ import {
   ArrowRight,
   Anchor
 } from "lucide-react";
+import { DashboardBanner } from "@/components/ui/DashboardBanner";
 import image2 from "@/app/assets/cc1821c6ea8a81adb203fcf9b1bb2ee371bbcbed.png";
 import imgLogo from "@/app/assets/0630bc807bbd9122cb449e66c33d18d13536d121.png";
 
@@ -705,17 +706,13 @@ export default function VehicleWaitlistPage() {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Header */}
-      <header className="flex items-center justify-center p-4 sm:p-6 bg-white/50 backdrop-blur-sm border-b border-gray-100">
-        <div className="flex flex-col items-center gap-2">
-          <img
-            src={image2.src}
-            alt="Vehicle"
-            className="h-24 sm:h-32 md:h-40 object-contain transition-all hover:scale-105 duration-300"
-          />
-          <h1 className="text-xl sm:text-2xl font-black text-[#132540] tracking-tight sm:hidden">VEHICLE MANAGEMENT</h1>
-        </div>
-      </header>
+      {/* Standardized Hero Banner */}
+      <DashboardBanner 
+        imageSrc={image2.src} 
+        alt="Vehicle" 
+        objectFit="contain"
+        className="bg-white/50 mb-0"
+      />
 
       {/* Action Buttons */}
       <div className="px-4 sm:px-6 flex flex-col sm:flex-row gap-3 sm:gap-4 mb-6 sm:mb-8 max-w-[1200px] mx-auto mt-4 sm:mt-6">

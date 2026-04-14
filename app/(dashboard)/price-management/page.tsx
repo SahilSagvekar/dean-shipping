@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Trash2, Edit2, ChevronDown, Plus, Loader2, ArrowRight, X, Package, Snowflake, Thermometer, Mail, Container, Briefcase, LayoutGrid, Car, Layers, Users } from "lucide-react";
+import { DashboardBanner } from "@/components/ui/DashboardBanner";
 import imgDesk from "@/app/assets/ab576223d2665babdbfbcf0c2c488ca622b1efd4.png";
 import imgLogo from "@/app/assets/0630bc807bbd9122cb449e66c33d18d13536d121.png";
 import { useAuth } from "@/lib/auth-context";
@@ -249,16 +250,13 @@ function PriceManagementContent() {
 
   return (
     <div className="bg-white min-h-screen">
-      {/* Hero Illustration */}
-      <div className="flex justify-center mb-8 lg:mb-12 px-4 lg:px-8 pt-4">
-        <div className="relative w-full max-w-[800px] aspect-[800/500] overflow-hidden rounded-xl">
-          <img
-            src={imgDesk.src}
-            alt="Price Management illustration"
-            className="w-full h-full object-contain"
-          />
-        </div>
-      </div>
+      {/* Standardized Hero Banner */}
+      <DashboardBanner 
+        imageSrc={imgDesk.src} 
+        alt="Price Management illustration" 
+        objectFit="contain"
+        className="mb-8 lg:mb-12 bg-gray-50/50"
+      />
 
       <main className="max-w-[1400px] mx-auto px-4 lg:px-8 pb-12 flex-1 w-full">
         {/* Title Section */}

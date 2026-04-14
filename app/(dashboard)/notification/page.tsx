@@ -21,6 +21,7 @@ import {
   Send,
   Settings
 } from "lucide-react";
+import { DashboardBanner } from "@/components/ui/DashboardBanner";
 import imgUntitled71 from "@/app/assets/3956b95e786ae07d9128fd4f6de57a9d0b031af5.png";
 
 // Types
@@ -405,16 +406,13 @@ export default function NotificationsPage() {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Header Image */}
-      <header className="relative bg-[#effaf6] py-8 sm:py-0">
-        <div className="flex justify-center">
-          <img
-            src={imgUntitled71.src}
-            alt="Notification"
-            className="h-48 sm:h-64 md:h-80 object-contain hover:scale-105 transition-transform duration-500"
-          />
-        </div>
-      </header>
+      {/* Standardized Hero Banner */}
+      <DashboardBanner 
+        imageSrc={imgUntitled71.src} 
+        alt="Notification" 
+        objectFit="contain"
+        className="bg-[#effaf6] mb-0"
+      />
 
       {/* Main Content */}
       <div className="px-4 sm:px-8 md:px-12 max-w-[1400px] mx-auto py-6 sm:py-10">

@@ -28,6 +28,7 @@ import {
   Ship,
   Anchor
 } from 'lucide-react';
+import { DashboardBanner } from "@/components/ui/DashboardBanner";
 import { useAuth } from '@/lib/auth-context';
 import { toast } from 'sonner';
 import imgCargoShip from "@/app/assets/3f7d36fbe26222b564747f69753922efbd74194d.png";
@@ -2150,25 +2151,15 @@ export default function CargoBooking() {
         className="hidden"
       />
 
-      {/* Hero Section with Service Title */}
-      <div className={`bg-gradient-to-r ${currentServiceConfig.headerBg} text-white py-6 sm:py-8 px-4 sm:px-8`}>
-        <div className="max-w-[1400px] mx-auto">
-          <div className="flex items-center gap-4 mb-3 sm:mb-4">
-            <button className="p-2 hover:bg-white/10 rounded-lg transition-colors">
-              <ChevronDown className="w-5 h-5 sm:w-6 sm:h-6 rotate-90" />
-            </button>
-            <span className="text-[12px] sm:text-sm font-medium uppercase tracking-wider opacity-80">ENTRY</span>
-          </div>
-          <div className="flex items-center gap-3 sm:gap-4">
-            <div className="p-2 sm:p-3 bg-white/20 rounded-xl [&>svg]:w-6 [&>svg]:h-6 sm:[&>svg]:w-8 sm:[&>svg]:h-8">
-              {service === 'BOX' ? BOX_SUBTYPE_CONFIGS[boxSubType].icon : currentServiceConfig.icon}
-            </div>
-            <h1 className="text-2xl sm:text-3xl md:text-4xl font-black tracking-wide">
-              {getServiceTitle()}
-            </h1>
-          </div>
-        </div>
-      </div>
+      {/* Standardized Hero Banner */}
+      <DashboardBanner 
+        imageSrc={imgCargoShip.src} 
+        alt="Cargo Shipping" 
+        overlay
+        title={service === 'BOX' ? BOX_SUBTYPE_CONFIGS[boxSubType].label : currentServiceConfig.title}
+        subtitle="Professional Logistics Services"
+        className={`bg-gradient-to-r ${currentServiceConfig.headerBg} rounded-t-none`}
+      />
 
       <main className="max-w-[1400px] mx-auto px-4 sm:px-8 py-6 sm:py-8 pb-32">
 

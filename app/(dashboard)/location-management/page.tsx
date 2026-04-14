@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { MapPin, Plus, Trash2, Edit2, Loader2, X, Check, Save, AlertCircle, Search } from 'lucide-react';
+import { DashboardBanner } from "@/components/ui/DashboardBanner";
 import imgLogo from "@/app/assets/0630bc807bbd9122cb449e66c33d18d13536d121.png";
 import imgHero from "@/app/assets/b493fe526d34a8d0e654480300ff88ab45d2dde1.png";
 import { useAuth } from "@/lib/auth-context";
@@ -130,21 +131,15 @@ export default function LocationManagement() {
 
     return (
         <div className="bg-white min-h-screen flex flex-col">
-            {/* Hero Section */}
-            <div className="flex justify-center mb-6 lg:mb-12 px-4 lg:px-8 pt-4 lg:pt-8">
-                <div className="relative w-full max-w-[1000px] aspect-[1000/400] overflow-hidden rounded-xl shadow-lg">
-                    <img
-                        src={imgHero.src}
-                        alt="Location Management"
-                        className="w-full h-full object-cover"
-                    />
-                    <div className="absolute inset-0 bg-black/20" />
-                    <div className="absolute bottom-4 left-6 lg:bottom-8 lg:left-12">
-                        <h1 className="text-white text-[28px] lg:text-[48px] font-bold tracking-tight">PORT & LOCATION</h1>
-                        <h2 className="text-white/90 text-[14px] lg:text-[24px] font-medium uppercase tracking-[0.2em]">Management System</h2>
-                    </div>
-                </div>
-            </div>
+            {/* Standardized Hero Banner */}
+            <DashboardBanner 
+                imageSrc={imgHero.src} 
+                alt="Location Management" 
+                overlay
+                title="PORT & LOCATION"
+                subtitle="Management System"
+                className="mb-6 lg:mb-12 rounded-t-none"
+            />
 
             <main className="max-w-[1400px] mx-auto px-4 lg:px-8 pb-12 w-full flex-1">
                 {/* Header Action Row */}

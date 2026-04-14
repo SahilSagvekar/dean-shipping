@@ -15,9 +15,11 @@ import {
   User,
   Building,
   Phone,
-  Hash
+  Hash,
+  Anchor
 } from "lucide-react";
 import imgPngClipartOccupationalSafetyRemovebgPreview1 from "@/app/assets/b44f74b3456b5fbbf83fdac0d10a96c2051e7d69.png";
+import { DashboardBanner } from "@/components/ui/DashboardBanner";
 
 export default function IncidentReport() {
   const { apiFetch, user } = useAuth();
@@ -141,14 +143,13 @@ export default function IncidentReport() {
 
   return (
     <div className="min-h-screen bg-white pb-20">
-      {/* Header Image Section */}
-      <div className="flex justify-center pt-8 pb-4">
-        <img
-          src={imgPngClipartOccupationalSafetyRemovebgPreview1.src}
-          alt="Safety"
-          className="h-48 md:h-64 object-contain"
-        />
-      </div>
+      {/* Standardized Hero Banner */}
+      <DashboardBanner 
+        imageSrc={imgPngClipartOccupationalSafetyRemovebgPreview1.src} 
+        alt="Safety" 
+        objectFit="contain"
+        className="bg-white pt-8 pb-4 mb-0"
+      />
 
       <div className="max-w-5xl mx-auto px-6">
         {/* Title */}

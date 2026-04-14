@@ -14,6 +14,7 @@ import {
   Printer,
   Download
 } from 'lucide-react';
+import { DashboardBanner } from "./ui/DashboardBanner";
 import imgCalculator from "@/app/assets/95d3e8d8f1cfe73bf74e2e7130445f7dba384e98.png";
 
 interface Invoice {
@@ -213,14 +214,13 @@ export default function CashierPage() {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Hero Image */}
-      <div className="flex justify-center mb-4 px-8">
-        <img
-          src={imgCalculator.src}
-          alt="Cashier"
-          className="w-full max-w-[600px] h-auto object-contain"
-        />
-      </div>
+      {/* Standardized Hero Banner */}
+      <DashboardBanner 
+        imageSrc={imgCalculator.src} 
+        alt="Cashier" 
+        objectFit="contain"
+        className="mb-4 bg-gray-50/20"
+      />
 
       <main className="max-w-[1400px] mx-auto px-4 sm:px-8 pb-16">
         {/* Search Bar */}

@@ -6,6 +6,7 @@ import imgLogo from "@/app/assets/0630bc807bbd9122cb449e66c33d18d13536d121.png";
 import imgHero from "@/app/assets/b493fe526d34a8d0e654480300ff88ab45d2dde1.png";
 import imgShipBg from "@/app/assets/cf53a64ce492864216e5a9b357abee066ed01103.png";
 import { useAuth } from "@/lib/auth-context";
+import { DashboardBanner } from "@/components/ui/DashboardBanner";
 
 // Types
 interface ScheduleEventStop {
@@ -954,14 +955,13 @@ function ScheduleManagementContent() {
 
   return (
     <div className="bg-white">
-      {/* Hero Illustration */}
-      <div className="flex justify-center mb-12 px-8">
-        <img
-          src={imgHero.src}
-          alt="Schedule Planning"
-          className="w-full max-w-[900px] h-auto"
-        />
-      </div>
+      {/* Standardized Hero Banner */}
+      <DashboardBanner 
+        imageSrc={imgHero.src} 
+        alt="Schedule Planning" 
+        objectFit="contain"
+        className="mb-8 lg:mb-12 bg-gray-50/50"
+      />
 
       <main className="max-w-[1400px] mx-auto px-8 pb-12 flex-1 w-full">
         {/* Title */}

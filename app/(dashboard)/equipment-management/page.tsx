@@ -20,6 +20,7 @@ import {
   AlertCircle
 } from "lucide-react";
 import image from "@/app/assets/e6c79afe715811b9fb95363def64518d57e9451c.png";
+import { DashboardBanner } from "@/components/ui/DashboardBanner";
 
 // Types
 interface Location {
@@ -463,16 +464,13 @@ export default function EquipmentManagementPage() {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Header Image */}
-      <header className="relative">
-        <div className="flex justify-center pt-2 pb-4">
-          <img
-            src={image.src}
-            alt="Warehouse Logistics"
-            className="h-48 md:h-56 object-contain"
-          />
-        </div>
-      </header>
+      {/* Standardized Hero Banner */}
+      <DashboardBanner 
+        imageSrc={image.src} 
+        alt="Warehouse Logistics" 
+        objectFit="contain"
+        className="mb-6 bg-gray-50/30"
+      />
 
       {/* Equipment List Section */}
       <section className="px-4 md:px-6 max-w-[1200px] mx-auto">
