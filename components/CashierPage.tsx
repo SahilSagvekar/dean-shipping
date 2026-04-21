@@ -12,9 +12,9 @@ import {
   ChevronLeft,
   ChevronRight,
   Printer,
-  Download
+  Download,
+  ArrowUpDown
 } from 'lucide-react';
-import { DashboardBanner } from "./ui/DashboardBanner";
 import imgCalculator from "@/app/assets/95d3e8d8f1cfe73bf74e2e7130445f7dba384e98.png";
 
 interface Invoice {
@@ -67,6 +67,8 @@ export default function CashierPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [sortField, setSortField] = useState<'createdAt' | 'paidAt'>('createdAt');
+  const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
   
   // Modal states
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
@@ -82,6 +84,8 @@ export default function CashierPage() {
         page: page.toString(),
         limit: '10',
         status: activeTab,
+        sort: sortField,
+        order: sortOrder,
       });
       if (search) params.append('search', search);
 
@@ -103,7 +107,7 @@ export default function CashierPage() {
 
   useEffect(() => {
     fetchInvoices(currentPage, searchQuery);
-  }, [activeTab, currentPage]);
+  }, [activeTab, currentPage, sortField, sortOrder]);
 
   // Handle search
   const handleSearch = (e: React.FormEvent) => {
@@ -131,14 +135,14 @@ export default function CashierPage() {
 
       if (res.ok) {
         toast.success(`Invoice marked as ${newStatus}`);
-        // Remove from current list if status changed
-        setInvoices(invoices.filter(inv => inv.id !== invoiceId));
         // Clear remark input
         setRemarkInputs(prev => {
           const updated = { ...prev };
           delete updated[invoiceId];
           return updated;
         });
+        // Re-fetch current page to get fresh data
+        await fetchInvoices(currentPage, searchQuery);
       } else {
         const data = await res.json();
         toast.error(data.error || 'Failed to update invoice');
@@ -214,13 +218,14 @@ export default function CashierPage() {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Standardized Hero Banner */}
-      <DashboardBanner 
-        imageSrc={imgCalculator.src} 
-        alt="Cashier" 
-        objectFit="contain"
-        className="mb-4 bg-gray-50/20"
-      />
+      {/* Hero Image */}
+      <div className="flex justify-center mb-4 px-8">
+        <img
+          src={imgCalculator.src}
+          alt="Cashier"
+          className="w-full max-w-[600px] h-auto object-contain"
+        />
+      </div>
 
       <main className="max-w-[1400px] mx-auto px-4 sm:px-8 pb-16">
         {/* Search Bar */}
@@ -265,6 +270,28 @@ export default function CashierPage() {
           >
             UNPAID
           </button>
+        </div>
+
+        {/* Sort Controls */}
+        <div className="flex items-center justify-end gap-3 mb-4 max-w-[1120px] mx-auto">
+          <button
+            onClick={() => setSortOrder(sortOrder === 'desc' ? 'asc' : 'desc')}
+            className="flex items-center gap-2 px-4 py-2 bg-white border-2 border-[#296341] rounded-lg text-sm font-bold text-[#296341] hover:bg-[#296341] hover:text-white transition-all active:scale-95"
+          >
+            <ArrowUpDown className="w-4 h-4" />
+            {sortOrder === 'desc' ? 'Newest First' : 'Oldest First'}
+          </button>
+          {activeTab === 'PAID' && (
+            <button
+              onClick={() => {
+                setSortField(sortField === 'createdAt' ? 'paidAt' : 'createdAt');
+                setCurrentPage(1);
+              }}
+              className="flex items-center gap-2 px-4 py-2 bg-white border-2 border-gray-300 rounded-lg text-sm font-bold text-gray-600 hover:border-[#296341] transition-all"
+            >
+              Sort by: {sortField === 'createdAt' ? 'Created' : 'Paid Date'}
+            </button>
+          )}
         </div>
 
         {/* Loading State */}
@@ -342,7 +369,11 @@ export default function CashierPage() {
                           <button
                             onClick={() => {
                               if (invoice.paymentStatus !== 'PAID') {
-                                handleUpdatePaymentStatus(invoice.id, 'PAID');
+                                if (!remarkInputs[invoice.id]?.trim()) {
+                                  toast.error('Please add a remark before marking as paid');
+                                  return;
+                                }
+                                handleUpdatePaymentStatus(invoice.id, 'PAID', remarkInputs[invoice.id]);
                               }
                             }}
                             disabled={isUpdating === invoice.id}
@@ -432,11 +463,17 @@ export default function CashierPage() {
                         />
                         {activeTab === 'UNPAID' && (
                           <button
-                            onClick={() => handleUpdatePaymentStatus(
-                              invoice.id, 
-                              'PAID', 
-                              remarkInputs[invoice.id]
-                            )}
+                            onClick={() => {
+                              if (!remarkInputs[invoice.id]?.trim()) {
+                                toast.error('Please add a remark before marking as paid');
+                                return;
+                              }
+                              handleUpdatePaymentStatus(
+                                invoice.id, 
+                                'PAID', 
+                                remarkInputs[invoice.id]
+                              );
+                            }}
                             disabled={isUpdating === invoice.id}
                             className="bg-[#132540] text-white h-[40px] rounded-full text-[22px] font-semibold hover:bg-[#1a3254] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                           >

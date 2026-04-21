@@ -18,9 +18,11 @@ import {
   Edit2,
   Trash2,
   Upload,
-  Image as ImageIcon
+  Image as ImageIcon,
+  CreditCard,
+  Lock,
+  Check
 } from 'lucide-react';
-import { DashboardBanner } from "@/components/ui/DashboardBanner";
 import { useAuth } from '@/lib/auth-context';
 import { toast } from 'sonner';
 import imgBookingIllustration from "@/app/assets/cfa31b3ce2eb14a48a0ef2738b4164b16c74ab53.png";
@@ -101,15 +103,10 @@ function PassengerBookingContent() {
 
   // Created booking
   const [createdBooking, setCreatedBooking] = useState<any>(null);
+  const [isPaying, setIsPaying] = useState(false);
 
-  // Set user details when loaded
-  useEffect(() => {
-    if (user) {
-      setName(`${user.firstName || ''} ${user.lastName || ''}`.trim());
-      setEmail(user.email || "");
-      setContact(user.mobileNumber || "");
-    }
-  }, [user]);
+  // NOTE: Do NOT auto-fill with logged-in user details.
+  // This form is for booking customers/passengers, not the logged-in agent.
 
   // Fetch locations
   useEffect(() => {
@@ -391,8 +388,9 @@ function PassengerBookingContent() {
         if (img.file) {
           try {
             await uploadImage(img.file, bookingId, 'USER_DOCUMENT');
-          } catch (error) {
+          } catch (error: any) {
             console.error('Failed to upload ID image:', error);
+            toast.error(`Image upload failed: ${error.message || 'Unknown error'}`);
             uploadErrors++;
           }
         }
@@ -407,6 +405,31 @@ function PassengerBookingContent() {
         toast.success(`Booking created successfully! Invoice: #${data.invoiceNo}`);
       }
 
+      // Reset form after successful submission
+      setName("");
+      setEmail("");
+      setContact("");
+      setInfantCount(0);
+      setChildCount(0);
+      setAdultCount(1);
+      setBookingDate(new Date().toISOString().split('T')[0]);
+      setSelectedVoyageId("");
+      setIdType("Passport");
+      setRemark("");
+      setPaymentStatus("UNPAID");
+      setLuggageItems([]);
+      setIdImages([]);
+      if (locations.length > 0) {
+        setFromLocation(locations[0].code);
+        if (locations.length > 1) {
+          setToLocation(locations[1].code);
+        }
+      }
+      // Scroll to bottom where Pay Now card appears
+      setTimeout(() => {
+        window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+      }, 100);
+
     } catch (err: any) {
       console.error("Submission error:", err);
       toast.error(err.message || "An error occurred");
@@ -415,30 +438,52 @@ function PassengerBookingContent() {
     }
   };
 
+  // Pay Now via Stripe
+  const handlePayNow = async (invoiceNo: string) => {
+    setIsPaying(true);
+    try {
+      const res = await fetch("/api/stripe/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ invoiceNo }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error || "Failed to initiate payment");
+        return;
+      }
+      if (data.url) {
+        window.location.href = data.url;
+      }
+    } catch {
+      toast.error("Something went wrong. Please try again.");
+    } finally {
+      setIsPaying(false);
+    }
+  };
+
   // Reset form
   const resetForm = () => {
-    if (luggageItems.length > 0 || idImages.length > 0) {
+    if (luggageItems.length > 0 || idImages.length > 0 || name || email || contact) {
       if (!confirm("Are you sure you want to reset? All data will be lost.")) {
         return;
       }
     }
 
+    setName("");
+    setEmail("");
+    setContact("");
     setInfantCount(0);
     setChildCount(0);
     setAdultCount(1);
     setBookingDate(new Date().toISOString().split('T')[0]);
+    setSelectedVoyageId("");
     setIdType("Passport");
     setRemark("");
     setPaymentStatus("UNPAID");
     setLuggageItems([]);
     setIdImages([]);
     setCreatedBooking(null);
-
-    if (user) {
-      setName(`${user.firstName || ''} ${user.lastName || ''}`.trim());
-      setEmail(user.email || "");
-      setContact(user.mobileNumber || "");
-    }
 
     if (locations.length > 0) {
       setFromLocation(locations[0].code);
@@ -471,13 +516,14 @@ function PassengerBookingContent() {
         className="hidden"
       />
 
-      {/* Standardized Hero Banner */}
-      <DashboardBanner 
-        imageSrc={imgBookingIllustration.src} 
-        alt="Passenger Booking Illustration" 
-        objectFit="contain"
-        className="bg-[#effaf6] mb-0"
-      />
+      {/* Hero Illustration */}
+      <div className="flex justify-center px-4 sm:px-8 bg-[#effaf6] py-6 sm:py-10 border-b border-[#296341]/10">
+        <img
+          src={imgBookingIllustration.src}
+          alt="Passenger Booking Illustration"
+          className="w-full max-w-[800px] h-auto object-contain max-h-[220px] sm:max-h-[300px] md:max-h-none hover:scale-105 transition-transform duration-700"
+        />
+      </div>
 
       <main className="max-w-[1400px] mx-auto px-4 sm:px-8 pb-16 md:pb-32 flex-1 w-full relative pt-8 sm:pt-12">
         <div className="flex flex-col lg:flex-row gap-8 lg:gap-16">
@@ -594,12 +640,56 @@ function PassengerBookingContent() {
                   onChange={(e) => {
                     const vid = e.target.value;
                     setSelectedVoyageId(vid);
+                    if (!vid) {
+                      // Cleared selection — reset to default locations
+                      if (locations.length > 0) {
+                        setFromLocation(locations[0].code);
+                        if (locations.length > 1) {
+                          setToLocation(locations[1].code);
+                        }
+                      }
+                      return;
+                    }
                     const v = upcomingVoyages.find(voy => voy.id === vid);
                     if (v) {
-                      setBookingDate(new Date(v.date).toISOString().split('T')[0]);
-                      if (v.stops && v.stops.length >= 2) {
-                        setFromLocation(v.stops[0].location.code);
-                        setToLocation(v.stops[v.stops.length - 1].location.code);
+                      // Set booking date from voyage
+                      try {
+                        setBookingDate(new Date(v.date).toISOString().split('T')[0]);
+                      } catch (e) {
+                        console.error("Error parsing voyage date:", e);
+                      }
+
+                      // Build ordered location list from stops
+                      const voyageLocations: { code: string; name: string }[] = [];
+
+                      // Add from location
+                      if (v.from) {
+                        voyageLocations.push(v.from);
+                      }
+
+                      // Add stops in order
+                      if (v.stops && v.stops.length > 0) {
+                        const sortedStops = [...v.stops].sort(
+                          (a: any, b: any) => (a.stopOrder || 0) - (b.stopOrder || 0)
+                        );
+                        sortedStops.forEach((s: any) => {
+                          if (!voyageLocations.find(l => l.code === s.location.code)) {
+                            voyageLocations.push(s.location);
+                          }
+                        });
+                      }
+
+                      // Add to location
+                      if (v.to && !voyageLocations.find((l: any) => l.code === v.to.code)) {
+                        voyageLocations.push(v.to);
+                      }
+
+                      // Set from = first, to = last
+                      if (voyageLocations.length >= 2) {
+                        setFromLocation(voyageLocations[0].code);
+                        setToLocation(voyageLocations[voyageLocations.length - 1].code);
+                      } else if (voyageLocations.length === 1) {
+                        setFromLocation(voyageLocations[0].code);
                       }
                     }
                   }}
@@ -639,16 +729,29 @@ function PassengerBookingContent() {
                     ) : locations.length === 0 ? (
                       <option>NO PORTS AVAILABLE</option>
                     ) : (
-                      // If a voyage is selected, only show locations from its stops
-                      (selectedVoyageId
-                        ? upcomingVoyages.find(v => v.id === selectedVoyageId)?.stops.map((s: any) => ({
-                          code: s.location.code,
-                          name: s.location.name,
-                          id: s.location.id
-                        })) || []
-                        : locations
-                      ).map((loc: any) => (
-                        <option key={loc.id} value={loc.code}>{loc.code} — {loc.name}</option>
+                      // If a voyage is selected, build full location list from from/stops/to
+                      (() => {
+                        if (!selectedVoyageId) return locations;
+                        const v = upcomingVoyages.find(voy => voy.id === selectedVoyageId);
+                        if (!v) return locations;
+
+                        const voyageLocs: any[] = [];
+                        if (v.from) voyageLocs.push(v.from);
+                        if (v.stops && v.stops.length > 0) {
+                          [...v.stops]
+                            .sort((a: any, b: any) => (a.stopOrder || 0) - (b.stopOrder || 0))
+                            .forEach((s: any) => {
+                              if (!voyageLocs.find((l: any) => l.code === s.location.code)) {
+                                voyageLocs.push(s.location);
+                              }
+                            });
+                        }
+                        if (v.to && !voyageLocs.find((l: any) => l.code === v.to.code)) {
+                          voyageLocs.push(v.to);
+                        }
+                        return voyageLocs.length > 0 ? voyageLocs : locations;
+                      })().map((loc: any) => (
+                        <option key={loc.id || loc.code} value={loc.code}>{loc.code} — {loc.name}</option>
                       ))
                     )}
                   </select>
@@ -671,16 +774,29 @@ function PassengerBookingContent() {
                     ) : locations.length === 0 ? (
                       <option>NO PORTS AVAILABLE</option>
                     ) : (
-                      // If a voyage is selected, only show locations from its stops
-                      (selectedVoyageId
-                        ? upcomingVoyages.find(v => v.id === selectedVoyageId)?.stops.map((s: any) => ({
-                          code: s.location.code,
-                          name: s.location.name,
-                          id: s.location.id
-                        })) || []
-                        : locations
-                      ).map((loc: any) => (
-                        <option key={loc.id} value={loc.code}>{loc.code} — {loc.name}</option>
+                      // Same logic for destination
+                      (() => {
+                        if (!selectedVoyageId) return locations;
+                        const v = upcomingVoyages.find(voy => voy.id === selectedVoyageId);
+                        if (!v) return locations;
+
+                        const voyageLocs: any[] = [];
+                        if (v.from) voyageLocs.push(v.from);
+                        if (v.stops && v.stops.length > 0) {
+                          [...v.stops]
+                            .sort((a: any, b: any) => (a.stopOrder || 0) - (b.stopOrder || 0))
+                            .forEach((s: any) => {
+                              if (!voyageLocs.find((l: any) => l.code === s.location.code)) {
+                                voyageLocs.push(s.location);
+                              }
+                            });
+                        }
+                        if (v.to && !voyageLocs.find((l: any) => l.code === v.to.code)) {
+                          voyageLocs.push(v.to);
+                        }
+                        return voyageLocs.length > 0 ? voyageLocs : locations;
+                      })().map((loc: any) => (
+                        <option key={loc.id || loc.code} value={loc.code}>{loc.code} — {loc.name}</option>
                       ))
                     )}
                   </select>
@@ -964,19 +1080,59 @@ function PassengerBookingContent() {
 
             {/* Action Buttons */}
             <div className="mt-12 md:mt-40 space-y-4">
+              {/* Success Card with Pay Now */}
+              {createdBooking?.invoiceNo && (
+                <div className="bg-white rounded-2xl border-2 border-[#296341] p-6 shadow-lg space-y-5 animate-in fade-in duration-300">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-[#296341] rounded-full flex items-center justify-center">
+                      <Check className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <p className="text-lg font-black text-[#296341]">Booking Created!</p>
+                      <p className="text-sm text-gray-500">Invoice #{createdBooking.invoiceNo}</p>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => handlePayNow(createdBooking.invoiceNo)}
+                    disabled={isPaying}
+                    className="w-full h-14 bg-[#296341] hover:bg-[#1e4c30] disabled:opacity-60 disabled:cursor-not-allowed text-white font-bold text-lg rounded-xl transition-all active:scale-[0.98] flex items-center justify-center gap-3 shadow-lg shadow-[#296341]/20"
+                  >
+                    {isPaying ? (
+                      <>
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                        Redirecting to Stripe…
+                      </>
+                    ) : (
+                      <>
+                        <CreditCard className="w-5 h-5" />
+                        Pay Now via Stripe
+                      </>
+                    )}
+                  </button>
+
+                  <div className="flex items-center justify-center gap-2 text-xs text-gray-400">
+                    <Lock className="w-3.5 h-3.5" />
+                    <span>
+                      Secured by <span className="font-semibold text-gray-500">Stripe</span>. Card details never stored.
+                    </span>
+                  </div>
+                </div>
+              )}
+
               <button
                 onClick={handleSubmit}
-                disabled={isSubmitting}
+                disabled={isSubmitting || !!createdBooking}
                 className="w-full bg-[#132540] py-4 md:py-5 rounded-xl md:rounded-2xl text-white text-xl md:text-[24px] font-black tracking-widest hover:bg-[#1a3254] transition-all shadow-lg active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {isSubmitting && <Loader2 className="w-6 h-6 animate-spin" />}
-                {isSubmitting ? 'SUBMITTING...' : 'SUBMIT'}
+                {isSubmitting ? 'SUBMITTING...' : createdBooking ? 'SUBMITTED ✓' : 'SUBMIT'}
               </button>
               <button
                 onClick={resetForm}
                 className="w-full bg-gray-200 py-3 rounded-xl text-gray-600 text-lg font-bold hover:bg-gray-300 transition-all"
               >
-                Reset Form
+                {createdBooking ? 'New Booking' : 'Reset Form'}
               </button>
             </div>
           </div>

@@ -105,8 +105,10 @@ export async function PATCH(
             updateData.paymentStatus = body.paymentStatus;
             if (body.paymentStatus === "PAID") {
                 updateData.paidAt = new Date();
+                updateData.paidAmount = existingInvoice.totalAmount;
             } else {
                 updateData.paidAt = null;
+                updateData.paidAmount = 0;
             }
         }
 

@@ -23,7 +23,6 @@ import {
   Eye,
   X,
 } from "lucide-react";
-import { DashboardBanner } from "@/components/ui/DashboardBanner";
 import imgRectangle228 from "@/app/assets/0630bc807bbd9122cb449e66c33d18d13536d121.png";
 import imgRectangle2 from "@/app/assets/7bfea36700cced4af0de8d5f4074e11966bfadd9.png";
 
@@ -771,9 +770,20 @@ export default function ManifestPage() {
         const newVoyages = data.voyages || [];
 
         if (append) {
-          setVoyages((prev) => [...prev, ...newVoyages]);
+          setVoyages((prev) => {
+            const existingIds = new Set(prev.map((v: VoyageListItem) => v.id));
+            const unique = newVoyages.filter((v: VoyageListItem) => !existingIds.has(v.id));
+            return [...prev, ...unique];
+          });
         } else {
-          setVoyages(newVoyages);
+          // Deduplicate initial load too
+          const seen = new Set<string>();
+          const unique = newVoyages.filter((v: VoyageListItem) => {
+            if (seen.has(v.id)) return false;
+            seen.add(v.id);
+            return true;
+          });
+          setVoyages(unique);
         }
 
         setHasMore(newVoyages.length === 10);
@@ -795,13 +805,15 @@ export default function ManifestPage() {
 
   return (
     <div className="min-h-screen bg-white">
-      <div className="relative">
-        {/* Hero Header */}
-      <DashboardBanner 
-        imageSrc={imgRectangle2.src} 
-        alt="Containers" 
-        className="mb-0"
-      />
+      {/* Hero Header */}
+      <header className="relative">
+        <div className="h-[350px] md:h-[450px] w-full overflow-hidden rounded-b-[50px]">
+          <img
+            src={imgRectangle2.src}
+            alt="Containers"
+            className="w-full h-full object-cover"
+          />
+        </div>
 
         {/* Logo */}
         <div className="absolute top-4 left-1/2 -translate-x-1/2">
@@ -823,7 +835,7 @@ export default function ManifestPage() {
               : "Staff Member"}
           </p>
         </div>
-      </div>
+      </header>
 
       {/* Main Content */}
       <div className="bg-white min-h-[600px] py-6 px-4 md:px-8">
@@ -844,7 +856,7 @@ export default function ManifestPage() {
             <>
               {voyages.map((voyage, index) => (
                 <VoyageListCard
-                  key={voyage.id}
+                  key={`${voyage.id}-${index}`}
                   voyage={voyage}
                   index={index}
                   onViewManifest={(id) => setSelectedVoyageId(id)}

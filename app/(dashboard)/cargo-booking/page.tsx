@@ -26,9 +26,11 @@ import {
   Layers,
   MoreHorizontal,
   Ship,
-  Anchor
+  Anchor,
+  CreditCard,
+  Lock,
+  Check
 } from 'lucide-react';
-import { DashboardBanner } from "@/components/ui/DashboardBanner";
 import { useAuth } from '@/lib/auth-context';
 import { toast } from 'sonner';
 import imgCargoShip from "@/app/assets/3f7d36fbe26222b564747f69753922efbd74194d.png";
@@ -1120,6 +1122,7 @@ export default function CargoBooking() {
 
   // =========== CREATED BOOKING STATE ===========
   const [createdBooking, setCreatedBooking] = useState<any>(null);
+  const [isPaying, setIsPaying] = useState(false);
 
   // =========== PRICE FETCHING STATE ===========
   const [availablePrices, setAvailablePrices] = useState<any[]>([]);
@@ -1593,6 +1596,30 @@ export default function CargoBooking() {
     toast.success("Item removed");
   };
 
+  // Pay Now via Stripe
+  const handlePayNow = async (invoiceNo: string) => {
+    setIsPaying(true);
+    try {
+      const res = await fetch("/api/stripe/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ invoiceNo }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error || "Failed to initiate payment");
+        return;
+      }
+      if (data.url) {
+        window.location.href = data.url;
+      }
+    } catch {
+      toast.error("Something went wrong. Please try again.");
+    } finally {
+      setIsPaying(false);
+    }
+  };
+
   // Reset Form - resets service-specific fields based on current service
   const resetServiceFields = () => {
     // Reset common fields
@@ -1867,6 +1894,39 @@ export default function CargoBooking() {
       } else {
         toast.success(`Booking created successfully! Invoice: #${data.invoiceNo}`);
       }
+
+      // Reset entire form after successful submission
+      setService('CONTAINER');
+      resetServiceFields();
+      setBookingDate(new Date().toISOString().split('T')[0]);
+      setVoyageNo("");
+      setSelectedVoyageId("");
+      setPaymentStatus("UNPAID");
+      setRemark("");
+      setItems([]);
+      setContainerImages([]);
+      setUserDocuments([]);
+      setContactName(user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() : "");
+      setContactEmail(user?.email || "");
+      setContactPhone(user?.mobileNumber || "");
+      setAddress("");
+      setIdType("Passport");
+      setHasTape(false);
+      setWrapType(null);
+      setHasTags(false);
+      setInsuranceAmount("");
+      setAdditionalServicePrice("");
+      if (locations.length > 0) {
+        setFromLocation(locations[0].code);
+        if (locations.length > 1) {
+          setToLocation(locations[1].code);
+        }
+      }
+
+      // Scroll to bottom where Pay Now card appears
+      setTimeout(() => {
+        window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+      }, 100);
 
     } catch (err: any) {
       console.error("Submission error:", err);
@@ -2151,15 +2211,25 @@ export default function CargoBooking() {
         className="hidden"
       />
 
-      {/* Standardized Hero Banner */}
-      <DashboardBanner 
-        imageSrc={imgCargoShip.src} 
-        alt="Cargo Shipping" 
-        overlay
-        title={service === 'BOX' ? BOX_SUBTYPE_CONFIGS[boxSubType].label : currentServiceConfig.title}
-        subtitle="Professional Logistics Services"
-        className={`bg-gradient-to-r ${currentServiceConfig.headerBg} rounded-t-none`}
-      />
+      {/* Hero Section with Service Title */}
+      <div className={`bg-gradient-to-r ${currentServiceConfig.headerBg} text-white py-6 sm:py-8 px-4 sm:px-8`}>
+        <div className="max-w-[1400px] mx-auto">
+          <div className="flex items-center gap-4 mb-3 sm:mb-4">
+            <button className="p-2 hover:bg-white/10 rounded-lg transition-colors">
+              <ChevronDown className="w-5 h-5 sm:w-6 sm:h-6 rotate-90" />
+            </button>
+            <span className="text-[12px] sm:text-sm font-medium uppercase tracking-wider opacity-80">ENTRY</span>
+          </div>
+          <div className="flex items-center gap-3 sm:gap-4">
+            <div className="p-2 sm:p-3 bg-white/20 rounded-xl [&>svg]:w-6 [&>svg]:h-6 sm:[&>svg]:w-8 sm:[&>svg]:h-8">
+              {service === 'BOX' ? BOX_SUBTYPE_CONFIGS[boxSubType].icon : currentServiceConfig.icon}
+            </div>
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-black tracking-wide">
+              {getServiceTitle()}
+            </h1>
+          </div>
+        </div>
+      </div>
 
       <main className="max-w-[1400px] mx-auto px-4 sm:px-8 py-6 sm:py-8 pb-32">
 
@@ -2555,18 +2625,66 @@ export default function CargoBooking() {
 
         {/* Action Buttons */}
         <div className="space-y-4">
+          {/* Success Card with Pay Now */}
+          {createdBooking?.invoiceNo && (
+            <div className="bg-white rounded-2xl border-2 border-[#296341] p-6 shadow-lg space-y-5 animate-in fade-in duration-300">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-[#296341] rounded-full flex items-center justify-center">
+                  <Check className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <p className="text-lg font-black text-[#296341]">Booking Created!</p>
+                  <p className="text-sm text-gray-500">Invoice #{createdBooking.invoiceNo}</p>
+                </div>
+              </div>
+
+              <button
+                onClick={() => handlePayNow(createdBooking.invoiceNo)}
+                disabled={isPaying}
+                className="w-full h-14 bg-[#296341] hover:bg-[#1e4c30] disabled:opacity-60 disabled:cursor-not-allowed text-white font-bold text-lg rounded-xl transition-all active:scale-[0.98] flex items-center justify-center gap-3 shadow-lg shadow-[#296341]/20"
+              >
+                {isPaying ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    Redirecting to Stripe…
+                  </>
+                ) : (
+                  <>
+                    <CreditCard className="w-5 h-5" />
+                    Pay Now via Stripe
+                  </>
+                )}
+              </button>
+
+              <div className="flex items-center justify-center gap-2 text-xs text-gray-400">
+                <Lock className="w-3.5 h-3.5" />
+                <span>
+                  Secured by <span className="font-semibold text-gray-500">Stripe</span>. Card details never stored.
+                </span>
+              </div>
+            </div>
+          )}
+
           <button
             onClick={handleSubmit}
-            disabled={isSubmitting || items.length === 0}
+            disabled={isSubmitting || items.length === 0 || !!createdBooking}
             className="w-full bg-[#132540] text-white py-4 rounded-xl text-lg font-bold hover:bg-[#1a3254] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             {isSubmitting && <Loader2 className="w-5 h-5 animate-spin" />}
-            {isSubmitting ? 'SUBMITTING...' : 'SUBMIT BOOKING'}
+            {isSubmitting ? 'SUBMITTING...' : createdBooking ? 'SUBMITTED ✓' : 'SUBMIT BOOKING'}
           </button>
-          {items.length === 0 && (
+          {!createdBooking && items.length === 0 && (
             <p className="text-center text-sm text-gray-500">
               Fill in the form above and click "Add Item" to add cargo items to your booking
             </p>
+          )}
+          {createdBooking && (
+            <button
+              onClick={resetForm}
+              className="w-full bg-gray-200 py-3 rounded-xl text-gray-600 text-lg font-bold hover:bg-gray-300 transition-all"
+            >
+              New Booking
+            </button>
           )}
         </div>
       </main>

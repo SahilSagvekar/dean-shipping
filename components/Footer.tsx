@@ -53,8 +53,8 @@ export default function Footer() {
               <li><a href="#about" className="hover:underline transition-all">About Us</a></li>
               <li><a href="#book" className="hover:underline transition-all">Book now</a></li>
               <li><a href="#contact" className="hover:underline transition-all">Contact us</a></li>
-              <li><a href="#terms" className="hover:underline transition-all">Terms & Condition</a></li>
-              <li><a href="#privacy" className="hover:underline transition-all">Privacy Policy</a></li>
+              {/* <li><a href="#terms" className="hover:underline transition-all">Terms & Condition</a></li>
+              <li><a href="#privacy" className="hover:underline transition-all">Privacy Policy</a></li> */}
             </ul>
           </div>
 

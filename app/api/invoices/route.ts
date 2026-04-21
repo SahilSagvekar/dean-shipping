@@ -12,6 +12,8 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get("status") || undefined;
     const search = searchParams.get("search") || undefined;
     const type = searchParams.get("type") || undefined; // 'cargo' or 'passenger'
+    const sort = searchParams.get("sort") || "createdAt"; // 'createdAt' or 'paidAt'
+    const order = searchParams.get("order") || "desc"; // 'asc' or 'desc'
     const skip = (page - 1) * limit;
 
     const where: any = {};
@@ -90,7 +92,7 @@ export async function GET(request: NextRequest) {
                     },
                 },
             },
-            orderBy: { createdAt: "desc" },
+            orderBy: { [sort === "paidAt" ? "paidAt" : "createdAt"]: order === "asc" ? "asc" : "desc" },
             skip,
             take: limit,
         }),

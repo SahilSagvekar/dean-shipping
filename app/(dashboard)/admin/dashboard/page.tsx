@@ -266,7 +266,7 @@ export default function App() {
   </style>
 </head>
 <body>
-  <h1>Dean's Shipping Ltd — Dashboard Report</h1>
+  <h1>Dean's Shipping Ltd  Dashboard Report</h1>
   <div class="subtitle">Range: ${rangeLabel} | Generated: ${new Date().toLocaleString()}</div>
   
   <div class="stats-grid">
