@@ -362,6 +362,9 @@ export default function CashierPage() {
                       <div>
                         <span className="text-[18px] font-medium">Amount : </span>
                         <span className="text-[15px] font-medium">${invoice.totalAmount.toFixed(2)}</span>
+                        <span className="text-[12px] text-gray-400 ml-1">
+                          (${invoice.subtotal.toFixed(2)} + ${invoice.vatAmount.toFixed(2)} VAT)
+                        </span>
                       </div>
                       <div className="ml-auto">
                         {/* Payment Status Toggle */}
@@ -458,7 +461,7 @@ export default function CashierPage() {
                             ...prev,
                             [invoice.id]: e.target.value
                           }))}
-                          placeholder={activeTab === 'UNPAID' ? `Collect $${invoice.totalAmount.toFixed(0)}` : 'Payment note'}
+                          placeholder={activeTab === 'UNPAID' ? `Collect $${invoice.totalAmount.toFixed(0)} (incl. $${invoice.vatAmount.toFixed(0)} VAT)` : 'Payment note'}
                           className="w-full h-[44px] bg-[#e5ebf3] border border-black px-3 text-[15px] outline-none"
                         />
                         {activeTab === 'UNPAID' && (

@@ -21,7 +21,6 @@ import {
   Send,
   Settings
 } from "lucide-react";
-import { DashboardBanner } from "@/components/ui/DashboardBanner";
 import imgUntitled71 from "@/app/assets/3956b95e786ae07d9128fd4f6de57a9d0b031af5.png";
 
 // Types
@@ -61,16 +60,15 @@ interface Notification {
 }
 
 interface ReminderSettings {
-  frequency: 'DAILY' | 'EVERY_2_DAYS' | 'EVERY_5_DAYS' | 'EVERY_7_DAYS';
+  frequency: 'EVERY_3_DAYS' | 'EVERY_7_DAYS' | 'EVERY_10_DAYS';
   lastSent?: string;
 }
 
 // Reminder frequency options
 const REMINDER_FREQUENCIES = [
-  { value: 'DAILY', label: 'Every Day' },
-  { value: 'EVERY_2_DAYS', label: 'Every 2 Days' },
-  { value: 'EVERY_5_DAYS', label: 'Every 5 Days' },
-  { value: 'EVERY_7_DAYS', label: 'Every 7 Days' },
+  { value: 'EVERY_3_DAYS', label: 'Every 3 Days', days: 3 },
+  { value: 'EVERY_7_DAYS', label: 'Every 7 Days', days: 7 },
+  { value: 'EVERY_10_DAYS', label: 'Every 10 Days', days: 10 },
 ];
 
 // Radio Button Component
@@ -243,7 +241,7 @@ export default function NotificationsPage() {
   const [updatingInvoiceId, setUpdatingInvoiceId] = useState<string | null>(null);
 
   // Automation settings
-  const [reminderFrequency, setReminderFrequency] = useState<string>('DAILY');
+  const [reminderFrequency, setReminderFrequency] = useState<string>('EVERY_3_DAYS');
   const [automationActive, setAutomationActive] = useState<boolean>(false);
   const [lastReminderSent, setLastReminderSent] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -341,14 +339,16 @@ export default function NotificationsPage() {
     }
   };
 
-  // Send payment reminders manually
+  // Send payment reminders manually (instant)
   const handleSendReminders = async () => {
+    if (!confirm("This will immediately send payment reminder emails to ALL customers with unpaid invoices. Continue?")) return;
+
     setIsSending(true);
     try {
       const res = await apiFetch('/api/notifications/send-reminders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ frequency: reminderFrequency }),
+        body: JSON.stringify({ frequency: reminderFrequency, manual: true }),
       });
 
       if (!res.ok) {
@@ -406,13 +406,16 @@ export default function NotificationsPage() {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Standardized Hero Banner */}
-      <DashboardBanner 
-        imageSrc={imgUntitled71.src} 
-        alt="Notification" 
-        objectFit="contain"
-        className="bg-[#effaf6] mb-0"
-      />
+      {/* Header Image */}
+      <header className="relative bg-[#effaf6] py-8 sm:py-0">
+        <div className="flex justify-center">
+          <img
+            src={imgUntitled71.src}
+            alt="Notification"
+            className="h-48 sm:h-64 md:h-80 object-contain hover:scale-105 transition-transform duration-500"
+          />
+        </div>
+      </header>
 
       {/* Main Content */}
       <div className="px-4 sm:px-8 md:px-12 max-w-[1400px] mx-auto py-6 sm:py-10">
@@ -477,20 +480,48 @@ export default function NotificationsPage() {
                 className="w-full sm:w-auto border-2 border-black text-black font-black px-8 py-3 rounded-full text-sm uppercase tracking-widest hover:bg-black hover:text-white transition-all transform active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 {isSending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
-                Manual Send Now
+                Send Now (Instant)
               </button>
             </div>
           </div>
 
-          {/* Last reminder info */}
+          {/* Last reminder info + Next scheduled send */}
           {lastReminderSent && (
-            <div className="mt-8 pt-6 border-t border-gray-100 flex items-center gap-3 text-gray-500 font-medium">
-               <Clock className="w-5 h-5 text-gray-400" />
-               <span>Last automated send triggered on <strong className="text-gray-900">{new Date(lastReminderSent).toLocaleString('en-GB', {
-                  day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
-               })}</strong></span>
+            <div className="mt-8 pt-6 border-t border-gray-100 space-y-3">
+              <div className="flex items-center gap-3 text-gray-500 font-medium">
+                <Clock className="w-5 h-5 text-gray-400" />
+                <span>Last send: <strong className="text-gray-900">{new Date(lastReminderSent).toLocaleString('en-US', {
+                    day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', timeZoneName: 'short'
+                })}</strong></span>
+              </div>
+              {automationActive && (() => {
+                const freq = REMINDER_FREQUENCIES.find(f => f.value === reminderFrequency);
+                const days = freq?.days || 7;
+                const lastDate = new Date(lastReminderSent);
+                const nextDate = new Date(lastDate);
+                nextDate.setDate(nextDate.getDate() + days);
+                // Set to 11 AM EST (UTC-5 = 16:00 UTC)
+                nextDate.setUTCHours(16, 0, 0, 0);
+                return (
+                  <div className="flex items-center gap-3 text-[#296341] font-medium">
+                    <Calendar className="w-5 h-5 text-[#296341]" />
+                    <span>Next automated send: <strong>{nextDate.toLocaleString('en-US', {
+                        weekday: 'short', day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', timeZoneName: 'short'
+                    })}</strong></span>
+                  </div>
+                );
+              })()}
             </div>
           )}
+
+          {/* 11 AM EST notice */}
+          <div className="mt-6 bg-blue-50 border border-blue-200 rounded-xl p-4 flex items-start gap-3">
+            <Clock className="w-5 h-5 text-blue-500 mt-0.5 flex-shrink-0" />
+            <div>
+              <p className="text-sm font-bold text-blue-800">Automated emails are sent at 11:00 AM EST (US Eastern Time)</p>
+              <p className="text-xs text-blue-600 mt-1">Based on the selected frequency, reminders will be sent every {REMINDER_FREQUENCIES.find(f => f.value === reminderFrequency)?.days || '?'} days at 11 AM EST to all customers with unpaid invoices.</p>
+            </div>
+          </div>
         </section>
 
         {/* Divider */}

@@ -29,10 +29,9 @@ export async function processAutomatedReminders() {
       const diffDays = diffMs / (1000 * 60 * 60 * 24);
 
       let requiredDays = 7;
-      if (currentFrequency === 'DAILY') requiredDays = 1;
-      if (currentFrequency === 'EVERY_2_DAYS') requiredDays = 2;
-      if (currentFrequency === 'EVERY_5_DAYS') requiredDays = 5;
+      if (currentFrequency === 'EVERY_3_DAYS') requiredDays = 3;
       if (currentFrequency === 'EVERY_7_DAYS') requiredDays = 7;
+      if (currentFrequency === 'EVERY_10_DAYS') requiredDays = 10;
 
       if (diffDays < requiredDays) {
         return { success: false, message: `Skipping: only ${diffDays.toFixed(1)} days since last run (requires ${requiredDays})` };
