@@ -180,7 +180,7 @@ export async function GET(request: NextRequest) {
                 take: 5,
             }),
             prisma.incidentReport.count({ where: { status: "OPEN" } }),
-            // Revenue chart data - group invoices by week/month
+            // Revenue chart data - group invoices by time buckets based on range
             (async () => {
                 const invoices = await prisma.invoice.findMany({
                     where: {
@@ -189,25 +189,70 @@ export async function GET(request: NextRequest) {
                     select: { totalAmount: true, createdAt: true },
                     orderBy: { createdAt: "asc" },
                 });
-                // Group into buckets
-                if (invoices.length === 0) return [];
-                const bucketCount = Math.min(7, Math.max(3, invoices.length));
-                const earliest = invoices[0].createdAt.getTime();
-                const latest = invoices[invoices.length - 1].createdAt.getTime();
-                const span = latest - earliest || 1;
-                const bucketSize = span / bucketCount;
-                const buckets: { name: string; value: number }[] = [];
-                for (let i = 0; i < bucketCount; i++) {
-                    const bStart = new Date(earliest + i * bucketSize);
-                    const bEnd = new Date(earliest + (i + 1) * bucketSize);
+
+                let numBuckets = 7;
+                let startTs: number;
+                let endTs: number;
+
+                if (range === "today") {
+                    numBuckets = 12; // Every 2 hours
+                    startTs = startDate.getTime();
+                    endTs = tomorrow.getTime();
+                } else if (range === "7d") {
+                    numBuckets = 7; // Daily
+                    startTs = startDate.getTime();
+                    endTs = tomorrow.getTime();
+                } else if (range === "30d") {
+                    numBuckets = 10; // Every 3 days
+                    startTs = startDate.getTime();
+                    endTs = tomorrow.getTime();
+                } else {
+                    // All time
+                    numBuckets = 12;
+                    if (invoices.length > 0) {
+                        startTs = invoices[0].createdAt.getTime();
+                        endTs = invoices[invoices.length - 1].createdAt.getTime() + 1000;
+                        if (endTs - startTs < 24 * 60 * 60 * 1000) {
+                            // If span is less than a day, show at least a day
+                            endTs = startTs + 24 * 60 * 60 * 1000;
+                        }
+                    } else {
+                        // No invoices at all, show last 7 days as empty
+                        const end = new Date();
+                        const start = new Date();
+                        start.setDate(start.getDate() - 7);
+                        startTs = start.getTime();
+                        endTs = end.getTime();
+                    }
+                }
+
+                const totalSpan = endTs - startTs;
+                const bucketSize = totalSpan / numBuckets;
+                const buckets = [];
+
+                for (let i = 0; i < numBuckets; i++) {
+                    const bStart = new Date(startTs + i * bucketSize);
+                    const bEnd = new Date(startTs + (i + 1) * bucketSize);
+
                     const total = invoices
                         .filter((inv) => inv.createdAt >= bStart && inv.createdAt < bEnd)
                         .reduce((sum, inv) => sum + (inv.totalAmount || 0), 0);
+
+                    let label = "";
+                    if (range === "today") {
+                        label = bStart.toLocaleTimeString("en-US", { hour: "numeric", hour12: true });
+                    } else if (range === "all" && totalSpan > 365 * 24 * 60 * 60 * 1000) {
+                        label = bStart.toLocaleDateString("en-US", { month: "short", year: "2-digit" });
+                    } else {
+                        label = bStart.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+                    }
+
                     buckets.push({
-                        name: bStart.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+                        name: label,
                         value: Math.round(total * 100) / 100,
                     });
                 }
+
                 return buckets;
             })(),
         ]);

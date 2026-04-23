@@ -22,7 +22,9 @@ import {
   Save,
   Ship,
   ArrowRight,
-  Anchor
+  Anchor,
+  CheckSquare,
+  Square
 } from "lucide-react";
 import { DashboardBanner } from "@/components/ui/DashboardBanner";
 import image2 from "@/app/assets/cc1821c6ea8a81adb203fcf9b1bb2ee371bbcbed.png";
@@ -203,37 +205,56 @@ function StatusBadge({ status }: { status: Vehicle['status'] }) {
 function WaitlistCardCollapsed({
   vehicle,
   onExpand,
+  isSelected,
+  onToggleSelect,
 }: {
   vehicle: Vehicle;
   onExpand: () => void;
+  isSelected: boolean;
+  onToggleSelect: (e: React.MouseEvent) => void;
 }) {
   return (
     <div 
       className="bg-[#e5f7f1] rounded-xl p-4 sm:p-5 cursor-pointer hover:shadow-md transition-all border border-[#296341]/5 hover:border-[#296341]/20 active:scale-[0.99] group"
       onClick={onExpand}
     >
-      <div className="flex items-center justify-between">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 flex-1">
-          <div className="col-span-2 sm:col-span-1">
-            <p className="text-[10px] sm:text-xs font-black text-[#296341]/60 uppercase tracking-tighter">Owner Name</p>
-            <p className="text-sm sm:text-base font-bold text-gray-900 truncate">{vehicle.ownerName}</p>
-          </div>
-          <div>
-            <p className="text-[10px] sm:text-xs font-black text-[#296341]/60 uppercase tracking-tighter">Invoice No.</p>
-            <p className="text-sm sm:text-base font-mono font-bold text-gray-900">
-              #{vehicle.invoiceNo || vehicle.id.slice(-6)}
-            </p>
-          </div>
-          <div className="hidden sm:block">
-            <p className="text-[10px] sm:text-xs font-black text-[#296341]/60 uppercase tracking-tighter">Vehicle Type</p>
-            <p className="text-sm sm:text-base font-bold text-gray-900">{vehicle.vehicleType}</p>
-          </div>
-          <div className="flex items-center sm:justify-end">
-            <StatusBadge status={vehicle.status} />
-          </div>
+      <div className="flex items-center gap-4">
+        <div 
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggleSelect(e);
+          }}
+          className="p-1 hover:bg-white/50 rounded-md transition-colors"
+        >
+          {isSelected ? (
+            <CheckSquare className="w-6 h-6 text-[#296341]" />
+          ) : (
+            <Square className="w-6 h-6 text-[#296341]/40" />
+          )}
         </div>
-        <div className="ml-4 p-2 bg-white/40 rounded-lg group-hover:bg-white transition-colors">
-          <ChevronDown className="w-5 h-5 sm:w-6 h-6 text-[#296341]" />
+        <div className="flex-1 flex items-center justify-between" onClick={onExpand}>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 flex-1">
+            <div className="col-span-2 sm:col-span-1">
+              <p className="text-[10px] sm:text-xs font-black text-[#296341]/60 uppercase tracking-tighter">Owner Name</p>
+              <p className="text-sm sm:text-base font-bold text-gray-900 truncate">{vehicle.ownerName}</p>
+            </div>
+            <div>
+              <p className="text-[10px] sm:text-xs font-black text-[#296341]/60 uppercase tracking-tighter">Invoice No.</p>
+              <p className="text-sm sm:text-base font-mono font-bold text-gray-900">
+                #{vehicle.invoiceNo || vehicle.id.slice(-6)}
+              </p>
+            </div>
+            <div className="hidden sm:block">
+              <p className="text-[10px] sm:text-xs font-black text-[#296341]/60 uppercase tracking-tighter">Vehicle Type</p>
+              <p className="text-sm sm:text-base font-bold text-gray-900">{vehicle.vehicleType}</p>
+            </div>
+            <div className="flex items-center sm:justify-end">
+              <StatusBadge status={vehicle.status} />
+            </div>
+          </div>
+          <div className="ml-4 p-2 bg-white/40 rounded-lg group-hover:bg-white transition-colors">
+            <ChevronDown className="w-5 h-5 sm:w-6 h-6 text-[#296341]" />
+          </div>
         </div>
       </div>
     </div>
@@ -248,6 +269,8 @@ function WaitlistCardExpanded({
   onSave,
   onDelete,
   isSubmitting,
+  isSelected,
+  onToggleSelect,
 }: {
   vehicle: Vehicle;
   locations: Location[];
@@ -255,6 +278,8 @@ function WaitlistCardExpanded({
   onSave: (updated: Partial<Vehicle>) => void;
   onDelete: () => void;
   isSubmitting: boolean;
+  isSelected: boolean;
+  onToggleSelect: (e: React.MouseEvent) => void;
 }) {
   const [editData, setEditData] = useState({
     ownerName: vehicle.ownerName,
@@ -276,6 +301,24 @@ function WaitlistCardExpanded({
 
   return (
     <div className="bg-[#e5f7f1] rounded-2xl p-4 sm:p-6 space-y-6 shadow-inner border border-[#296341]/10">
+      <div className="flex items-center justify-between border-b border-[#296341]/10 pb-4">
+        <div className="flex items-center gap-3">
+          <div 
+            onClick={onToggleSelect}
+            className="cursor-pointer hover:bg-white/50 p-1 rounded-md transition-colors"
+          >
+            {isSelected ? (
+              <CheckSquare className="w-6 h-6 text-[#296341]" />
+            ) : (
+              <Square className="w-6 h-6 text-[#296341]/40" />
+            )}
+          </div>
+          <span className="text-sm font-black text-[#296341] uppercase tracking-widest">Selection Status</span>
+        </div>
+        <button onClick={onCollapse} className="text-[#296341] hover:bg-white/50 p-2 rounded-full transition-colors">
+          <X className="w-5 h-5" />
+        </button>
+      </div>
       {/* Row 1: Name, Email, Contact */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
         <InputField 
@@ -428,6 +471,7 @@ export default function VehicleWaitlistPage() {
   const [pagination, setPagination] = useState<Pagination | null>(null);
   const [locations, setLocations] = useState<Location[]>([]);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   // Voyage state
   const [upcomingVoyages, setUpcomingVoyages] = useState<Voyage[]>([]);
@@ -694,12 +738,54 @@ export default function VehicleWaitlistPage() {
         const data = await res.json();
         toast.error(data.error || 'Failed to remove vehicle');
       }
-    } catch (error) {
-      console.error('Error deleting vehicle:', error);
-      toast.error('Failed to remove vehicle');
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  // Bulk update vehicle status
+  const handleBulkStatusUpdate = async (status: Vehicle['status']) => {
+    if (selectedIds.length === 0) return;
+    
+    setIsSubmitting(true);
+    try {
+      const res = await apiFetch('/api/vehicles/bulk', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ids: selectedIds,
+          status,
+        }),
+      });
+
+      if (res.ok) {
+        toast.success(`Updated ${selectedIds.length} vehicles to ${STATUS_CONFIG[status].label}`);
+        setSelectedIds([]);
+        fetchVehicles();
+      } else {
+        const data = await res.json();
+        toast.error(data.error || 'Failed to update vehicles');
+      }
+    } catch (error) {
+      console.error('Error bulk updating vehicles:', error);
+      toast.error('Failed to update vehicles');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.length === vehicles.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(vehicles.map(v => v.id));
+    }
+  };
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => 
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    );
   };
 
   const locationOptions = locations.map(l => ({ value: l.code, label: l.name }));
@@ -902,14 +988,30 @@ export default function VehicleWaitlistPage() {
       {/* View Vehicle Waitlist Section */}
       {activeView === 'list' && (
         <section className="px-6 mb-8 max-w-[1200px] mx-auto">
-          <div className="flex items-center gap-2 mb-2">
-            <VehicleIcon variant="list" />
-            <h2 className="text-xl font-medium text-black">VEHICLE WAITLIST</h2>
-            <div className="ml-2 w-10 h-10 rounded-full bg-[#e4ebf4] border-2 border-[#132540] flex items-center justify-center">
-              <span className="text-lg font-bold text-[#132540]">{pagination?.total || 0}</span>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+            <div className="flex items-center gap-2">
+              <VehicleIcon variant="list" />
+              <h2 className="text-xl font-medium text-black uppercase">VEHICLE WAITLIST</h2>
+              <div className="ml-2 w-10 h-10 rounded-full bg-[#e4ebf4] border-2 border-[#132540] flex items-center justify-center">
+                <span className="text-lg font-bold text-[#132540]">{pagination?.total || 0}</span>
+              </div>
             </div>
+            
+            {vehicles.length > 0 && (
+              <button 
+                onClick={toggleSelectAll}
+                className="flex items-center gap-2 px-4 py-2 bg-[#e5f7f1] text-[#296341] rounded-lg font-bold text-sm hover:bg-[#d1f0e5] transition-colors"
+              >
+                {selectedIds.length === vehicles.length ? (
+                  <CheckSquare className="w-5 h-5" />
+                ) : (
+                  <Square className="w-5 h-5" />
+                )}
+                {selectedIds.length === vehicles.length ? 'DESELECT ALL' : 'SELECT ALL PAGE'}
+              </button>
+            )}
           </div>
-          <div className="w-48 h-1 bg-[#132540] rounded-full mb-4" />
+          <div className="w-48 h-1 bg-[#132540] rounded-full mb-6" />
 
           {/* Loading State */}
           {isLoading ? (
@@ -939,15 +1041,134 @@ export default function VehicleWaitlistPage() {
                     onSave={(updates) => handleUpdateVehicle(vehicle.id, updates)}
                     onDelete={() => handleDeleteVehicle(vehicle.id)}
                     isSubmitting={isSubmitting}
+                    isSelected={selectedIds.includes(vehicle.id)}
+                    onToggleSelect={(e) => {
+                      e.stopPropagation();
+                      toggleSelect(vehicle.id);
+                    }}
                   />
                 ) : (
                   <WaitlistCardCollapsed
                     key={vehicle.id}
                     vehicle={vehicle}
                     onExpand={() => setExpandedId(vehicle.id)}
+                    isSelected={selectedIds.includes(vehicle.id)}
+                    onToggleSelect={(e) => {
+                      e.stopPropagation();
+                      toggleSelect(vehicle.id);
+                    }}
                   />
                 )
               ))}
+
+              {/* Bulk Action Bar */}
+              {selectedIds.length > 0 && (
+                <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-40 w-[95%] max-w-[800px] animate-in slide-in-from-bottom-8 duration-500">
+                  <div className="bg-[#132540] rounded-2xl p-4 sm:p-6 shadow-2xl border border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-full bg-[#296341] flex items-center justify-center text-white font-black text-lg">
+                        {selectedIds.length}
+                      </div>
+                      <div>
+                        <p className="text-white font-black uppercase tracking-widest text-sm">Vehicles Selected</p>
+                        <p className="text-[#296341] text-xs font-bold italic">Bulk Registry Update Active</p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-2 overflow-x-auto w-full sm:w-auto pb-2 sm:pb-0 scrollbar-hide">
+                      {Object.entries(STATUS_CONFIG).map(([key, config]) => (
+                        <button
+                          key={key}
+                          onClick={() => handleBulkStatusUpdate(key as Vehicle['status'])}
+                          disabled={isSubmitting}
+                          className={`px-4 py-2 rounded-full text-xs font-black uppercase tracking-tighter whitespace-nowrap transition-all active:scale-95 disabled:opacity-50 ${config.bg} ${config.text} hover:scale-105 shadow-sm`}
+                        >
+                          {config.label}
+                        </button>
+                      ))}
+                      <button
+                        onClick={() => setSelectedIds([])}
+                        className="p-2 text-white/50 hover:text-white transition-colors"
+                        title="Clear Selection"
+                      >
+                        <X className="w-6 h-6" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Pagination */}
+              {pagination && pagination.totalPages > 1 && (
+                <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-6 border-t border-[#296341]/10 mt-12">
+                  <div className="flex flex-col items-center sm:items-start">
+                    <p className="text-[14px] lg:text-[16px] font-black italic text-[#296341] uppercase tracking-widest">
+                      Showing {((pagination.page - 1) * pagination.limit) + 1} - {Math.min(pagination.page * pagination.limit, pagination.total)}
+                    </p>
+                    <p className="text-[12px] font-bold text-gray-400 uppercase tracking-tighter">Total Capacity: {pagination.total} Records</p>
+                  </div>
+                  
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => fetchVehicles(pagination.page - 1)}
+                      disabled={pagination.page <= 1 || isLoading}
+                      className="w-10 h-10 lg:w-12 lg:h-12 flex items-center justify-center rounded-[10px] border-2 border-gray-100 disabled:opacity-20 hover:bg-gray-50 hover:border-[#296341] hover:text-[#296341] transition-all active:scale-90 shadow-sm"
+                    >
+                      <ChevronDown className="w-5 h-5 lg:w-6 lg:h-6 rotate-90" />
+                    </button>
+                    
+                    <div className="flex items-center gap-2">
+                      {(() => {
+                        const total = pagination.totalPages;
+                        const current = pagination.page;
+                        const pages: (number | string)[] = [];
+                        
+                        if (total <= 7) {
+                          for (let i = 1; i <= total; i++) pages.push(i);
+                        } else {
+                          pages.push(1);
+                          if (current > 3) pages.push("...");
+                          
+                          const start = Math.max(2, current - 1);
+                          const end = Math.min(total - 1, current + 1);
+                          
+                          for (let i = start; i <= end; i++) {
+                            if (!pages.includes(i)) pages.push(i);
+                          }
+                          
+                          if (current < total - 2) pages.push("...");
+                          if (!pages.includes(total)) pages.push(total);
+                        }
+                        
+                        return pages.map((pageNum, idx) => (
+                          <button
+                            key={idx}
+                            onClick={() => typeof pageNum === 'number' ? fetchVehicles(pageNum) : null}
+                            disabled={typeof pageNum !== 'number' || isLoading}
+                            className={`w-10 h-10 lg:w-12 lg:h-12 rounded-[10px] font-black text-[14px] lg:text-[18px] transition-all transform active:scale-95 shadow-sm ${
+                              pageNum === pagination.page
+                                ? "bg-[#296341] text-white shadow-lg shadow-[#296341]/30 -translate-y-1"
+                                : typeof pageNum !== 'number'
+                                ? "cursor-default text-gray-300"
+                                : "bg-white border-2 border-gray-50 text-[#132540] hover:border-[#296341] hover:text-[#296341]"
+                            }`}
+                          >
+                            {pageNum}
+                          </button>
+                        ));
+                      })()}
+                    </div>
+                    
+                    <button
+                      onClick={() => fetchVehicles(pagination.page + 1)}
+                      disabled={pagination.page >= pagination.totalPages || isLoading}
+                      className="w-10 h-10 lg:w-12 lg:h-12 flex items-center justify-center rounded-[10px] border-2 border-gray-100 disabled:opacity-20 hover:bg-gray-50 hover:border-[#296341] hover:text-[#296341] transition-all active:scale-90 shadow-sm"
+                    >
+                      <ChevronDown className="w-5 h-5 lg:w-6 lg:h-6 -rotate-90" />
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </section>

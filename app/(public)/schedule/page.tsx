@@ -1,19 +1,35 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { MapPin, Loader2, ChevronLeft, ChevronRight, Truck, Package, Users, Car, Bike, Bus, Boxes, Container, Layers, Wheat, Anchor } from "lucide-react";
+import { MapPin, Loader2, ChevronLeft, ChevronRight, Truck, Package, Users, Car, Bike, Bus, Boxes, Container, Layers, Wheat, Anchor, Ship, ArrowRight, Train, Clock } from "lucide-react";
 import svgPaths from "@/app/imports/svg-1kz55w3e74";
 import imgRectangle4 from "@/app/assets/3ffc24d8b6b2a7f5ec77f9c65134af63bb12a59d.png";
 import imgRectangle490 from "@/app/assets/cf53a64ce492864216e5a9b357abee066ed01103.png";
 
 // Types
-interface ScheduleEvent {
-  id: string;
+interface ScheduleEventStop {
+  id?: string;
   location: string;
-  startTime: string;
-  endTime: string;
+  arrivalTime: string;
+  departureTime: string;
+  activities: string[];
+  notes: string;
+  stopOrder?: number;
+}
+
+interface ScheduleEvent {
+  id?: string;
+  fromLocation: string;
+  toLocation: string;
+  departureTime: string;
+  arrivalTime: string;
+  location?: string;
+  startTime?: string;
+  endTime?: string;
   type: string;
   notes: string;
+  sortOrder?: number;
+  stops?: ScheduleEventStop[];
 }
 
 interface Schedule {
@@ -24,6 +40,8 @@ interface Schedule {
   shipName: string;
   isHoliday: boolean;
   isPublished: boolean;
+  launchAt?: string | null;
+  isLaunched?: boolean;
   events: ScheduleEvent[];
 }
 
@@ -88,54 +106,60 @@ function Hero() {
   );
 }
 
-// Schedule Card Component
-function ScheduleCard({ date, day, month, isHoliday, events }: any) {
-  return (
-    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 md:gap-8 min-h-[120px] md:min-h-[140px] group transition-all duration-300">
-      {/* Date Card */}
-      <div className="flex-shrink-0 bg-white border-2 md:border-[3px] border-emerald-900 rounded-lg sm:rounded-none w-20 h-20 md:w-[110px] md:h-[110px] flex flex-col items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
-        <div className="text-xl md:text-3xl font-bold text-black leading-tight">{date}</div>
-        <div className="text-sm md:text-lg font-bold text-black uppercase leading-tight">{day}</div>
-        <div className="text-[10px] md:text-sm font-semibold text-black/60 leading-tight">{month}</div>
+function ScheduleItem({ data, compact = false }: { data: Schedule; compact?: boolean }) {
+  if (data.isHoliday) {
+    return (
+      <div className="flex-1 flex items-center justify-center p-4">
+        <span className={`${compact ? 'text-xl' : 'text-[28px]'} font-extrabold text-white tracking-wider`}>Holiday</span>
       </div>
+    );
+  }
 
-      {/* Event Details */}
-      <div className="flex-1 flex flex-col justify-center w-full">
-        {isHoliday ? (
-          <div className="text-xl md:text-[28px] font-bold text-white bg-red-500/20 py-2 px-4 rounded-lg backdrop-blur-sm border border-red-500/30 text-center w-full">
-            Holiday
-          </div>
-        ) : !events || events.length === 0 ? (
-          <div className="text-sm md:text-[20px] text-white/40 italic text-center w-full">
-            No scheduled events
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {events.map((e: any, idx: number) => (
-              <div key={idx} className="flex items-start gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors">
-                <MapPin className="w-5 h-5 mt-1 text-emerald-400 flex-shrink-0" />
-                <div>
-                  <div className="text-lg md:text-[20px] font-bold text-white leading-tight mb-1">
-                    {e.location} {(e.startTime || e.endTime) && (
-                      <span className="ml-2 font-semibold text-white/70">
-                        ({e.startTime}{e.startTime && e.endTime ? " - " : ""}{e.endTime})
-                      </span>
-                    )}
-                  </div>
-                  <div className="text-base md:text-[22px] font-black text-emerald-300 uppercase leading-tight mb-1">
-                    {e.type}
-                  </div>
-                  {e.notes && (
-                    <div className="text-sm md:text-[17px] font-medium text-white/80 leading-tight italic">
-                      ({e.notes})
-                    </div>
-                  )}
-                </div>
+  return (
+    <div className={`flex-1 flex flex-col justify-center ${compact ? 'p-4 space-y-2' : 'p-6 space-y-4'}`}>
+      {!data.events || data.events.length === 0 ? (
+        <div className="text-white/40 text-center italic">
+          <span className={compact ? 'text-sm' : ''}>No scheduled events</span>
+        </div>
+      ) : (
+        data.events.map((event, idx) => {
+          const fromLoc = event.fromLocation || event.location || "";
+          const toLoc = event.toLocation || event.location || "";
+          const depTime = event.departureTime || event.startTime || "";
+          const arrTime = event.arrivalTime || event.endTime || "";
+          const stopsCount = event.stops?.length || 0;
+
+          return (
+            <div key={idx} className="text-white">
+              <div className="flex items-center gap-2 mb-1 flex-wrap">
+                <MapPin className={`${compact ? 'w-4 h-4' : 'w-5 h-5'} text-emerald-400`} />
+                <span className={`${compact ? 'text-base' : 'text-[18px]'} font-bold`}>{fromLoc}</span>
+                {toLoc && toLoc !== fromLoc && (
+                  <>
+                    <ArrowRight className={`${compact ? 'w-4 h-4' : 'w-5 h-5'}`} />
+                    <span className={`${compact ? 'text-base' : 'text-[18px]'} font-bold`}>{toLoc}</span>
+                  </>
+                )}
               </div>
-            ))}
-          </div>
-        )}
-      </div>
+              {(depTime || arrTime) && (
+                <p className={`${compact ? 'text-xs pl-6' : 'text-sm pl-7'} text-white/70 font-semibold`}>
+                  {depTime}{depTime && arrTime ? " — " : ""}{arrTime}
+                </p>
+              )}
+              <div className={compact ? 'pl-6' : 'pl-7'}>
+                <p className={`${compact ? 'text-sm' : 'text-[18px]'} font-black text-emerald-300 uppercase leading-tight`}>{event.type}</p>
+                {stopsCount > 0 && (
+                  <p className={`${compact ? 'text-[11px]' : 'text-[14px]'} font-medium text-white/60 flex items-center gap-1`}>
+                    <Train className="w-3.5 h-3.5" />
+                    {stopsCount} stop{stopsCount > 1 ? 's' : ''}
+                  </p>
+                )}
+                {event.notes && <p className={`${compact ? 'text-[11px]' : 'text-[14px]'} font-medium text-white/80 italic`}>({event.notes})</p>}
+              </div>
+            </div>
+          );
+        })
+      )}
     </div>
   );
 }
@@ -145,6 +169,16 @@ function ScheduleSection() {
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+  const [mobileActiveShip, setMobileActiveShip] = useState<'A' | 'B'>('A');
+
+  const [shipNameA, setShipNameA] = useState(() => {
+    if (typeof window !== 'undefined') return localStorage.getItem('dsl_ship_a') || 'SHIP_A';
+    return 'SHIP_A';
+  });
+  const [shipNameB, setShipNameB] = useState(() => {
+    if (typeof window !== 'undefined') return localStorage.getItem('dsl_ship_b') || 'SHIP_B';
+    return 'SHIP_B';
+  });
 
   const toLocalISO = (date: Date) => {
     const offset = date.getTimezoneOffset();
@@ -205,66 +239,150 @@ function ScheduleSection() {
     setCurrentWeekStart(newStart);
   };
 
-  const getWeekSchedule = (shipName: string) => weekDates.map((date, index) => {
-    const schedule = getScheduleForDate(date, shipName);
-    return {
-      date: String(date.getDate()).padStart(2, '0'),
-      day: weekdays[index],
-      month: months[date.getMonth()],
-      isHoliday: schedule?.isHoliday || false,
-      events: schedule?.events || []
-    };
-  });
+  const weekRangeStr = `${weekDates[0].toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} — ${weekDates[5].toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
 
   return (
     <section className="relative py-12 md:py-24 overflow-hidden min-h-[800px]">
       <img alt="" className="absolute inset-0 w-full h-full object-cover filter brightness-[0.2]" src={imgRectangle490.src} />
 
-      <div className="relative max-w-[1200px] mx-auto px-4 md:px-8">
+      <div className="relative max-w-[1400px] mx-auto px-4 md:px-8">
         {/* Week Navigation */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-6 mb-12 md:mb-20 bg-black/40 p-4 md:p-6 rounded-2xl backdrop-blur-md border border-white/10">
-          <div className="flex items-center gap-4 order-2 sm:order-1">
-            <button onClick={() => navigateWeek(-1)} className="bg-white/10 hover:bg-white/20 text-white p-2 md:p-3 rounded-full transition-all active:scale-90"><ChevronLeft className="w-6 h-6 md:w-8 md:h-8" /></button>
-            <button onClick={() => navigateWeek(1)} className="bg-white/10 hover:bg-white/20 text-white p-2 md:p-3 rounded-full transition-all active:scale-90"><ChevronRight className="w-6 h-6 md:w-8 md:h-8" /></button>
+        <div className="flex items-center justify-between mb-8 lg:mb-12 bg-black/40 p-4 lg:p-6 rounded-2xl backdrop-blur-md border border-white/10">
+          <button onClick={() => navigateWeek(-1)} className="p-2 lg:px-6 lg:py-2 border border-emerald-500 text-emerald-500 rounded-lg hover:bg-emerald-500 hover:text-white transition-all active:scale-95">
+            <ChevronLeft className="w-6 h-6 lg:hidden" />
+            <span className="hidden lg:inline text-lg font-bold">← Previous Week</span>
+          </button>
+          <div className="text-center">
+            <p className="text-emerald-400 text-xs lg:text-base font-bold uppercase tracking-widest mb-1">Current Schedule</p>
+            <h2 className="text-lg lg:text-3xl font-bold text-white italic">{weekRangeStr}</h2>
           </div>
-          <div className="text-center order-1 sm:order-2">
-            <p className="text-emerald-400 text-sm md:text-base font-bold uppercase tracking-widest mb-1">Current Schedule</p>
-            <h2 className="text-lg md:text-3xl font-bold text-white italic">
-              {weekDates[0].toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - {weekDates[5].toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-            </h2>
-          </div>
+          <button onClick={() => navigateWeek(1)} className="p-2 lg:px-6 lg:py-2 border border-emerald-500 text-emerald-500 rounded-lg hover:bg-emerald-500 hover:text-white transition-all active:scale-95">
+            <ChevronRight className="w-6 h-6 lg:hidden" />
+            <span className="hidden lg:inline text-lg font-bold">Next Week →</span>
+          </button>
         </div>
 
-        {/* Content */}
         {isLoading ? (
           <div className="flex justify-center py-20"><Loader2 className="w-12 h-12 animate-spin text-emerald-400" /></div>
         ) : error ? (
           <div className="text-center py-20 text-white"><p className="text-xl text-red-400">{error}</p></div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 relative">
-            {/* Ships */}
-            {[
-              { name: "SHIP A", data: getWeekSchedule("SHIP_A") },
-              { name: "SHIP B", data: getWeekSchedule("SHIP_B") }
-            ].map((ship, idx) => (
-              <div key={ship.name} className="relative">
-                <div className="flex items-center gap-4 mb-10 md:mb-16">
-                  <div className="h-1 flex-1 bg-gradient-to-r from-transparent to-emerald-500/50" />
-                  <h2 className="text-3xl md:text-[50px] font-black text-white tracking-widest">{ship.name}</h2>
-                  <div className="h-1 flex-1 bg-gradient-to-l from-transparent to-emerald-500/50" />
-                </div>
-                <div className="space-y-8 md:space-y-12">
-                  {ship.data.map((schedule, sIdx) => (
-                    <div key={sIdx} className="relative pb-8 md:pb-12 border-b border-white/10 last:border-0 last:pb-0">
-                      <ScheduleCard {...schedule} />
+          <>
+            {/* MOBILE VIEW (below lg) */}
+            <div className="lg:hidden space-y-6">
+              {/* Ship Tabs */}
+              <div className="flex bg-white/5 backdrop-blur-md rounded-xl p-1 gap-1 border border-white/10">
+                <button
+                  onClick={() => setMobileActiveShip('A')}
+                  className={`flex-1 py-3 rounded-lg text-sm font-black uppercase tracking-wider transition-all flex items-center justify-center gap-2 ${
+                    mobileActiveShip === 'A' ? 'bg-emerald-600 text-white shadow-lg' : 'text-white/60 hover:text-white'
+                  }`}
+                >
+                  <Ship className="w-4 h-4" />
+                  {shipNameA.replace(/_/g, ' ')}
+                </button>
+                <button
+                  onClick={() => setMobileActiveShip('B')}
+                  className={`flex-1 py-3 rounded-lg text-sm font-black uppercase tracking-wider transition-all flex items-center justify-center gap-2 ${
+                    mobileActiveShip === 'B' ? 'bg-emerald-600 text-white shadow-lg' : 'text-white/60 hover:text-white'
+                  }`}
+                >
+                  <Ship className="w-4 h-4" />
+                  {shipNameB.replace(/_/g, ' ')}
+                </button>
+              </div>
+
+              {/* Day Cards */}
+              <div className="space-y-4">
+                {weekDates.map((date, index) => {
+                  const activeShipName = mobileActiveShip === 'A' ? shipNameA : shipNameB;
+                  const schedule = getScheduleForDate(date, activeShipName);
+
+                  return (
+                    <div key={index} className="rounded-2xl overflow-hidden bg-black/40 backdrop-blur-md border border-white/10 shadow-xl">
+                      <div className="bg-emerald-900/50 px-4 py-3 flex items-center justify-between border-b border-white/10">
+                        <div className="flex items-center gap-3">
+                          <div className="bg-white rounded-lg w-12 h-12 flex flex-col items-center justify-center shadow-lg border-2 border-emerald-900">
+                            <span className="text-lg font-black leading-none text-black">{String(date.getDate()).padStart(2, '0')}</span>
+                            <span className="text-[10px] font-bold text-emerald-900">{weekdays[index]}</span>
+                          </div>
+                          <div className="text-white">
+                            <p className="text-sm font-bold uppercase tracking-wider">{months[date.getMonth()]}</p>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="p-2">
+                        {schedule ? (
+                          <ScheduleItem data={schedule} compact />
+                        ) : (
+                          <div className="py-8 text-center text-white/30 italic text-sm">
+                            No scheduled events
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  ))}
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* DESKTOP VIEW (lg and above) */}
+            <div className="hidden lg:block relative rounded-2xl overflow-hidden border border-white/10 shadow-2xl bg-black/40 backdrop-blur-md">
+              {/* Header */}
+              <div className="grid grid-cols-[180px_1fr_1fr] bg-emerald-900/40 border-b border-white/20">
+                <div className="py-8 text-center flex flex-col items-center justify-center">
+                   <Clock className="w-8 h-8 text-emerald-400 mb-2" />
+                   <span className="text-white/60 text-sm font-bold uppercase tracking-widest">Time Slot</span>
+                </div>
+                <div className="py-8 flex flex-col items-center justify-center border-l border-white/20">
+                  <Ship className="w-8 h-8 text-white mb-2" />
+                  <h2 className="text-3xl font-black text-white tracking-widest uppercase">{shipNameA.replace(/_/g, ' ')}</h2>
+                </div>
+                <div className="py-8 flex flex-col items-center justify-center border-l border-white/20">
+                  <Ship className="w-8 h-8 text-white mb-2" />
+                  <h2 className="text-3xl font-black text-white tracking-widest uppercase">{shipNameB.replace(/_/g, ' ')}</h2>
                 </div>
               </div>
-            ))}
-            {/* Desktop Vertical Divider */}
-            <div className="hidden lg:block absolute left-1/2 top-24 bottom-0 w-[1px] bg-gradient-to-b from-emerald-500/50 via-white/20 to-transparent -translate-x-1/2" />
-          </div>
+
+              {/* Rows */}
+              <div className="divide-y divide-white/10">
+                {weekDates.map((date, index) => {
+                  const scheduleA = getScheduleForDate(date, shipNameA);
+                  const scheduleB = getScheduleForDate(date, shipNameB);
+
+                  return (
+                    <div key={index} className="grid grid-cols-[180px_1fr_1fr] hover:bg-white/5 transition-colors">
+                      <div className="p-6 flex flex-col items-center justify-center">
+                        <div className="bg-white rounded-xl p-3 w-full aspect-square flex flex-col items-center justify-center shadow-xl border-[4px] border-emerald-900 group-hover:scale-105 transition-transform">
+                          <span className="text-[36px] font-black leading-none text-black">{String(date.getDate()).padStart(2, '0')}</span>
+                          <span className="text-[20px] font-black text-emerald-900">{weekdays[index]}</span>
+                          <span className="text-[14px] font-bold text-black/60 uppercase">{months[date.getMonth()].substring(0, 3)}</span>
+                        </div>
+                      </div>
+                      <div className="border-l border-white/10 flex min-h-[160px]">
+                        {scheduleA ? (
+                          <ScheduleItem data={scheduleA} />
+                        ) : (
+                          <div className="flex-1 flex items-center justify-center text-white/20 italic">
+                            No events scheduled
+                          </div>
+                        )}
+                      </div>
+                      <div className="border-l border-white/10 flex min-h-[160px]">
+                        {scheduleB ? (
+                          <ScheduleItem data={scheduleB} />
+                        ) : (
+                          <div className="flex-1 flex items-center justify-center text-white/20 italic">
+                            No events scheduled
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </>
         )}
       </div>
     </section>

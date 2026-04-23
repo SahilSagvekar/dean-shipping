@@ -1093,6 +1093,16 @@ function PassengerBookingContent() {
                     </div>
                   </div>
 
+                  <div className="bg-gray-50 rounded-xl p-4 flex justify-between items-center">
+                    <div>
+                      <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Total Amount</p>
+                      <p className="text-2xl font-black text-[#132540]">${grandTotal.toFixed(2)}</p>
+                    </div>
+                    <p className="text-[10px] text-[#296341] font-black bg-[#296341]/10 px-3 py-1 rounded-full uppercase">
+                      12% VAT Included
+                    </p>
+                  </div>
+
                   <button
                     onClick={() => handlePayNow(createdBooking.invoiceNo)}
                     disabled={isPaying}

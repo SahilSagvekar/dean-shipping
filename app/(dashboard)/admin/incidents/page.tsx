@@ -46,6 +46,8 @@ export default function AdminIncidentsPage() {
   const [filter, setFilter] = useState({ status: '', severity: '' });
   const [search, setSearch] = useState('');
 
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
+
   const fetchIncidents = async () => {
     setIsLoading(true);
     try {
@@ -71,6 +73,7 @@ export default function AdminIncidentsPage() {
   }, [filter]);
 
   const updateStatus = async (id: string, newStatus: string) => {
+    setUpdatingId(id);
     try {
       const res = await apiFetch(`/api/incidents/${id}`, {
         method: 'PATCH',
@@ -79,9 +82,13 @@ export default function AdminIncidentsPage() {
       if (res.ok) {
         toast.success(`Incident marked as ${newStatus.toLowerCase()}`);
         setIncidents(prev => prev.map(inc => inc.id === id ? { ...inc, status: newStatus as any } : inc));
+      } else {
+        toast.error("Failed to update incident status");
       }
     } catch (err) {
       toast.error("Failed to update incident status");
+    } finally {
+      setUpdatingId(null);
     }
   };
 
@@ -97,6 +104,13 @@ export default function AdminIncidentsPage() {
     INVESTIGATING: <Search className="w-4 h-4 text-orange-500" />,
     RESOLVED: <CheckCircle className="w-4 h-4 text-green-500" />,
     CLOSED: <XCircle className="w-4 h-4 text-gray-500" />
+  };
+
+  const statusColors: any = {
+    OPEN: 'text-blue-500 bg-blue-50 border-blue-100',
+    INVESTIGATING: 'text-orange-500 bg-orange-50 border-orange-100',
+    RESOLVED: 'text-green-500 bg-green-50 border-green-100',
+    CLOSED: 'text-gray-500 bg-gray-50 border-gray-100'
   };
 
   const filteredIncidents = incidents.filter(inc => 
@@ -191,9 +205,29 @@ export default function AdminIncidentsPage() {
                     <div className={`px-4 py-1.5 rounded-full text-xs font-black tracking-widest border-2 ${severityStyles[incident.severity]}`}>
                       {incident.severity}
                     </div>
-                    <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 rounded-full border border-gray-100">
-                      {statusIcons[incident.status]}
-                      <span className="text-[10px] font-black uppercase text-gray-500 tracking-wider font-mono">{incident.status}</span>
+                    
+                    {/* Status Dropdown */}
+                    <div className="relative">
+                      {updatingId === incident.id ? (
+                        <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 rounded-full border border-gray-100">
+                          <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
+                          <span className="text-[10px] font-black uppercase text-gray-400 tracking-wider">Updating...</span>
+                        </div>
+                      ) : (
+                        <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full border group/status ${statusColors[incident.status]}`}>
+                          {statusIcons[incident.status]}
+                          <select
+                            value={incident.status}
+                            onChange={(e) => updateStatus(incident.id, e.target.value)}
+                            className="bg-transparent border-none p-0 text-[10px] font-black uppercase tracking-wider font-mono outline-none cursor-pointer focus:ring-0"
+                          >
+                            <option value="OPEN">Open</option>
+                            <option value="INVESTIGATING">Investigating</option>
+                            <option value="RESOLVED">Resolved</option>
+                            <option value="CLOSED">Closed</option>
+                          </select>
+                        </div>
+                      )}
                     </div>
                   </div>
                   <span className="text-xs font-bold text-gray-400 tabular-nums bg-gray-50 px-3 py-1 rounded-full uppercase">

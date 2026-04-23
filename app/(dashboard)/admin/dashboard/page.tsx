@@ -177,6 +177,11 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<any>(null);
   const [range, setRange] = useState('today');
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   useEffect(() => {
     async function fetchData() {
@@ -475,10 +480,10 @@ export default function App() {
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_436px] gap-6 mb-8">
           <div className="border border-[#296341] p-6 bg-white shadow-sm">
             <h2 className="text-[20px] font-black italic mb-6 uppercase tracking-widest text-[#296341]">REVENUE Chart</h2>
-            <div className="h-[300px] w-full">
-              {revenueChartData.length === 0 ? (
+            <div className="h-[300px] w-full relative">
+              {!isMounted || revenueChartData.length === 0 ? (
                 <div className="flex items-center justify-center h-full text-gray-400 font-bold italic">
-                  No revenue data for this period
+                  {revenueChartData.length === 0 ? "No revenue data for this period" : "Loading chart..."}
                 </div>
               ) : (
                 <ResponsiveContainer width="100%" height="100%">

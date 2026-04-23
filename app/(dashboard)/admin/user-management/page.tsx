@@ -392,72 +392,77 @@ export default function UserManagement() {
             </div>
 
             {/* Pagination */}
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-6 mt-10">
-              <p className="text-[14px] lg:text-[16px] font-bold text-gray-400">
-                Showing {((pagination.page - 1) * pagination.limit) + 1} - {Math.min(pagination.page * pagination.limit, pagination.total)} of {pagination.total} records
-              </p>
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-6 mt-12 pb-8">
+              <div className="flex flex-col items-center sm:items-start">
+                <p className="text-[14px] lg:text-[16px] font-black italic text-[#296341] uppercase tracking-widest">
+                  Showing {((pagination.page - 1) * pagination.limit) + 1} - {Math.min(pagination.page * pagination.limit, pagination.total)}
+                </p>
+                <p className="text-[12px] font-bold text-gray-400 uppercase tracking-tighter">Total Capacity: {pagination.total} Records</p>
+              </div>
               
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-3">
                 <button
                   onClick={() => goToPage(pagination.page - 1)}
                   disabled={pagination.page <= 1 || isLoading}
-                  className="p-2 rounded border border-gray-200 disabled:opacity-20 hover:bg-gray-100 transition-colors"
+                  className="w-10 h-10 lg:w-12 lg:h-12 flex items-center justify-center rounded-[10px] border-2 border-gray-100 disabled:opacity-20 hover:bg-gray-50 hover:border-[#296341] hover:text-[#296341] transition-all active:scale-90"
                 >
-                  <ChevronLeft className="w-5 h-5" />
+                  <ChevronLeft className="w-5 h-5 lg:w-6 lg:h-6" />
                 </button>
                 
-                <div className="flex items-center gap-1">
-                  {Array.from({ length: pagination.totalPages }, (_, i) => i + 1).map(pageNum => (
-                    <button
-                      key={pageNum}
-                      onClick={() => goToPage(pageNum)}
-                      className={`w-8 h-8 rounded font-black text-[14px] transition-all ${
-                        pageNum === pagination.page
-                          ? "bg-[#296341] text-white"
-                          : "border border-gray-100 text-gray-400 hover:border-[#296341] hover:text-[#296341]"
-                      }`}
-                    >
-                      {pageNum}
-                    </button>
-                  ))}
+                <div className="flex items-center gap-2">
+                  {(() => {
+                    const total = pagination.totalPages;
+                    const current = pagination.page;
+                    const pages: (number | string)[] = [];
+                    
+                    if (total <= 7) {
+                      for (let i = 1; i <= total; i++) pages.push(i);
+                    } else {
+                      pages.push(1);
+                      if (current > 3) pages.push("...");
+                      
+                      const start = Math.max(2, current - 1);
+                      const end = Math.min(total - 1, current + 1);
+                      
+                      for (let i = start; i <= end; i++) {
+                        if (!pages.includes(i)) pages.push(i);
+                      }
+                      
+                      if (current < total - 2) pages.push("...");
+                      if (!pages.includes(total)) pages.push(total);
+                    }
+                    
+                    return pages.map((pageNum, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => typeof pageNum === 'number' ? goToPage(pageNum) : null}
+                        disabled={typeof pageNum !== 'number' || isLoading}
+                        className={`w-10 h-10 lg:w-12 lg:h-12 rounded-[10px] font-black text-[14px] lg:text-[18px] transition-all transform active:scale-95 ${
+                          pageNum === pagination.page
+                            ? "bg-[#296341] text-white shadow-lg shadow-[#296341]/30 -translate-y-1"
+                            : typeof pageNum !== 'number'
+                            ? "cursor-default text-gray-300"
+                            : "bg-white border-2 border-gray-50 text-[#132540] hover:border-[#296341] hover:text-[#296341]"
+                        }`}
+                      >
+                        {pageNum}
+                      </button>
+                    ));
+                  })()}
                 </div>
                 
                 <button
                   onClick={() => goToPage(pagination.page + 1)}
                   disabled={pagination.page >= pagination.totalPages || isLoading}
-                  className="p-2 rounded border border-gray-200 disabled:opacity-20 hover:bg-gray-100 transition-colors"
+                  className="w-10 h-10 lg:w-12 lg:h-12 flex items-center justify-center rounded-[10px] border-2 border-gray-100 disabled:opacity-20 hover:bg-gray-50 hover:border-[#296341] hover:text-[#296341] transition-all active:scale-90"
                 >
-                  <ChevronRight className="w-5 h-5" />
+                  <ChevronRight className="w-5 h-5 lg:w-6 lg:h-6" />
                 </button>
               </div>
             </div>
           </>
         )}
       </main>
-
-      {/* Footer */}
-      <footer className="bg-[#132540] py-8 lg:py-12 mt-12 border-t-4 border-[#296341]">
-        <div className="max-w-[1400px] mx-auto px-8 flex flex-col lg:flex-row items-center justify-between gap-8">
-          <div className="flex items-center gap-4">
-            <div className="bg-white p-2 rounded-xl">
-              <img src={imgLogo.src} alt="Dean's Shipping" className="h-[50px] lg:h-[70px] w-auto" />
-            </div>
-            <div>
-              <p className="text-white font-black text-lg uppercase tracking-tight">DEAN&apos;S SHIPPING</p>
-              <p className="text-blue-200/50 font-bold text-xs uppercase tracking-widest">Personnel Management</p>
-            </div>
-          </div>
-          
-          <div className="flex flex-col items-center lg:items-end text-center lg:text-right">
-            <div className="text-white text-[18px] lg:text-[28px] font-black uppercase">
-              {currentUser ? `${currentUser.firstName} ${currentUser.lastName}` : "GUEST"}
-            </div>
-            <div className="text-[10px] lg:text-[12px] font-black text-blue-200/30 uppercase tracking-[0.2em] mt-1">
-              SECURE PORTAL ACCESS • {currentUser?.role || "ADMIN"}
-            </div>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }

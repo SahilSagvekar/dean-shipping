@@ -360,9 +360,12 @@ function VehicleBookingContent() {
                 {v.fromLocation} → {v.toLocation}
               </span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-sm text-gray-500">Status</span>
-              <span className="font-bold text-amber-600">{v.status}</span>
+            <div className="flex justify-between border-t border-gray-200 pt-2 mt-2">
+              <span className="text-sm font-bold text-gray-900">Total Amount</span>
+              <div className="text-right">
+                <span className="font-black text-[#296341]">${(300 + (v.nonRunning ? 75 : 0) + (300 + (v.nonRunning ? 75 : 0)) * 0.12).toFixed(2)}</span>
+                <p className="text-[9px] text-gray-400 font-bold uppercase leading-none">Incl. 12% VAT</p>
+              </div>
             </div>
           </div>
           <div className="flex gap-3">
@@ -852,16 +855,29 @@ function VehicleBookingContent() {
               </div>
 
               {/* Total Card */}
-              <div className="static md:absolute md:left-[10%] md:right-[10%] md:-bottom-12 bg-white rounded-2xl p-6 shadow-2xl border-2 border-gray-50 flex flex-col items-center mt-8 md:mt-0">
-                <p className="text-sm md:text-[14px] font-bold text-gray-400">
+              <div className="static md:absolute md:left-[10%] md:right-[10%] md:-bottom-20 bg-white rounded-3xl p-6 md:p-8 shadow-2xl border border-gray-100 flex flex-col items-center mt-8 md:mt-0">
+                <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-1">
                   Total Amount
                 </p>
-                <p className="text-4xl md:text-[36px] font-black text-black leading-tight">
+                <p className="text-4xl md:text-5xl font-black text-[#132540] tracking-tight leading-tight">
                   ${total.toFixed(2)}
                 </p>
-                <p className="text-[10px] text-gray-400 font-semibold tracking-tighter uppercase">
-                  (Including 12% VAT)
-                </p>
+                <div className="mt-4 flex flex-col items-center gap-2">
+                  <p className="text-[10px] text-gray-400 font-bold uppercase tracking-tight text-center">
+                    VAT SURCHARGE (12%) INCLUDED
+                  </p>
+                  <div className="flex items-center gap-4 text-[10px] font-black text-gray-500 bg-gray-50 px-6 py-2 rounded-full border border-gray-200/50">
+                    <span className="flex items-center gap-1.5">
+                      <div className="w-1.5 h-1.5 rounded-full bg-[#296341]" /> 
+                      Sub: ${subtotal.toFixed(2)}
+                    </span>
+                    <span className="w-1 h-1 bg-gray-300 rounded-full" />
+                    <span className="flex items-center gap-1.5 text-blue-700">
+                      <div className="w-1.5 h-1.5 rounded-full bg-blue-500" /> 
+                      Tax: ${vatAmount.toFixed(2)}
+                    </span>
+                  </div>
+                </div>
               </div>
             </div>
 

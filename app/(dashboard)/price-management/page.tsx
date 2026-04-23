@@ -479,46 +479,74 @@ function PriceManagementContent() {
                 </div>
 
                 {/* Pagination */}
-                <div className="pt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-                  <span className="text-gray-600 text-[14px] lg:text-[18px]">
-                    Showing {((pagination.page - 1) * 5) + 1} - {Math.min(pagination.page * 5, pagination.total)} of {pagination.total}
-                  </span>
+                <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-6 border-t border-[#296341]/10 mt-6">
+                  <div className="flex flex-col items-center sm:items-start">
+                    <p className="text-[14px] lg:text-[16px] font-black italic text-[#296341] uppercase tracking-widest">
+                      Showing {((pagination.page - 1) * 5) + 1} - {Math.min(pagination.page * 5, pagination.total)}
+                    </p>
+                    <p className="text-[12px] font-bold text-gray-400 uppercase tracking-tighter">Total: {pagination.total} Prices</p>
+                  </div>
                   
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-3">
                     {/* Previous Button */}
                     <button
                       onClick={() => goToPage(pagination.page - 1)}
                       disabled={pagination.page <= 1 || isLoading}
-                      className="px-3 lg:px-4 py-1.5 lg:py-2 rounded-md border border-[#296341] text-[#296341] font-medium text-sm lg:text-base disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#296341] hover:text-white transition-colors"
+                      className="w-10 h-10 lg:w-12 lg:h-12 flex items-center justify-center rounded-[10px] border-2 border-[#296341]/20 disabled:opacity-20 hover:bg-white hover:border-[#296341] hover:text-[#296341] transition-all active:scale-90 shadow-sm"
                     >
-                      Prev
+                      <ChevronDown className="w-5 h-5 lg:w-6 lg:h-6 rotate-90" />
                     </button>
                     
-                    {/* Page Numbers */}
-                    <div className="flex items-center gap-1">
-                      {Array.from({ length: pagination.totalPages }, (_, i) => i + 1).map((pageNum) => (
-                        <button
-                          key={pageNum}
-                          onClick={() => goToPage(pageNum)}
-                          disabled={isLoading}
-                          className={`w-8 h-8 lg:w-10 lg:h-10 rounded-md font-bold text-[14px] lg:text-[18px] transition-colors ${
-                            pageNum === pagination.page
-                              ? "bg-[#296341] text-white"
-                              : "border border-gray-300 text-gray-600 hover:border-[#296341] hover:text-[#296341]"
-                          }`}
-                        >
-                          {pageNum}
-                        </button>
-                      ))}
+                    {/* Page Numbers with Sliding Window */}
+                    <div className="flex items-center gap-2">
+                      {(() => {
+                        const total = pagination.totalPages;
+                        const current = pagination.page;
+                        const pages: (number | string)[] = [];
+                        
+                        if (total <= 7) {
+                          for (let i = 1; i <= total; i++) pages.push(i);
+                        } else {
+                          pages.push(1);
+                          if (current > 3) pages.push("...");
+                          
+                          const start = Math.max(2, current - 1);
+                          const end = Math.min(total - 1, current + 1);
+                          
+                          for (let i = start; i <= end; i++) {
+                            if (!pages.includes(i)) pages.push(i);
+                          }
+                          
+                          if (current < total - 2) pages.push("...");
+                          if (!pages.includes(total)) pages.push(total);
+                        }
+                        
+                        return pages.map((pageNum, idx) => (
+                          <button
+                            key={idx}
+                            onClick={() => typeof pageNum === 'number' ? goToPage(pageNum) : null}
+                            disabled={typeof pageNum !== 'number' || isLoading}
+                            className={`w-10 h-10 lg:w-12 lg:h-12 rounded-[10px] font-black text-[14px] lg:text-[18px] transition-all transform active:scale-95 shadow-sm ${
+                              pageNum === pagination.page
+                                ? "bg-[#296341] text-white shadow-lg shadow-[#296341]/30 -translate-y-1"
+                                : typeof pageNum !== 'number'
+                                ? "cursor-default text-gray-300"
+                                : "bg-white border-2 border-white text-[#132540] hover:border-[#296341] hover:text-[#296341]"
+                            }`}
+                          >
+                            {pageNum}
+                          </button>
+                        ));
+                      })()}
                     </div>
                     
                     {/* Next Button */}
                     <button
                       onClick={() => goToPage(pagination.page + 1)}
                       disabled={pagination.page >= pagination.totalPages || isLoading}
-                      className="px-3 lg:px-4 py-1.5 lg:py-2 rounded-md border border-[#296341] text-[#296341] font-medium text-sm lg:text-base disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#296341] hover:text-white transition-colors"
+                      className="w-10 h-10 lg:w-12 lg:h-12 flex items-center justify-center rounded-[10px] border-2 border-[#296341]/20 disabled:opacity-20 hover:bg-white hover:border-[#296341] hover:text-[#296341] transition-all active:scale-90 shadow-sm"
                     >
-                      Next
+                      <ChevronDown className="w-5 h-5 lg:w-6 lg:h-6 -rotate-90" />
                     </button>
                   </div>
                 </div>

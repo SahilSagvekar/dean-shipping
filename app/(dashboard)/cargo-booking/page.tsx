@@ -2616,9 +2616,22 @@ export default function CargoBooking() {
               <MapPin className="w-5 h-5 text-[#296341]" />
               <span className="font-bold text-lg lg:text-[20px]">{toLocation || 'MAH'}</span>
             </div>
-            <div className="lg:ml-auto flex items-center lg:flex-col lg:items-end gap-3 lg:gap-0">
-              <p className="text-[12px] lg:text-[14px] text-gray-500 lg:text-black uppercase lg:normal-case font-black lg:font-bold">Total Price</p>
-              <p className="text-3xl sm:text-4xl lg:text-[50px] font-black text-[#296341] lg:text-black leading-none">${grandTotal.toFixed(2)}</p>
+            <div className="lg:ml-auto flex items-center lg:flex-col lg:items-end gap-4 lg:gap-1">
+              <div className="flex flex-col items-end">
+                <p className="text-[12px] lg:text-[14px] text-gray-500 lg:text-black uppercase lg:normal-case font-black lg:font-bold">Total Price</p>
+                <p className="text-3xl sm:text-4xl lg:text-[50px] font-black text-[#296341] lg:text-black leading-none">${grandTotal.toFixed(2)}</p>
+              </div>
+              <div className="flex items-center gap-4 text-[10px] font-black text-gray-500 bg-white/40 px-4 py-1.5 rounded-full border border-white/20 whitespace-nowrap">
+                <span className="flex items-center gap-1.5">
+                  <div className="w-1.5 h-1.5 rounded-full bg-[#296341]" /> 
+                  Sub: ${subtotal.toFixed(2)}
+                </span>
+                <span className="w-1 h-1 bg-gray-400/30 rounded-full" />
+                <span className="flex items-center gap-1.5 text-blue-700">
+                  <div className="w-1.5 h-1.5 rounded-full bg-blue-500" /> 
+                  VAT (12%): ${vatAmount.toFixed(2)}
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -2636,6 +2649,16 @@ export default function CargoBooking() {
                   <p className="text-lg font-black text-[#296341]">Booking Created!</p>
                   <p className="text-sm text-gray-500">Invoice #{createdBooking.invoiceNo}</p>
                 </div>
+              </div>
+
+              <div className="bg-gray-50 rounded-xl p-4 flex justify-between items-center">
+                <div>
+                  <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Total Amount</p>
+                  <p className="text-2xl font-black text-[#132540]">${grandTotal.toFixed(2)}</p>
+                </div>
+                <p className="text-[10px] text-[#296341] font-black bg-[#296341]/10 px-3 py-1 rounded-full uppercase">
+                  12% VAT Included
+                </p>
               </div>
 
               <button
@@ -2843,15 +2866,40 @@ export default function CargoBooking() {
               {/* Items */}
               <div className="border-b pb-4">
                 <h4 className="font-bold text-gray-700 mb-2">Items ({items.length})</h4>
-                {items.map(item => (
-                  <div key={item.id} className="flex justify-between py-2 border-b border-gray-100 last:border-0">
-                    <span>{item.type} x {item.quantity}</span>
-                    <span className="font-bold">${item.total.toFixed(2)}</span>
+                <div className="space-y-2">
+                  {items.map(item => (
+                    <div key={item.id} className="flex justify-between py-1 text-sm">
+                      <span className="text-gray-600">{item.type} x {item.quantity}</span>
+                      <span className="font-bold text-gray-800">${item.total.toFixed(2)}</span>
+                    </div>
+                  ))}
+                  
+                  {additionalServices.length > 0 && (
+                    <div className="pt-2 border-t border-dashed border-gray-200 mt-2">
+                      <p className="text-xs font-bold text-gray-400 uppercase mb-2">Additional Services</p>
+                      {additionalServices.map((svc, idx) => (
+                        <div key={idx} className="flex justify-between py-1 text-sm">
+                          <span className="text-gray-600">{svc.name}</span>
+                          <span className="font-bold text-gray-800">${svc.price.toFixed(2)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="mt-6 pt-4 border-t-2 border-gray-100 space-y-2">
+                  <div className="flex justify-between text-sm text-gray-500">
+                    <span>Subtotal</span>
+                    <span>${subtotal.toFixed(2)}</span>
                   </div>
-                ))}
-                <div className="flex justify-between py-2 mt-2 border-t-2">
-                  <span className="font-bold">Total (incl. 12% VAT)</span>
-                  <span className="font-black text-[#296341]">${grandTotal.toFixed(2)}</span>
+                  <div className="flex justify-between text-sm text-blue-600 font-medium">
+                    <span>VAT (12%)</span>
+                    <span>${vatAmount.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between pt-2">
+                    <span className="text-lg font-bold text-gray-900">Grand Total</span>
+                    <span className="text-2xl font-black text-[#296341]">${grandTotal.toFixed(2)}</span>
+                  </div>
                 </div>
               </div>
 
