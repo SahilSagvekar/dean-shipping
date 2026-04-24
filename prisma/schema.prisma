@@ -770,6 +770,10 @@ model Vehicle {
   fromLocation   String
   toLocation     String
   status         VehicleStatus @default(PENDING)
+  paymentStatus  PaymentStatus @default(UNPAID)
+  totalAmount    Float         @default(0)
+  paidAt         DateTime?
+  paymentMode    String? // Cash, Online, Credit Card, Debit Card
   bookingDate    DateTime
 
   // Optional voyage assignment
@@ -780,6 +784,7 @@ model Vehicle {
   updatedAt DateTime @updatedAt
 
   @@index([status])
+  @@index([paymentStatus])
   @@index([bookingDate])
   @@index([registrationNo])
 }

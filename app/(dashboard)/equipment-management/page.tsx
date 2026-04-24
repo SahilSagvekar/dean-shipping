@@ -17,7 +17,8 @@ import {
   Container,
   Edit2,
   X,
-  AlertCircle
+  AlertCircle,
+  Search
 } from "lucide-react";
 import image from "@/app/assets/e6c79afe715811b9fb95363def64518d57e9451c.png";
 import { DashboardBanner } from "@/components/ui/DashboardBanner";
@@ -340,15 +341,13 @@ function EquipmentCategory({
 
 // Main Component
 export default function EquipmentManagementPage() {
-  const { apiFetch } = useAuth();
+  const { apiFetch, isLoading: authLoading, user } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
-  const [equipment, setEquipment] = useState<Equipment[]>([]);
   const [groupedEquipment, setGroupedEquipment] = useState<GroupedEquipment>({});
   const [locations, setLocations] = useState<Location[]>([]);
   const [expandedCategory, setExpandedCategory] = useState<string | null>("CHASSIS");
-  const [isUpdatingStatus, setIsUpdatingStatus] = useState<string | null>(null);
-
-  const { user } = useAuth();
+  const [isUpdating, setIsUpdating] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Add form state
   const [showAddForm, setShowAddForm] = useState(false);
@@ -368,13 +367,12 @@ export default function EquipmentManagementPage() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   // Fetch equipment
-  const fetchEquipment = async () => {
+  const fetchEquipment = async (search = searchQuery) => {
     setIsLoading(true);
     try {
-      const res = await apiFetch('/api/equipment');
+      const res = await apiFetch(`/api/equipment${search ? `?search=${encodeURIComponent(search)}` : ''}`);
       if (res.ok) {
         const data = await res.json();
-        setEquipment(data.equipment || []);
         setGroupedEquipment(data.grouped || {});
       } else {
         toast.error('Failed to load equipment');
@@ -404,9 +402,19 @@ export default function EquipmentManagementPage() {
   };
 
   useEffect(() => {
-    fetchEquipment();
-    fetchLocations();
-  }, []);
+    const timer = setTimeout(() => {
+      if (!authLoading) {
+        fetchEquipment(searchQuery);
+      }
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [searchQuery, authLoading]);
+
+  useEffect(() => {
+    if (!authLoading) {
+      fetchLocations();
+    }
+  }, [authLoading]);
 
   // Toggle category expansion
   const toggleCategory = (category: string) => {
@@ -600,15 +608,38 @@ export default function EquipmentManagementPage() {
 
       {/* Equipment List Section */}
       <section className="px-4 md:px-6 max-w-[1200px] mx-auto">
-        <div className="mb-6">
-          <h1 className="text-2xl md:text-3xl font-medium text-black">
-            EQUIPMENT LIST
-          </h1>
-          <div className="w-40 h-1 bg-black rounded-full mt-1" />
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
+          <div className="mb-6 md:mb-0">
+            <h1 className="text-2xl md:text-3xl font-medium text-black">
+              EQUIPMENT LIST
+            </h1>
+            <div className="w-40 h-1 bg-black rounded-full mt-1" />
+          </div>
+
+          <div className="flex-1 max-w-md relative group">
+            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[#296341] transition-colors">
+              <Search className="w-5 h-5" />
+            </div>
+            <input
+              type="text"
+              placeholder="Search by name or identifier..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full bg-[#f8fafc] border border-gray-200 rounded-xl pl-11 pr-10 py-3 text-sm font-medium outline-none focus:bg-white focus:border-[#296341] focus:ring-4 focus:ring-[#296341]/10 transition-all shadow-sm"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-200 rounded-full text-gray-400 transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Loading State */}
-        {isLoading ? (
+        {isLoading || authLoading ? (
           <div className="flex items-center justify-center py-20">
             <Loader2 className="w-10 h-10 animate-spin text-[#296341]" />
           </div>
@@ -626,7 +657,7 @@ export default function EquipmentManagementPage() {
                 onEdit={handleEditEquipment}
                 onAssignToMe={handleAssignToMe}
                 onRelease={handleRelease}
-                isUpdating={isUpdatingStatus}
+                isUpdating={isUpdating}
                 user={user}
               />
             ))}

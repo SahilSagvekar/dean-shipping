@@ -7,7 +7,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { requireAuth, requireStaff, createAuditLog, getClientIp } from "@/lib/auth";
-import { VehicleStatus } from "@prisma/client";
+import { VehicleStatus, PaymentStatus } from "@prisma/client";
 
 export async function GET(
     request: NextRequest,
@@ -95,6 +95,33 @@ export async function PATCH(
                 { error: "From and To locations cannot be the same" },
                 { status: 400 }
             );
+        }
+
+        // Handle payment fields
+        if (body.paymentStatus !== undefined) {
+            const validPaymentStatuses = Object.values(PaymentStatus);
+            if (!validPaymentStatuses.includes(body.paymentStatus as PaymentStatus)) {
+                return NextResponse.json(
+                    { error: `Invalid payment status` },
+                    { status: 400 }
+                );
+            }
+            updateData.paymentStatus = body.paymentStatus as PaymentStatus;
+            
+            // Auto-set paidAt if status is PAID
+            if (body.paymentStatus === 'PAID' && !existing.paidAt) {
+                updateData.paidAt = new Date();
+            } else if (body.paymentStatus === 'UNPAID') {
+                updateData.paidAt = null;
+            }
+        }
+
+        if (body.totalAmount !== undefined) {
+            updateData.totalAmount = parseFloat(body.totalAmount) || 0;
+        }
+
+        if (body.paymentMode !== undefined) {
+            updateData.paymentMode = body.paymentMode;
         }
 
         const vehicle = await prisma.vehicle.update({

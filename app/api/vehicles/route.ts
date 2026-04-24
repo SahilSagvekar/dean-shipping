@@ -137,6 +137,8 @@ export async function POST(request: NextRequest) {
                 voyageId: voyageId || null,
                 notes: notes?.trim() || null,
                 status: VehicleStatus.PENDING,
+                paymentStatus: body.paymentStatus || 'UNPAID',
+                totalAmount: body.totalAmount ? parseFloat(body.totalAmount) : 0,
             },
         });
 

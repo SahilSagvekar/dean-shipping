@@ -24,7 +24,9 @@ import {
   ArrowRight,
   Anchor,
   CheckSquare,
-  Square
+  Square,
+  CreditCard,
+  Search
 } from "lucide-react";
 import { DashboardBanner } from "@/components/ui/DashboardBanner";
 import image2 from "@/app/assets/cc1821c6ea8a81adb203fcf9b1bb2ee371bbcbed.png";
@@ -48,6 +50,8 @@ interface Vehicle {
   toLocation: string;
   bookingDate: string;
   status: 'PENDING' | 'IN_DOCK' | 'IN_TRANSIT' | 'DELIVERED' | 'CANCELLED';
+  paymentStatus: 'PAID' | 'UNPAID' | 'PARTIAL';
+  totalAmount: number;
   notes?: string;
   createdAt: string;
   invoiceNo?: string;
@@ -85,6 +89,12 @@ const STATUS_CONFIG = {
   IN_TRANSIT: { label: 'In Transit', bg: 'bg-purple-100', text: 'text-purple-700' },
   DELIVERED: { label: 'Delivered', bg: 'bg-green-100', text: 'text-green-700' },
   CANCELLED: { label: 'Cancelled', bg: 'bg-red-100', text: 'text-red-700' },
+};
+
+const PAYMENT_STATUS_CONFIG = {
+  PAID: { label: 'Paid', bg: 'bg-green-100', text: 'text-green-700' },
+  UNPAID: { label: 'Unpaid', bg: 'bg-red-100', text: 'text-red-700' },
+  PARTIAL: { label: 'Partial', bg: 'bg-blue-100', text: 'text-blue-700' },
 };
 
 // Vehicle Icon Component
@@ -201,6 +211,16 @@ function StatusBadge({ status }: { status: Vehicle['status'] }) {
   );
 }
 
+function PaymentBadge({ status }: { status: Vehicle['paymentStatus'] }) {
+  const config = PAYMENT_STATUS_CONFIG[status] || PAYMENT_STATUS_CONFIG.UNPAID;
+  return (
+    <span className={`${config.bg} ${config.text} px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-tighter flex items-center gap-1`}>
+      <CreditCard className="w-2.5 h-2.5" />
+      {config.label}
+    </span>
+  );
+}
+
 // Collapsed Waitlist Card
 function WaitlistCardCollapsed({
   vehicle,
@@ -248,8 +268,9 @@ function WaitlistCardCollapsed({
               <p className="text-[10px] sm:text-xs font-black text-[#296341]/60 uppercase tracking-tighter">Vehicle Type</p>
               <p className="text-sm sm:text-base font-bold text-gray-900">{vehicle.vehicleType}</p>
             </div>
-            <div className="flex items-center sm:justify-end">
+            <div className="flex flex-col items-end gap-1 sm:justify-center">
               <StatusBadge status={vehicle.status} />
+              <PaymentBadge status={vehicle.paymentStatus} />
             </div>
           </div>
           <div className="ml-4 p-2 bg-white/40 rounded-lg group-hover:bg-white transition-colors">
@@ -290,6 +311,8 @@ function WaitlistCardExpanded({
     fromLocation: vehicle.fromLocation,
     toLocation: vehicle.toLocation,
     status: vehicle.status,
+    paymentStatus: vehicle.paymentStatus || 'UNPAID',
+    totalAmount: vehicle.totalAmount || 0,
     notes: vehicle.notes || '',
   });
 
@@ -404,6 +427,20 @@ function WaitlistCardExpanded({
           onChange={(v) => setEditData(prev => ({ ...prev, status: v as Vehicle['status'] }))}
           options={statusOptions}
         />
+        <SelectField 
+          label="Payment Status" 
+          value={editData.paymentStatus}
+          onChange={(v) => setEditData(prev => ({ ...prev, paymentStatus: v as Vehicle['paymentStatus'] }))}
+          options={Object.entries(PAYMENT_STATUS_CONFIG).map(([k, v]) => ({ value: k, label: v.label }))}
+        />
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
+        <InputField 
+          label="Total Amount" 
+          value={(editData.totalAmount || 0).toString()}
+          onChange={(v) => setEditData(prev => ({ ...prev, totalAmount: parseFloat(v) || 0 }))}
+          type="number"
+        />
         <div className="flex flex-col gap-1">
           <label className="text-sm font-bold text-gray-700">Additional Notes</label>
           <textarea
@@ -449,6 +486,18 @@ function WaitlistCardExpanded({
             {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
             Save Changes
           </button>
+          
+          {vehicle.paymentStatus !== 'PAID' && (
+            <button 
+              onClick={() => onSave({ paymentStatus: 'PAID' })}
+              disabled={isSubmitting}
+              className="flex-1 sm:flex-none bg-[#296341] text-white rounded-xl px-8 py-3 font-bold hover:bg-[#1e4a2e] transition-all shadow-lg active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              <CreditCard className="w-5 h-5" />
+              Pay Now
+            </button>
+          )}
+
           <button 
             onClick={onCollapse}
             className="hidden sm:flex p-3 hover:bg-white rounded-xl transition-all"
@@ -472,6 +521,7 @@ export default function VehicleWaitlistPage() {
   const [locations, setLocations] = useState<Location[]>([]);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Voyage state
   const [upcomingVoyages, setUpcomingVoyages] = useState<Voyage[]>([]);
@@ -488,14 +538,16 @@ export default function VehicleWaitlistPage() {
     fromLocation: '',
     toLocation: '',
     bookingDate: new Date().toISOString().split('T')[0],
+    paymentStatus: 'UNPAID' as Vehicle['paymentStatus'],
+    totalAmount: 0,
     notes: '',
   });
 
   // Fetch vehicles
-  const fetchVehicles = async (page = 1) => {
+  const fetchVehicles = async (page = 1, search = searchQuery) => {
     setIsLoading(true);
     try {
-      const res = await apiFetch(`/api/vehicles?page=${page}&limit=20`);
+      const res = await apiFetch(`/api/vehicles?page=${page}&limit=20${search ? `&search=${encodeURIComponent(search)}` : ''}`);
       if (res.ok) {
         const data = await res.json();
         setVehicles(data.vehicles || []);
@@ -532,7 +584,15 @@ export default function VehicleWaitlistPage() {
   };
 
   useEffect(() => {
-    fetchVehicles();
+    const timer = setTimeout(() => {
+      if (activeView === 'list') {
+        fetchVehicles(1, searchQuery);
+      }
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [searchQuery, activeView]);
+
+  useEffect(() => {
     fetchLocations();
   }, []);
 
@@ -675,6 +735,8 @@ export default function VehicleWaitlistPage() {
           fromLocation: locations[0]?.code || '',
           toLocation: locations[1]?.code || locations[0]?.code || '',
           bookingDate: new Date().toISOString().split('T')[0],
+          paymentStatus: 'UNPAID',
+          totalAmount: 0,
           notes: '',
         });
         // Refresh list and switch to list view
@@ -705,7 +767,7 @@ export default function VehicleWaitlistPage() {
       if (res.ok) {
         toast.success('Vehicle updated');
         setExpandedId(null);
-        fetchVehicles();
+        fetchVehicles(pagination?.page || 1);
       } else {
         const data = await res.json();
         toast.error(data.error || 'Failed to update vehicle');
@@ -733,7 +795,7 @@ export default function VehicleWaitlistPage() {
       if (res.ok) {
         toast.success('Vehicle removed from waitlist');
         setExpandedId(null);
-        fetchVehicles();
+        fetchVehicles(pagination?.page || 1);
       } else {
         const data = await res.json();
         toast.error(data.error || 'Failed to remove vehicle');
@@ -759,9 +821,10 @@ export default function VehicleWaitlistPage() {
       });
 
       if (res.ok) {
-        toast.success(`Updated ${selectedIds.length} vehicles to ${STATUS_CONFIG[status].label}`);
+        const data = await res.json();
+        toast.success(`Updated ${data.count || selectedIds.length} vehicles to ${STATUS_CONFIG[status].label}`);
         setSelectedIds([]);
-        fetchVehicles();
+        fetchVehicles(pagination?.page || 1);
       } else {
         const data = await res.json();
         toast.error(data.error || 'Failed to update vehicles');
@@ -774,11 +837,54 @@ export default function VehicleWaitlistPage() {
     }
   };
 
+  // Bulk update payment status
+  const handleBulkPaymentUpdate = async (paymentStatus: Vehicle['paymentStatus']) => {
+    if (selectedIds.length === 0) return;
+    
+    setIsSubmitting(true);
+    try {
+      const res = await apiFetch('/api/vehicles/bulk', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ids: selectedIds,
+          paymentStatus,
+        }),
+      });
+  
+      if (res.ok) {
+        const data = await res.json();
+        toast.success(`Updated ${data.count || selectedIds.length} vehicles to ${PAYMENT_STATUS_CONFIG[paymentStatus].label}`);
+        setSelectedIds([]);
+        fetchVehicles(pagination?.page || 1);
+      } else {
+        const data = await res.json();
+        toast.error(data.error || 'Failed to update payments');
+      }
+    } catch (error) {
+      console.error('Error bulk updating payments:', error);
+      toast.error('Failed to update payments');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const toggleSelectAll = () => {
-    if (selectedIds.length === vehicles.length) {
-      setSelectedIds([]);
+    const currentPageIds = vehicles.map(v => v.id);
+    const allOnPageSelected = currentPageIds.every(id => selectedIds.includes(id));
+    
+    if (allOnPageSelected) {
+      // Remove all current page IDs
+      setSelectedIds(prev => prev.filter(id => !currentPageIds.includes(id)));
     } else {
-      setSelectedIds(vehicles.map(v => v.id));
+      // Add missing current page IDs
+      setSelectedIds(prev => {
+        const newSelection = [...prev];
+        currentPageIds.forEach(id => {
+          if (!newSelection.includes(id)) newSelection.push(id);
+        });
+        return newSelection;
+      });
     }
   };
 
@@ -958,6 +1064,23 @@ export default function VehicleWaitlistPage() {
                 required
               />
             </div>
+            
+            {/* Row 4: Payment Status, Total Amount */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <SelectField 
+                label="Payment Status" 
+                value={newVehicle.paymentStatus}
+                onChange={(v) => setNewVehicle(prev => ({ ...prev, paymentStatus: v as Vehicle['paymentStatus'] }))}
+                options={Object.entries(PAYMENT_STATUS_CONFIG).map(([k, v]) => ({ value: k, label: v.label }))}
+              />
+              <InputField 
+                label="Total Amount" 
+                value={newVehicle.totalAmount.toString()}
+                onChange={(v) => setNewVehicle(prev => ({ ...prev, totalAmount: parseFloat(v) || 0 }))}
+                type="number"
+                placeholder="0.00"
+              />
+            </div>
 
             {/* Notes */}
             <div className="flex flex-col gap-1">
@@ -996,20 +1119,43 @@ export default function VehicleWaitlistPage() {
                 <span className="text-lg font-bold text-[#132540]">{pagination?.total || 0}</span>
               </div>
             </div>
+
+            <div className="flex-1 max-w-md relative group">
+              <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[#296341] transition-colors">
+                <Search className="w-5 h-5" />
+              </div>
+              <input
+                type="text"
+                placeholder="Search by owner, plate, or invoice..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full bg-[#f8fafc] border border-gray-200 rounded-xl pl-11 pr-10 py-2.5 text-sm outline-none focus:bg-white focus:border-[#296341] focus:ring-4 focus:ring-[#296341]/10 transition-all"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-200 rounded-full text-gray-400 transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
             
-            {vehicles.length > 0 && (
-              <button 
-                onClick={toggleSelectAll}
-                className="flex items-center gap-2 px-4 py-2 bg-[#e5f7f1] text-[#296341] rounded-lg font-bold text-sm hover:bg-[#d1f0e5] transition-colors"
-              >
-                {selectedIds.length === vehicles.length ? (
-                  <CheckSquare className="w-5 h-5" />
-                ) : (
-                  <Square className="w-5 h-5" />
-                )}
-                {selectedIds.length === vehicles.length ? 'DESELECT ALL' : 'SELECT ALL PAGE'}
-              </button>
-            )}
+            <div className="flex items-center gap-4">
+              {vehicles.length > 0 && (
+                <button 
+                  onClick={toggleSelectAll}
+                  className="flex items-center gap-2 px-4 py-2 bg-[#e5f7f1] text-[#296341] rounded-lg font-bold text-sm hover:bg-[#d1f0e5] transition-colors"
+                >
+                  {selectedIds.length === vehicles.length ? (
+                    <CheckSquare className="w-5 h-5" />
+                  ) : (
+                    <Square className="w-5 h-5" />
+                  )}
+                  {selectedIds.length === vehicles.length ? 'DESELECT ALL' : 'SELECT ALL PAGE'}
+                </button>
+              )}
+            </div>
           </div>
           <div className="w-48 h-1 bg-[#132540] rounded-full mb-6" />
 
@@ -1076,19 +1222,36 @@ export default function VehicleWaitlistPage() {
                     </div>
                     
                     <div className="flex items-center gap-2 overflow-x-auto w-full sm:w-auto pb-2 sm:pb-0 scrollbar-hide">
-                      {Object.entries(STATUS_CONFIG).map(([key, config]) => (
-                        <button
-                          key={key}
-                          onClick={() => handleBulkStatusUpdate(key as Vehicle['status'])}
-                          disabled={isSubmitting}
-                          className={`px-4 py-2 rounded-full text-xs font-black uppercase tracking-tighter whitespace-nowrap transition-all active:scale-95 disabled:opacity-50 ${config.bg} ${config.text} hover:scale-105 shadow-sm`}
-                        >
-                          {config.label}
-                        </button>
-                      ))}
+                      <div className="flex items-center gap-1 border-r border-white/10 pr-2 mr-2">
+                        {Object.entries(STATUS_CONFIG).map(([key, config]) => (
+                          <button
+                            key={key}
+                            onClick={() => handleBulkStatusUpdate(key as Vehicle['status'])}
+                            disabled={isSubmitting}
+                            className={`px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-tighter whitespace-nowrap transition-all active:scale-95 disabled:opacity-50 ${config.bg} ${config.text} hover:scale-105 shadow-sm`}
+                          >
+                            {config.label}
+                          </button>
+                        ))}
+                      </div>
+
+                      <div className="flex items-center gap-1">
+                        {Object.entries(PAYMENT_STATUS_CONFIG).map(([key, config]) => (
+                          <button
+                            key={key}
+                            onClick={() => handleBulkPaymentUpdate(key as Vehicle['paymentStatus'])}
+                            disabled={isSubmitting}
+                            className={`px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-tighter whitespace-nowrap transition-all active:scale-95 disabled:opacity-50 ${config.bg} ${config.text} hover:scale-105 shadow-sm flex items-center gap-1`}
+                          >
+                            <CreditCard className="w-3 h-3" />
+                            {config.label}
+                          </button>
+                        ))}
+                      </div>
+                      
                       <button
                         onClick={() => setSelectedIds([])}
-                        className="p-2 text-white/50 hover:text-white transition-colors"
+                        className="p-2 text-white/50 hover:text-white transition-colors ml-2"
                         title="Clear Selection"
                       >
                         <X className="w-6 h-6" />

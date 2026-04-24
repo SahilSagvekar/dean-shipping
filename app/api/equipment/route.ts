@@ -15,12 +15,19 @@ export async function GET(request: NextRequest) {
     const type = searchParams.get("type") || undefined;
     const locationCode = searchParams.get("location") || undefined;
     const status = searchParams.get("status") || undefined;
+    const search = searchParams.get("search") || undefined;
 
     const where: any = { isActive: true };
     if (type) where.type = type;
     if (status) where.status = status;
     if (locationCode) {
         where.location = { code: locationCode };
+    }
+    if (search) {
+        where.OR = [
+            { name: { contains: search, mode: "insensitive" } },
+            { identifier: { contains: search, mode: "insensitive" } },
+        ];
     }
 
     const equipment = await prisma.equipment.findMany({

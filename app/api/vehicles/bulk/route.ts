@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { requireStaff, createAuditLog, getClientIp } from "@/lib/auth";
-import { VehicleStatus } from "@prisma/client";
+import { VehicleStatus, PaymentStatus } from "@prisma/client";
 
 export async function PATCH(request: NextRequest) {
     const result = await requireStaff(request);
@@ -15,16 +15,13 @@ export async function PATCH(request: NextRequest) {
             return NextResponse.json({ error: "No vehicle IDs provided" }, { status: 400 });
         }
 
-        if (!status) {
-            return NextResponse.json({ error: "Status is required" }, { status: 400 });
-        }
-
-        const validStatuses = Object.values(VehicleStatus);
-        if (!validStatuses.includes(status as VehicleStatus)) {
-            return NextResponse.json(
-                { error: `Invalid status. Must be one of: ${validStatuses.join(', ')}` },
-                { status: 400 }
-            );
+        const updateData: any = {};
+        if (status) updateData.status = status as VehicleStatus;
+        if (body.paymentStatus) {
+            updateData.paymentStatus = body.paymentStatus as PaymentStatus;
+            if (body.paymentStatus === 'PAID') {
+                updateData.paidAt = new Date();
+            }
         }
 
         // Update all vehicles in the list
@@ -32,9 +29,7 @@ export async function PATCH(request: NextRequest) {
             where: {
                 id: { in: ids }
             },
-            data: {
-                status: status as VehicleStatus
-            }
+            data: updateData
         });
 
         await createAuditLog({
