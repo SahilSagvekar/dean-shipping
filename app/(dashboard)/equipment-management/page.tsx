@@ -40,6 +40,13 @@ interface Equipment {
     code: string;
     name: string;
   };
+  assignments?: {
+    assignedTo: {
+      id: string;
+      firstName: string;
+      lastName: string;
+    };
+  }[];
   createdAt: string;
 }
 
@@ -178,6 +185,10 @@ function EquipmentCategory({
   onToggle,
   onDelete,
   onEdit,
+  onAssignToMe,
+  onRelease,
+  isUpdating,
+  user,
 }: {
   config: typeof EQUIPMENT_TYPES[0];
   items: Equipment[];
@@ -185,7 +196,16 @@ function EquipmentCategory({
   onToggle: () => void;
   onDelete: (id: string) => void;
   onEdit: (item: Equipment) => void;
+  onAssignToMe: (id: string) => void;
+  onRelease: (id: string) => void;
+  isUpdating: string | null;
+  user: any;
 }) {
+  const isAssignedToUser = items.some(item => 
+    item.status === 'OCCUPIED' && item.assignments?.[0]?.assignedTo?.id === user?.id
+  );
+  
+  const isAdmin = user?.role === 'ADMIN';
   return (
     <div className={`${config.bgColor} rounded-lg overflow-hidden`}>
       {/* Header */}
@@ -238,25 +258,75 @@ function EquipmentCategory({
                       {item.location?.name || item.location?.code || 'Unknown'}
                     </span>
                   </div>
-                  <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onEdit(item);
-                      }}
-                      className="p-1 hover:bg-gray-100 rounded"
-                    >
-                      <Edit2 className="w-5 h-5 text-[#296341]" />
-                    </button>
-                    <button 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onDelete(item.id);
-                      }}
-                      className="p-1 hover:bg-red-50 rounded"
-                    >
-                      <Trash2 className="w-5 h-5 text-[#296341] hover:text-red-500" />
-                    </button>
+                  <div className="flex gap-2">
+                    {item.status === 'AVAILABLE' ? (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onAssignToMe(item.id);
+                        }}
+                        disabled={isUpdating === item.id}
+                        className="bg-[#296341] text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-[#1e4a2e] transition-colors disabled:opacity-50 flex items-center gap-1"
+                      >
+                        {isUpdating === item.id ? (
+                          <Loader2 className="w-3 h-3 animate-spin" />
+                        ) : (
+                          <Truck className="w-3 h-3" />
+                        )}
+                        USE
+                      </button>
+                    ) : item.status === 'OCCUPIED' ? (
+                      <div className="flex flex-col items-end gap-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] text-gray-500 font-medium italic">
+                            By {item.assignments?.[0]?.assignedTo?.firstName || 'Unknown'} {item.assignments?.[0]?.assignedTo?.lastName || ''}
+                          </span>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onRelease(item.id);
+                            }}
+                            disabled={isUpdating === item.id || (!isAdmin && item.assignments?.[0]?.assignedTo?.id !== user?.id)}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors disabled:opacity-50 flex items-center gap-1 ${
+                              !isAdmin && item.assignments?.[0]?.assignedTo?.id !== user?.id
+                                ? 'bg-gray-50 text-gray-400 border border-gray-200 cursor-not-allowed'
+                                : 'bg-gray-100 text-[#296341] border border-[#296341] hover:bg-gray-200'
+                            }`}
+                            title={!isAdmin && item.assignments?.[0]?.assignedTo?.id !== user?.id ? "Only the assigned agent or admin can release" : "Release equipment"}
+                          >
+                            {isUpdating === item.id ? (
+                              <Loader2 className="w-3 h-3 animate-spin" />
+                            ) : (
+                              <Package className="w-3 h-3" />
+                            )}
+                            RELEASE
+                          </button>
+                        </div>
+                      </div>
+                    ) : null}
+                    
+                    <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity ml-2 border-l pl-2 border-gray-100">
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onEdit(item);
+                        }}
+                        className="p-1 hover:bg-gray-100 rounded"
+                        title="Edit"
+                      >
+                        <Edit2 className="w-5 h-5 text-[#296341]" />
+                      </button>
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onDelete(item.id);
+                        }}
+                        className="p-1 hover:bg-red-50 rounded"
+                        title="Delete"
+                      >
+                        <Trash2 className="w-5 h-5 text-[#296341] hover:text-red-500" />
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -276,6 +346,9 @@ export default function EquipmentManagementPage() {
   const [groupedEquipment, setGroupedEquipment] = useState<GroupedEquipment>({});
   const [locations, setLocations] = useState<Location[]>([]);
   const [expandedCategory, setExpandedCategory] = useState<string | null>("CHASSIS");
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState<string | null>(null);
+
+  const { user } = useAuth();
 
   // Add form state
   const [showAddForm, setShowAddForm] = useState(false);
@@ -454,6 +527,59 @@ export default function EquipmentManagementPage() {
     }
   };
 
+  // Assign equipment to current user
+  const handleAssignToMe = async (id: string) => {
+    if (!user?.id) {
+      toast.error("You must be logged in to use equipment");
+      return;
+    }
+
+    setIsUpdatingStatus(id);
+    try {
+      const res = await apiFetch(`/api/equipment/${id}/assign`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ assignToUserId: user.id }),
+      });
+
+      if (res.ok) {
+        toast.success("Equipment marked as In Use");
+        fetchEquipment();
+      } else {
+        const data = await res.json();
+        toast.error(data.error || "Failed to assign equipment");
+      }
+    } catch (error) {
+      console.error("Assign error:", error);
+      toast.error("Failed to assign equipment");
+    } finally {
+      setIsUpdatingStatus(null);
+    }
+  };
+
+  // Release equipment
+  const handleRelease = async (id: string) => {
+    setIsUpdatingStatus(id);
+    try {
+      const res = await apiFetch(`/api/equipment/${id}/release`, {
+        method: 'POST',
+      });
+
+      if (res.ok) {
+        toast.success("Equipment marked as Available");
+        fetchEquipment();
+      } else {
+        const data = await res.json();
+        toast.error(data.error || "Failed to release equipment");
+      }
+    } catch (error) {
+      console.error("Release error:", error);
+      toast.error("Failed to release equipment");
+    } finally {
+      setIsUpdatingStatus(null);
+    }
+  };
+
   // Generate auto name based on type and count
   const generateAutoName = (type: string) => {
     const typeConfig = EQUIPMENT_TYPES.find(t => t.type === type);
@@ -498,6 +624,10 @@ export default function EquipmentManagementPage() {
                 onToggle={() => toggleCategory(config.type)}
                 onDelete={handleDeleteEquipment}
                 onEdit={handleEditEquipment}
+                onAssignToMe={handleAssignToMe}
+                onRelease={handleRelease}
+                isUpdating={isUpdatingStatus}
+                user={user}
               />
             ))}
           </div>

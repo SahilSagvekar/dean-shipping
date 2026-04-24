@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
                 where: { releasedAt: null },
                 take: 1,
                 include: {
-                    assignedTo: { select: { firstName: true, lastName: true } },
+                    assignedTo: { select: { id: true, firstName: true, lastName: true } },
                 },
             },
         },

@@ -121,6 +121,17 @@ export async function POST(
                 );
             }
 
+            // Check if user is authorized to release (must be the one assigned or an admin)
+            const isAdmin = result.user.role === "ADMIN";
+            const isAssignedUser = currentAssignment.assignedToId === result.user.id;
+
+            if (!isAdmin && !isAssignedUser) {
+                return NextResponse.json(
+                    { error: "Only the assigned user or an administrator can release this equipment" },
+                    { status: 403 }
+                );
+            }
+
             // Release assignment and update status
             const [releasedAssignment, updatedEquipment] = await prisma.$transaction([
                 prisma.equipmentAssignment.update({
