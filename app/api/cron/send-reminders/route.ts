@@ -23,10 +23,15 @@ function verifyCronRequest(request: NextRequest): boolean {
 }
 
 export async function GET(request: NextRequest) {
-    if (!verifyCronRequest(request)) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    // if (!verifyCronRequest(request)) {
+    //     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    // }
 
+    return NextResponse.json({
+        message: "Cron job is temporarily disabled",
+    });
+
+    /*
     try {
         console.log(`[Cron] Running send-reminders at ${new Date().toISOString()}`);
         const result = await processAutomatedReminders();
@@ -39,4 +44,5 @@ export async function GET(request: NextRequest) {
             { status: 500 }
         );
     }
+    */
 }
