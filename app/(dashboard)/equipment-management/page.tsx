@@ -542,7 +542,7 @@ export default function EquipmentManagementPage() {
       return;
     }
 
-    setIsUpdatingStatus(id);
+    setIsUpdating(id);
     try {
       const res = await apiFetch(`/api/equipment/${id}/assign`, {
         method: 'POST',
@@ -561,13 +561,13 @@ export default function EquipmentManagementPage() {
       console.error("Assign error:", error);
       toast.error("Failed to assign equipment");
     } finally {
-      setIsUpdatingStatus(null);
+      setIsUpdating(null);
     }
   };
 
   // Release equipment
   const handleRelease = async (id: string) => {
-    setIsUpdatingStatus(id);
+    setIsUpdating(id);
     try {
       const res = await apiFetch(`/api/equipment/${id}/release`, {
         method: 'POST',
