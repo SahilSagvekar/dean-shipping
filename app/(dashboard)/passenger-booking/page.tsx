@@ -50,19 +50,21 @@ interface UploadedImage {
   preview?: string;
 }
 
-// Pricing configuration
-const PRICING = {
-  infant: 0,      // Free
-  child: 45,      // $45 per child
-  adult: 65,      // $65 per adult
-  luggage: {
-    'CARRY_ON': 0,
-    'CHECKED_BAG': 25,
-    'OVERSIZED': 50,
-    'SPECIAL': 75,
-  } as Record<string, number>,
-  vatRate: 0.12,  // 12% VAT
+// Default pricing fallbacks (used when no DB prices exist for a route)
+const DEFAULT_PASSENGER_PRICES: Record<string, number> = {
+  infant: 0,
+  child: 0,
+  adult: 0,
 };
+
+const DEFAULT_LUGGAGE_PRICES: Record<string, number> = {
+  'CARRY_ON': 0,
+  'CHECKED_BAG': 25,
+  'OVERSIZED': 50,
+  'SPECIAL': 75,
+};
+
+const VAT_RATE = 0.12; // 12% VAT
 
 function PassengerBookingContent() {
   const { apiFetch, user } = useAuth();
@@ -105,6 +107,11 @@ function PassengerBookingContent() {
   const [createdBooking, setCreatedBooking] = useState<any>(null);
   const [isPaying, setIsPaying] = useState(false);
 
+  // Dynamic pricing state (fetched from DB)
+  const [passengerPrices, setPassengerPrices] = useState<Record<string, number>>(DEFAULT_PASSENGER_PRICES);
+  const [luggagePrices, setLuggagePrices] = useState<Record<string, number>>(DEFAULT_LUGGAGE_PRICES);
+  const [isLoadingPrices, setIsLoadingPrices] = useState(false);
+
   // NOTE: Do NOT auto-fill with logged-in user details.
   // This form is for booking customers/passengers, not the logged-in agent.
 
@@ -136,6 +143,53 @@ function PassengerBookingContent() {
     fetchLocations();
   }, [apiFetch]);
 
+  // Fetch dynamic prices from DB when route changes
+  useEffect(() => {
+    async function fetchPrices() {
+      if (!fromLocation || !toLocation) return;
+      setIsLoadingPrices(true);
+      try {
+        // Fetch passenger prices
+        const passengerRes = await apiFetch(`/api/prices?category=PASSENGER&from=${fromLocation}&to=${toLocation}&limit=50`);
+        if (passengerRes.ok) {
+          const data = await passengerRes.json();
+          const prices = data.prices || [];
+          
+          const newPrices: Record<string, number> = { ...DEFAULT_PASSENGER_PRICES };
+          newPrices.adult = prices.find((p: any) => p.size?.toLowerCase() === 'adult')?.value ?? 0;
+          newPrices.child = prices.find((p: any) => p.size?.toLowerCase() === 'child')?.value ?? 0;
+          newPrices.infant = prices.find((p: any) => p.size?.toLowerCase() === 'infant')?.value ?? 0;
+          
+          setPassengerPrices(newPrices);
+        }
+
+        // Fetch luggage prices
+        const luggageRes = await apiFetch(`/api/prices?category=LUGGAGE&from=${fromLocation}&to=${toLocation}&limit=50`);
+        if (luggageRes.ok) {
+          const data = await luggageRes.json();
+          const prices = data.prices || [];
+          if (prices.length > 0) {
+            const newLuggagePrices: Record<string, number> = { ...DEFAULT_LUGGAGE_PRICES };
+            prices.forEach((p: any) => {
+              const sizeKey = p.size?.toUpperCase();
+              if (sizeKey && sizeKey in newLuggagePrices) {
+                newLuggagePrices[sizeKey] = p.value;
+              }
+            });
+            setLuggagePrices(newLuggagePrices);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch prices:", err);
+      } finally {
+        setIsLoadingPrices(false);
+      }
+    }
+
+    const timer = setTimeout(fetchPrices, 300);
+    return () => clearTimeout(timer);
+  }, [fromLocation, toLocation, apiFetch]);
+
   // Fetch upcoming voyages
   useEffect(() => {
     async function fetchVoyages() {
@@ -155,20 +209,19 @@ function PassengerBookingContent() {
     fetchVoyages();
   }, [apiFetch]);
 
-  // Calculate totals
+  // Calculate totals using dynamic prices
   const calculateTotals = () => {
     const passengerTotal =
-      (infantCount * PRICING.infant) +
-      (childCount * PRICING.child) +
-      (adultCount * PRICING.adult);
+      (infantCount * passengerPrices.infant) +
+      (childCount * passengerPrices.child) +
+      (adultCount * passengerPrices.adult);
 
     const luggageTotal = luggageItems.reduce((sum, item) => {
-      const pricePerItem = PRICING.luggage[item.type] || 0;
-      return sum + (pricePerItem * item.quantity);
+      return sum + (item.price || 0);
     }, 0);
 
     const subtotal = passengerTotal + luggageTotal;
-    const vatAmount = subtotal * PRICING.vatRate;
+    const vatAmount = subtotal * VAT_RATE;
     const grandTotal = subtotal + vatAmount;
 
     return { passengerTotal, luggageTotal, subtotal, vatAmount, grandTotal };
@@ -252,7 +305,7 @@ function PassengerBookingContent() {
 
     const qty = parseInt(newLuggageQuantity);
     const weight = parseFloat(newLuggageWeight) || 0;
-    const price = (PRICING.luggage[newLuggageType] || 0) * qty;
+    const price = (luggagePrices[newLuggageType] || 0) * qty;
 
     if (qty <= 0) {
       toast.error("Quantity must be greater than 0");
@@ -339,7 +392,7 @@ function PassengerBookingContent() {
         idType,
         paymentStatus,
         remark: remark || null,
-        totalAmount: subtotal, // Pre-VAT amount, API will add VAT
+        totalAmount: subtotal, // Pre-VAT subtotal, API will add VAT
         luggage: luggageItems.map(item => ({
           type: item.type,
           weight: item.weight,
@@ -496,10 +549,10 @@ function PassengerBookingContent() {
   };
 
   const luggageTypes = [
-    { value: 'CARRY_ON', label: 'Carry-on (Free)' },
-    { value: 'CHECKED_BAG', label: 'Checked Bag ($25)' },
-    { value: 'OVERSIZED', label: 'Oversized ($50)' },
-    { value: 'SPECIAL', label: 'Special Items ($75)' },
+    { value: 'CARRY_ON', label: `Carry-on (${luggagePrices['CARRY_ON'] === 0 ? 'Free' : '$' + luggagePrices['CARRY_ON']})` },
+    { value: 'CHECKED_BAG', label: `Checked Bag ($${luggagePrices['CHECKED_BAG']})` },
+    { value: 'OVERSIZED', label: `Oversized ($${luggagePrices['OVERSIZED']})` },
+    { value: 'SPECIAL', label: `Special Items ($${luggagePrices['SPECIAL']})` },
   ];
 
   const idTypes = ['Passport', "Driver's License", 'National ID', 'Other'];
@@ -596,9 +649,9 @@ function PassengerBookingContent() {
             <div className="space-y-4 pt-4">
               <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4">Passenger Selection <span className="text-red-500">*</span></h3>
               {[
-                { label: "Infant (0 - 2 yr old)", sublabel: "Complimentary Traveling", count: infantCount, setCount: setInfantCount, icon: Baby },
-                { label: "Child (3 - 12 yr old)", sublabel: `$${PRICING.child}/person fare`, count: childCount, setCount: setChildCount, icon: Users },
-                { label: "Adult (13+ yr old)", sublabel: `$${PRICING.adult}/person fare`, count: adultCount, setCount: setAdultCount, icon: User }
+                { label: "Infant (0 - 2 yr old)", sublabel: passengerPrices.infant === 0 ? "Complimentary Traveling" : `$${passengerPrices.infant}/person fare`, count: infantCount, setCount: setInfantCount, icon: Baby },
+                { label: "Child (3 - 12 yr old)", sublabel: `$${passengerPrices.child}/person fare`, count: childCount, setCount: setChildCount, icon: Users },
+                { label: "Adult (13+ yr old)", sublabel: `$${passengerPrices.adult}/person fare`, count: adultCount, setCount: setAdultCount, icon: User }
               ].map((group, idx) => (
                 <div key={idx} className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6 bg-white border border-gray-100 p-4 sm:p-5 rounded-2xl shadow-sm transition-all hover:border-[#296341]/30 hover:shadow-md group">
                   <div className="flex items-center gap-4 flex-1">
@@ -972,19 +1025,19 @@ function PassengerBookingContent() {
                   {adultCount > 0 && (
                     <div className="flex justify-between text-sm">
                       <span>Adult x {adultCount}</span>
-                      <span className="font-bold">${adultCount * PRICING.adult}</span>
+                      <span className="font-bold">${(adultCount * passengerPrices.adult).toFixed(2)}</span>
                     </div>
                   )}
                   {childCount > 0 && (
                     <div className="flex justify-between text-sm">
                       <span>Child x {childCount}</span>
-                      <span className="font-bold">${childCount * PRICING.child}</span>
+                      <span className="font-bold">${(childCount * passengerPrices.child).toFixed(2)}</span>
                     </div>
                   )}
                   {infantCount > 0 && (
                     <div className="flex justify-between text-sm">
                       <span>Infant x {infantCount}</span>
-                      <span className="font-bold">Free</span>
+                      <span className="font-bold">{passengerPrices.infant === 0 ? 'Free' : `$${(infantCount * passengerPrices.infant).toFixed(2)}`}</span>
                     </div>
                   )}
                   {luggageItems.length > 0 && (
@@ -1067,7 +1120,7 @@ function PassengerBookingContent() {
                 </div>
                 <div className="mt-4 flex flex-col items-center gap-2">
                   <p className="text-[10px] text-gray-400 font-bold uppercase tracking-tight text-center">
-                    VAT SURCHARGE ({PRICING.vatRate * 100}%) INCLUDED
+                    VAT SURCHARGE ({VAT_RATE * 100}%) INCLUDED
                   </p>
                   <div className="flex items-center gap-4 text-[10px] font-black text-gray-500 bg-gray-100 px-6 py-2 rounded-full border border-gray-200/50">
                     <span className="flex items-center gap-1.5"><div className="w-1.5 h-1.5 rounded-full bg-[#296341]" /> Sub: ${subtotal.toFixed(0)}</span>
@@ -1096,7 +1149,7 @@ function PassengerBookingContent() {
                   <div className="bg-gray-50 rounded-xl p-4 flex justify-between items-center">
                     <div>
                       <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Total Amount</p>
-                      <p className="text-2xl font-black text-[#132540]">${grandTotal.toFixed(2)}</p>
+                      <p className="text-2xl font-black text-[#132540]">${(createdBooking?.booking?.totalAmount || grandTotal).toFixed(2)}</p>
                     </div>
                     <p className="text-[10px] text-[#296341] font-black bg-[#296341]/10 px-3 py-1 rounded-full uppercase">
                       12% VAT Included
@@ -1227,7 +1280,7 @@ function PassengerBookingContent() {
                 <div className="bg-[#eef6f2] rounded-lg p-4 text-center">
                   <p className="text-[14px] text-gray-500">Total</p>
                   <p className="text-[28px] font-black text-[#296341]">
-                    ${((PRICING.luggage[newLuggageType] || 0) * parseInt(newLuggageQuantity || '0')).toFixed(2)}
+                    ${((luggagePrices[newLuggageType] || 0) * parseInt(newLuggageQuantity || '0')).toFixed(2)}
                   </p>
                 </div>
               )}

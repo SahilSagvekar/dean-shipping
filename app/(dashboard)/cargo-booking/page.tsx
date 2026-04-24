@@ -1179,10 +1179,19 @@ export default function CargoBooking() {
 
           if (matchedPrice) {
             setPrice(String(matchedPrice.value));
-          } else if (prices.length > 0 && !price) {
-            // If no exact size match but we have prices, use the first one if price is empty
-            // (or maybe don't auto-fill if not matched?)
-            // For now, let's only auto-fill if matched
+          } else if (prices.length > 0) {
+            // If no exact size match but we have prices, use the first one as a fallback
+            setPrice(String(prices[0].value));
+            // Also update the size state to match the fallback price so the UI is consistent
+            const fallbackSize = prices[0].size;
+            if (service === 'CONTAINER') setContainerSize(fallbackSize);
+            else if (service === 'PALLET') setPalletHeight(fallbackSize);
+            else if (service === 'BUNDLE') setBundleLength(fallbackSize);
+            else if (service === 'ENVELOPE') setEnvelopeType(fallbackSize);
+            else setCargoSize(fallbackSize);
+          } else {
+            // If no prices at all for this route, clear the price so they can enter it manually
+            setPrice("");
           }
         }
       } catch (err) {
@@ -1886,7 +1895,16 @@ export default function CargoBooking() {
         }
       }
 
-      setCreatedBooking(data);
+      // Save the booking data along with the client-computed totals
+      // (before the form resets and grandTotal recalculates to 0)
+      setCreatedBooking({
+        ...data,
+        _savedTotals: {
+          grandTotal,
+          subtotal,
+          vatAmount,
+        }
+      });
 
       if (uploadErrors > 0) {
         toast.success(`Booking created! Invoice: #${data.invoiceNo}`);
@@ -2627,17 +2645,17 @@ export default function CargoBooking() {
             <div className="lg:ml-auto flex items-center lg:flex-col lg:items-end gap-4 lg:gap-1">
               <div className="flex flex-col items-end">
                 <p className="text-[12px] lg:text-[14px] text-gray-500 lg:text-black uppercase lg:normal-case font-black lg:font-bold">Total Price</p>
-                <p className="text-3xl sm:text-4xl lg:text-[50px] font-black text-[#296341] lg:text-black leading-none">${grandTotal.toFixed(2)}</p>
+                <p className="text-3xl sm:text-4xl lg:text-[50px] font-black text-[#296341] lg:text-black leading-none">${(createdBooking?._savedTotals?.grandTotal ?? grandTotal).toFixed(2)}</p>
               </div>
               <div className="flex items-center gap-4 text-[10px] font-black text-gray-500 bg-white/40 px-4 py-1.5 rounded-full border border-white/20 whitespace-nowrap">
                 <span className="flex items-center gap-1.5">
                   <div className="w-1.5 h-1.5 rounded-full bg-[#296341]" /> 
-                  Sub: ${subtotal.toFixed(2)}
+                  Sub: ${(createdBooking?._savedTotals?.subtotal ?? subtotal).toFixed(2)}
                 </span>
                 <span className="w-1 h-1 bg-gray-400/30 rounded-full" />
                 <span className="flex items-center gap-1.5 text-blue-700">
                   <div className="w-1.5 h-1.5 rounded-full bg-blue-500" /> 
-                  VAT (12%): ${vatAmount.toFixed(2)}
+                  VAT (12%): ${(createdBooking?._savedTotals?.vatAmount ?? vatAmount).toFixed(2)}
                 </span>
               </div>
             </div>
@@ -2662,7 +2680,7 @@ export default function CargoBooking() {
               <div className="bg-gray-50 rounded-xl p-4 flex justify-between items-center">
                 <div>
                   <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Total Amount</p>
-                  <p className="text-2xl font-black text-[#132540]">${grandTotal.toFixed(2)}</p>
+                  <p className="text-2xl font-black text-[#132540]">${(createdBooking?._savedTotals?.grandTotal ?? grandTotal).toFixed(2)}</p>
                 </div>
                 <p className="text-[10px] text-[#296341] font-black bg-[#296341]/10 px-3 py-1 rounded-full uppercase">
                   12% VAT Included

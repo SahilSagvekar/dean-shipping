@@ -201,9 +201,43 @@ export async function POST(request: NextRequest) {
         try {
             const bookingType = 'Passenger Booking';
             const invoiceItems = [];
-            if (adults > 0) invoiceItems.push({ description: 'Adult Passenger', quantity: adults, total: adults * 65 });
-            if (children > 0) invoiceItems.push({ description: 'Child Passenger', quantity: children, total: children * 45 });
-            if (infants > 0) invoiceItems.push({ description: 'Infant Passenger', quantity: infants, total: 0 });
+            // Calculate per-passenger prices from the total
+            // The client sends pre-VAT subtotal in totalAmount, which includes passenger + luggage
+            const luggageSubtotal = (luggage || []).reduce((sum: number, item: any) => sum + (parseFloat(item.price) || 0), 0);
+            const passengerSubtotal = amount - luggageSubtotal;
+            const totalPax = adults + children + infants;
+            
+            // Try to get per-type breakdown from DB prices
+            let adultPrice = 0;
+            let childPrice = 0;
+            let infantPrice = 0;
+            try {
+              const dbPrices = await prisma.price.findMany({
+                where: {
+                  category: 'PASSENGER',
+                  isActive: true,
+                  from: { code: fromLocation },
+                  to: { code: toLocation },
+                },
+              });
+              dbPrices.forEach((p: any) => {
+                const sizeKey = p.size?.toLowerCase();
+                if (sizeKey === 'adult') adultPrice = p.value;
+                else if (sizeKey === 'child') childPrice = p.value;
+                else if (sizeKey === 'infant') infantPrice = p.value;
+              });
+            } catch (e) {
+              // Fallback: estimate from submitted total
+              if (adults > 0 && totalPax > 0) {
+                adultPrice = passengerSubtotal / totalPax;
+                childPrice = adultPrice * 0.7;
+                infantPrice = 0;
+              }
+            }
+            
+            if (adults > 0) invoiceItems.push({ description: 'Adult Passenger', quantity: adults, total: adults * adultPrice });
+            if (children > 0) invoiceItems.push({ description: 'Child Passenger', quantity: children, total: children * childPrice });
+            if (infants > 0) invoiceItems.push({ description: 'Infant Passenger', quantity: infants, total: infants * infantPrice });
 
             const emailData = {
                 invoiceNo,
