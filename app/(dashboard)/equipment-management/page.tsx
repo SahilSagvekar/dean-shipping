@@ -584,7 +584,7 @@ export default function EquipmentManagementPage() {
       console.error("Release error:", error);
       toast.error("Failed to release equipment");
     } finally {
-      setIsUpdatingStatus(null);
+      setIsUpdating(null);
     }
   };
 
