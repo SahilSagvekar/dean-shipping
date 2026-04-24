@@ -1976,6 +1976,14 @@ export default function CargoBooking() {
 
   const { subtotal, vatAmount, grandTotal } = calculateTotals();
 
+  // Derive additional services array for display in preview
+  const additionalServices = [
+    ...(hasTape ? [{ name: `Tape (${wrapType || 'N/A'})`, price: 0 }] : []),
+    ...(hasTags ? [{ name: 'Tags', price: 0 }] : []),
+    ...(insuranceAmount ? [{ name: `Insurance ($${insuranceAmount})`, price: 0 }] : []),
+    ...(parseFloat(additionalServicePrice) > 0 ? [{ name: 'Additional Service Fee', price: parseFloat(additionalServicePrice) }] : [])
+  ].filter(svc => svc.price > 0 || svc.name);
+
   const getLocationName = (code: string) => {
     const loc = locations.find(l => l.code === code);
     return loc ? `${loc.code} - ${loc.name}` : code;
