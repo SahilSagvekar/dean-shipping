@@ -114,14 +114,56 @@ export async function POST(request: NextRequest) {
 
     if (event.type === "checkout.session.completed") {
         const session = event.data.object as Stripe.Checkout.Session;
-        const { invoiceId, invoiceNo } = session.metadata || {};
+        const { invoiceId, invoiceNo, vehicleId } = session.metadata || {};
 
-        if (!invoiceId && !invoiceNo) {
-            console.error("No invoice reference in session metadata");
+        if (!invoiceId && !invoiceNo && !vehicleId) {
+            console.error("No invoice or vehicle reference in session metadata");
             return NextResponse.json({ received: true });
         }
 
         try {
+            // CASE 1: VEHICLE PAYMENT
+            if (vehicleId) {
+                const vehicle = await prisma.vehicle.findUnique({
+                    where: { id: vehicleId }
+                });
+
+                if (!vehicle) {
+                    console.error("Vehicle not found from metadata ID:", vehicleId);
+                    return NextResponse.json({ received: true });
+                }
+
+                await prisma.$transaction(async (tx) => {
+                    await tx.vehicle.update({
+                        where: { id: vehicle.id },
+                        data: {
+                            paymentStatus: "PAID",
+                            paymentMode: "Online (Stripe)",
+                            paidAt: new Date(),
+                        },
+                    });
+
+                    await tx.auditLog.create({
+                        data: {
+                            action: "PAYMENT_RECEIVED",
+                            entity: "vehicle",
+                            entityId: vehicle.id,
+                            metadata: {
+                                registrationNo: vehicle.registrationNo,
+                                ownerName: vehicle.ownerName,
+                                amount: vehicle.totalAmount,
+                                stripeSessionId: session.id,
+                                paymentMethod: "Stripe",
+                            },
+                        },
+                    });
+                });
+
+                console.log(`✅ Vehicle ${vehicle.registrationNo} marked as PAID via Stripe`);
+                return NextResponse.json({ received: true });
+            }
+
+            // CASE 2: INVOICE PAYMENT (Original Logic)
             // Find the invoice with booking and user details
             const invoice = await prisma.invoice.findFirst({
                 where: invoiceId ? { id: invoiceId } : { invoiceNo: invoiceNo! },
@@ -184,6 +226,7 @@ export async function POST(request: NextRequest) {
             console.log(`✅ Invoice ${invoice.invoiceNo} marked as PAID via Stripe`);
 
             // ── Send email notifications ──────────────────────────────
+            // ... (Rest of original email logic stays here for invoices)
 
             const booking = invoice.cargoBooking || invoice.passengerBooking;
             const customerName = invoice.cargoBooking?.contactName

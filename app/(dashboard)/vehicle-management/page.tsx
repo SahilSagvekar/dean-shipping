@@ -292,6 +292,7 @@ function WaitlistCardExpanded({
   isSubmitting,
   isSelected,
   onToggleSelect,
+  onPayNow,
 }: {
   vehicle: Vehicle;
   locations: Location[];
@@ -301,6 +302,7 @@ function WaitlistCardExpanded({
   isSubmitting: boolean;
   isSelected: boolean;
   onToggleSelect: (e: React.MouseEvent) => void;
+  onPayNow: (id: string) => void;
 }) {
   const [editData, setEditData] = useState({
     ownerName: vehicle.ownerName,
@@ -489,7 +491,7 @@ function WaitlistCardExpanded({
           
           {vehicle.paymentStatus !== 'PAID' && (
             <button 
-              onClick={() => onSave({ paymentStatus: 'PAID' })}
+              onClick={() => onPayNow(vehicle.id)}
               disabled={isSubmitting}
               className="flex-1 sm:flex-none bg-[#296341] text-white rounded-xl px-8 py-3 font-bold hover:bg-[#1e4a2e] transition-all shadow-lg active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
             >
@@ -512,7 +514,7 @@ function WaitlistCardExpanded({
 
 // Main Component
 export default function VehicleWaitlistPage() {
-  const { apiFetch, user } = useAuth();
+  const { apiFetch, user, isLoading: authLoading } = useAuth();
   const [activeView, setActiveView] = useState<'add' | 'list'>('list');
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -585,16 +587,18 @@ export default function VehicleWaitlistPage() {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      if (activeView === 'list') {
+      if (!authLoading && activeView === 'list') {
         fetchVehicles(1, searchQuery);
       }
     }, 500);
     return () => clearTimeout(timer);
-  }, [searchQuery, activeView]);
+  }, [searchQuery, activeView, authLoading]);
 
   useEffect(() => {
-    fetchLocations();
-  }, []);
+    if (!authLoading) {
+      fetchLocations();
+    }
+  }, [authLoading]);
 
   // Fetch Voyages
   useEffect(() => {
@@ -612,8 +616,10 @@ export default function VehicleWaitlistPage() {
         setIsLoadingVoyages(false);
       }
     }
-    fetchVoyages();
-  }, [apiFetch]);
+    if (!authLoading) {
+      fetchVoyages();
+    }
+  }, [apiFetch, authLoading]);
 
   // Pre-fill user details
   useEffect(() => {
@@ -864,6 +870,29 @@ export default function VehicleWaitlistPage() {
     } catch (error) {
       console.error('Error bulk updating payments:', error);
       toast.error('Failed to update payments');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleStripePayment = async (vehicleId: string) => {
+    setIsSubmitting(true);
+    try {
+      const res = await apiFetch('/api/stripe/checkout-vehicle', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ vehicleId }),
+      });
+
+      const data = await res.json();
+      if (res.ok && data.url) {
+        window.location.href = data.url;
+      } else {
+        toast.error(data.error || 'Failed to initiate payment');
+      }
+    } catch (error) {
+      console.error('Stripe error:', error);
+      toast.error('Failed to initiate payment');
     } finally {
       setIsSubmitting(false);
     }
@@ -1192,6 +1221,7 @@ export default function VehicleWaitlistPage() {
                       e.stopPropagation();
                       toggleSelect(vehicle.id);
                     }}
+                    onPayNow={handleStripePayment}
                   />
                 ) : (
                   <WaitlistCardCollapsed
