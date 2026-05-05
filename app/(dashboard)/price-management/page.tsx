@@ -65,6 +65,11 @@ function PriceManagementContent() {
   // Check if category needs type field
   const needsType = (cat: Category) => cat === "CONTAINER";
 
+  // Check if category is PASSENGER (uses passenger type instead of size)
+  const isPassenger = (cat: Category) => cat === "PASSENGER";
+
+  const passengerTypes = ["Infant", "Child", "Adult"];
+
   // Fetch locations on mount
   useEffect(() => {
     async function fetchLocations() {
@@ -312,14 +317,32 @@ function PriceManagementContent() {
           <div className="space-y-6 lg:space-y-10">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-12">
               <div>
-                <label className="block text-[18px] lg:text-[24px] font-bold mb-2 lg:mb-3">Size (ft)</label>
-                <input
-                  type="text"
-                  value={formSize}
-                  onChange={(e) => setFormSize(e.target.value)}
-                  placeholder="e.g., Small, Medium, 20 ft"
-                  className="w-full h-[48px] lg:h-[54px] bg-white rounded-md border-none px-4 lg:px-6 text-[16px] lg:text-[20px] shadow-sm outline-none focus:ring-2 focus:ring-[#296341]"
-                />
+                <label className="block text-[18px] lg:text-[24px] font-bold mb-2 lg:mb-3">
+                  {isPassenger(selectedCategory) ? "Passenger Type" : "Size (ft)"}
+                </label>
+                {isPassenger(selectedCategory) ? (
+                  <div className="relative">
+                    <select
+                      value={formSize}
+                      onChange={(e) => setFormSize(e.target.value)}
+                      className="w-full h-[48px] lg:h-[54px] bg-white rounded-md appearance-none px-4 lg:px-6 text-[16px] lg:text-[20px] shadow-sm outline-none cursor-pointer focus:ring-2 focus:ring-[#296341]"
+                    >
+                      <option value="">Select type...</option>
+                      {passengerTypes.map(t => (
+                        <option key={t} value={t}>{t}</option>
+                      ))}
+                    </select>
+                    <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-[#296341] pointer-events-none w-4 h-4" />
+                  </div>
+                ) : (
+                  <input
+                    type="text"
+                    value={formSize}
+                    onChange={(e) => setFormSize(e.target.value)}
+                    placeholder="e.g., Small, Medium, 20 ft"
+                    className="w-full h-[48px] lg:h-[54px] bg-white rounded-md border-none px-4 lg:px-6 text-[16px] lg:text-[20px] shadow-sm outline-none focus:ring-2 focus:ring-[#296341]"
+                  />
+                )}
               </div>
               <div>
                 <label className="block text-[18px] lg:text-[24px] font-bold mb-2 lg:mb-3">Location</label>

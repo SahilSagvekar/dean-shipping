@@ -148,36 +148,69 @@ function PassengerBookingContent() {
     async function fetchPrices() {
       if (!fromLocation || !toLocation) return;
       setIsLoadingPrices(true);
+      // Reset to defaults while fetching so stale prices don't show
+      setPassengerPrices(DEFAULT_PASSENGER_PRICES);
       try {
-        // Fetch passenger prices
-        const passengerRes = await apiFetch(`/api/prices?category=PASSENGER&from=${fromLocation}&to=${toLocation}&limit=50`);
-        if (passengerRes.ok) {
-          const data = await passengerRes.json();
-          const prices = data.prices || [];
-          
+        // Fetch passenger prices — try both directions
+        const fwdUrl = `/api/prices?category=PASSENGER&from=${fromLocation}&to=${toLocation}&limit=50`;
+        const revUrl = `/api/prices?category=PASSENGER&from=${toLocation}&to=${fromLocation}&limit=50`;
+        console.log('[PriceDebug] Fetching passenger prices:', { fwdUrl, revUrl });
+
+        const [fwdRes, revRes] = await Promise.all([
+          apiFetch(fwdUrl),
+          apiFetch(revUrl),
+        ]);
+
+        let prices: any[] = [];
+        if (fwdRes.ok) {
+          const data = await fwdRes.json();
+          prices = data.prices || [];
+          console.log('[PriceDebug] Forward prices:', prices);
+        }
+        if (prices.length === 0 && revRes.ok) {
+          const data = await revRes.json();
+          prices = data.prices || [];
+          console.log('[PriceDebug] Reverse prices:', prices);
+        }
+
+        console.log('[PriceDebug] Final prices array:', prices);
+
+        if (prices.length > 0) {
           const newPrices: Record<string, number> = { ...DEFAULT_PASSENGER_PRICES };
           newPrices.adult = prices.find((p: any) => p.size?.toLowerCase() === 'adult')?.value ?? 0;
           newPrices.child = prices.find((p: any) => p.size?.toLowerCase() === 'child')?.value ?? 0;
           newPrices.infant = prices.find((p: any) => p.size?.toLowerCase() === 'infant')?.value ?? 0;
-          
+          console.log('[PriceDebug] Setting passengerPrices:', newPrices);
           setPassengerPrices(newPrices);
+        } else {
+          console.warn('[PriceDebug] No prices found for route:', fromLocation, '→', toLocation);
         }
 
-        // Fetch luggage prices
-        const luggageRes = await apiFetch(`/api/prices?category=LUGGAGE&from=${fromLocation}&to=${toLocation}&limit=50`);
-        if (luggageRes.ok) {
-          const data = await luggageRes.json();
-          const prices = data.prices || [];
-          if (prices.length > 0) {
-            const newLuggagePrices: Record<string, number> = { ...DEFAULT_LUGGAGE_PRICES };
-            prices.forEach((p: any) => {
-              const sizeKey = p.size?.toUpperCase();
-              if (sizeKey && sizeKey in newLuggagePrices) {
-                newLuggagePrices[sizeKey] = p.value;
-              }
-            });
-            setLuggagePrices(newLuggagePrices);
-          }
+        // Fetch luggage prices — try both directions
+        const [luggageFwdRes, luggageRevRes] = await Promise.all([
+          apiFetch(`/api/prices?category=LUGGAGE&from=${fromLocation}&to=${toLocation}&limit=50`),
+          apiFetch(`/api/prices?category=LUGGAGE&from=${toLocation}&to=${fromLocation}&limit=50`),
+        ]);
+
+        let luggagePricesRaw: any[] = [];
+        if (luggageFwdRes.ok) {
+          const data = await luggageFwdRes.json();
+          luggagePricesRaw = data.prices || [];
+        }
+        if (luggagePricesRaw.length === 0 && luggageRevRes.ok) {
+          const data = await luggageRevRes.json();
+          luggagePricesRaw = data.prices || [];
+        }
+
+        if (luggagePricesRaw.length > 0) {
+          const newLuggagePrices: Record<string, number> = { ...DEFAULT_LUGGAGE_PRICES };
+          luggagePricesRaw.forEach((p: any) => {
+            const sizeKey = p.size?.toUpperCase();
+            if (sizeKey && sizeKey in newLuggagePrices) {
+              newLuggagePrices[sizeKey] = p.value;
+            }
+          });
+          setLuggagePrices(newLuggagePrices);
         }
       } catch (err) {
         console.error("Failed to fetch prices:", err);
