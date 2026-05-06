@@ -691,11 +691,18 @@ export default function EquipmentManagementPage() {
                   </label>
                   <select
                     value={newEquipment.locationCode}
-                    onChange={(e) => setNewEquipment(prev => ({ ...prev, locationCode: e.target.value }))}
+                    onChange={(e) =>
+                      setNewEquipment((prev) => ({
+                        ...prev,
+                        locationCode: e.target.value,
+                      }))
+                    }
                     className="w-full h-[45px] bg-[#e5ebf3] rounded-md px-4 text-sm font-medium outline-none focus:ring-2 focus:ring-[#296341] appearance-none"
                   >
-                    {locations.map(loc => (
-                      <option key={loc.id} value={loc.code}>{loc.name}</option>
+                    {locations.map((loc) => (
+                      <option key={loc.id} value={loc.code}>
+                        {loc.name}
+                      </option>
                     ))}
                   </select>
                 </div>
@@ -710,16 +717,18 @@ export default function EquipmentManagementPage() {
                     value={newEquipment.type}
                     onChange={(e) => {
                       const type = e.target.value;
-                      setNewEquipment(prev => ({ 
-                        ...prev, 
+                      setNewEquipment((prev) => ({
+                        ...prev,
                         type,
-                        name: generateAutoName(type)
+                        name: generateAutoName(type),
                       }));
                     }}
                     className="w-full h-[45px] bg-[#e5ebf3] rounded-md px-4 text-sm font-medium outline-none focus:ring-2 focus:ring-[#296341] appearance-none"
                   >
-                    {EQUIPMENT_TYPES.map(type => (
-                      <option key={type.type} value={type.type}>{type.label}</option>
+                    {EQUIPMENT_TYPES.map((type) => (
+                      <option key={type.type} value={type.type}>
+                        {type.label}
+                      </option>
                     ))}
                   </select>
                 </div>
@@ -732,7 +741,12 @@ export default function EquipmentManagementPage() {
                   <input
                     type="text"
                     value={newEquipment.name}
-                    onChange={(e) => setNewEquipment(prev => ({ ...prev, name: e.target.value }))}
+                    onChange={(e) =>
+                      setNewEquipment((prev) => ({
+                        ...prev,
+                        name: e.target.value,
+                      }))
+                    }
                     placeholder="e.g., CHASSIS #01"
                     className="w-full h-[45px] bg-[#e5ebf3] rounded-md px-4 text-sm font-medium outline-none focus:ring-2 focus:ring-[#296341]"
                   />
@@ -746,7 +760,12 @@ export default function EquipmentManagementPage() {
                   <input
                     type="text"
                     value={newEquipment.identifier}
-                    onChange={(e) => setNewEquipment(prev => ({ ...prev, identifier: e.target.value }))}
+                    onChange={(e) =>
+                      setNewEquipment((prev) => ({
+                        ...prev,
+                        identifier: e.target.value,
+                      }))
+                    }
                     placeholder="e.g., #10057"
                     className="w-full h-[45px] bg-[#e5ebf3] rounded-md px-4 text-sm font-medium outline-none focus:ring-2 focus:ring-[#296341]"
                   />
@@ -779,14 +798,23 @@ export default function EquipmentManagementPage() {
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
           {EQUIPMENT_TYPES.map((config) => {
             const items = groupedEquipment[config.type] || [];
-            const available = items.filter(i => i.status === 'AVAILABLE').length;
+            const available = items.filter(
+              (i) => i.status === "AVAILABLE",
+            ).length;
             return (
-              <div key={config.type} className={`${config.bgColor} rounded-xl p-4 text-center`}>
+              <div
+                key={config.type}
+                className={`${config.bgColor} rounded-xl p-4 text-center`}
+              >
                 <div className="flex justify-center mb-2">
                   {getEquipmentIcon(config.icon)}
                 </div>
-                <p className="text-sm font-medium text-gray-700">{config.label}</p>
-                <p className="text-2xl font-bold text-[#296341]">{items.length}</p>
+                <p className="text-sm font-medium text-gray-700">
+                  {config.label}
+                </p>
+                <p className="text-2xl font-bold text-[#296341]">
+                  {items.length}
+                </p>
                 <p className="text-xs text-gray-500">{available} available</p>
               </div>
             );
@@ -802,7 +830,9 @@ export default function EquipmentManagementPage() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl p-6 w-full max-w-[500px] shadow-2xl">
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-bold text-[#296341]">Edit Equipment</h3>
+              <h3 className="text-xl font-bold text-[#296341]">
+                Edit Equipment
+              </h3>
               <button
                 onClick={() => {
                   setShowEditModal(false);
@@ -816,37 +846,65 @@ export default function EquipmentManagementPage() {
 
             <div className="space-y-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-600">Equipment Name</label>
+                <label className="text-sm font-medium text-gray-600">
+                  Equipment Name
+                </label>
                 <input
                   type="text"
                   value={editingEquipment.name}
-                  onChange={(e) => setEditingEquipment(prev => prev ? { ...prev, name: e.target.value } : null)}
+                  onChange={(e) =>
+                    setEditingEquipment((prev) =>
+                      prev ? { ...prev, name: e.target.value } : null,
+                    )
+                  }
                   className="w-full h-[45px] border border-gray-200 rounded-lg px-4 outline-none focus:ring-2 focus:ring-[#296341]"
                 />
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-600">Identifier</label>
+                <label className="text-sm font-medium text-gray-600">
+                  Identifier
+                </label>
                 <input
                   type="text"
-                  value={editingEquipment.identifier || ''}
-                  onChange={(e) => setEditingEquipment(prev => prev ? { ...prev, identifier: e.target.value } : null)}
+                  value={editingEquipment.identifier || ""}
+                  onChange={(e) =>
+                    setEditingEquipment((prev) =>
+                      prev ? { ...prev, identifier: e.target.value } : null,
+                    )
+                  }
                   className="w-full h-[45px] border border-gray-200 rounded-lg px-4 outline-none focus:ring-2 focus:ring-[#296341]"
                 />
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-600">Location</label>
+                <label className="text-sm font-medium text-gray-600">
+                  Location
+                </label>
                 <select
                   value={editingEquipment.location.code}
-                  onChange={(e) => setEditingEquipment(prev => prev ? { 
-                    ...prev, 
-                    location: { ...prev.location, code: e.target.value, name: locations.find(l => l.code === e.target.value)?.name || e.target.value }
-                  } : null)}
+                  onChange={(e) =>
+                    setEditingEquipment((prev) =>
+                      prev
+                        ? {
+                            ...prev,
+                            location: {
+                              ...prev.location,
+                              code: e.target.value,
+                              name:
+                                locations.find((l) => l.code === e.target.value)
+                                  ?.name || e.target.value,
+                            },
+                          }
+                        : null,
+                    )
+                  }
                   className="w-full h-[45px] border border-gray-200 rounded-lg px-4 outline-none focus:ring-2 focus:ring-[#296341] appearance-none"
                 >
-                  {locations.map(loc => (
-                    <option key={loc.id} value={loc.code}>{loc.name}</option>
+                  {locations.map((loc) => (
+                    <option key={loc.id} value={loc.code}>
+                      {loc.name}
+                    </option>
                   ))}
                 </select>
               </div>

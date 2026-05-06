@@ -53,7 +53,7 @@ export default function DashboardLayout({
                                 </div>
                             </div>
                             
-                            <div className="flex items-center gap-2">
+                            {/* <div className="flex items-center gap-2">
                                 <button className="w-10 h-10 flex items-center justify-center bg-gray-50 text-gray-500 active:bg-gray-200 transition-colors">
                                     <Search className="w-5 h-5" />
                                 </button>
@@ -61,17 +61,17 @@ export default function DashboardLayout({
                                     <Bell className="w-5 h-5" />
                                     <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
                                 </button>
-                            </div>
+                            </div> */}
                         </header>
 
                         {/* Desktop Header: persistent toggle */}
                         <header className="hidden lg:flex items-center h-16 px-8 bg-white border-b border-gray-100 flex-shrink-0">
                             <HamburgerButton iconSize={20} className="w-10 h-10 mr-4" />
                             
-                            <div className="ml-auto flex items-center gap-4">
+                            {/* <div className="ml-auto flex items-center gap-4">
                                 <button className="p-2 text-gray-400 hover:text-gray-600 transition-colors"><Search className="w-5 h-5" /></button>
                                 <button className="p-2 text-gray-400 hover:text-gray-600 transition-colors"><Bell className="w-5 h-5" /></button>
-                            </div>
+                            </div> */}
                         </header>
 
                         {/* Main Content Area */}

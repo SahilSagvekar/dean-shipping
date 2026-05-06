@@ -90,7 +90,8 @@ export const updateUserSchema = z.object({
 });
 
 // Define Role type locally to avoid Prisma client generation issues on build
-type Role = "USER" | "AGENT" | "ADMIN";
+type Role = "USER" | "AGENT" | "ADMIN" | "SENIOR_MANAGER" | "FREIGHT_SUPERVISOR" | "FREIGHT_AGENT" | "DOCK_MANAGER" | "CASHIER_TICKETING_AGENT" | "ACCOUNTS";
+
 
 // ============================================
 // JWT TOKEN HELPERS
@@ -237,7 +238,7 @@ export async function requireAdmin(request: NextRequest) {
  * Require ADMIN or AGENT role
  */
 export async function requireStaff(request: NextRequest) {
-    return requireRole(request, ["ADMIN", "AGENT"]);
+    return requireRole(request, ["ADMIN", "AGENT", "SENIOR_MANAGER", "FREIGHT_SUPERVISOR", "FREIGHT_AGENT", "DOCK_MANAGER", "CASHIER_TICKETING_AGENT", "ACCOUNTS"]);
 }
 
 // ============================================
