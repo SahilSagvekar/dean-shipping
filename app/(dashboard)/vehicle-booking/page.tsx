@@ -17,7 +17,7 @@ import {
   Eye,
   X,
 } from "lucide-react";
-import { DashboardBanner } from "@/components/ui/DashboardBanner";
+import  DashboardBanner from "@/components/ui/DashboardBanner";
 import imgIllustration from "@/app/assets/fc4d24c0a5d260c8ee523edd7416ec133186b7d1.png";
 import imgLogo from "@/app/assets/0630bc807bbd9122cb449e66c33d18d13536d121.png";
 

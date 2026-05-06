@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { toast } from "sonner";
 import {
@@ -466,7 +466,6 @@ function VoyageDetailView({
   const { apiFetch } = useAuth();
   const [detail, setDetail] = useState<VoyageDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const printRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     async function fetchDetail() {
@@ -490,37 +489,102 @@ function VoyageDetailView({
   }, [voyageId, apiFetch]);
 
   const handlePrint = () => {
-    if (!printRef.current) return;
-    const printContent = printRef.current.innerHTML;
+    if (!detail) return;
+    const { voyage, stops, summary } = detail;
+    const formattedDate = new Date(voyage.date).toLocaleDateString("en-GB", {
+      weekday: "long", day: "2-digit", month: "long", year: "numeric",
+    });
+    const routeStr = stops.map((s) => s.location.code).join(" → ");
+
+    const buildStopRows = (bookings: StopBooking[], action: string) => {
+      if (!bookings.length) return "";
+      const actionLabel = action === "load" ? "⬇ LOAD" : action === "unload" ? "⬆ UNLOAD" : "— STAYS ON BOARD";
+      const bgColor = action === "load" ? "#d1fae5" : action === "unload" ? "#fef3c7" : "#dbeafe";
+      return `
+        <tr><td colspan="7" style="background:${bgColor};font-weight:bold;padding:6px 8px;font-size:12px;">${actionLabel} (${bookings.length})</td></tr>
+        ${bookings.map((b) => {
+          const sender = b.user ? `${b.user.firstName} ${b.user.lastName}` : b.contactName || b.name || "—";
+          return `
+            <tr>
+              <td>${b.invoiceNo || "—"}</td>
+              <td>${b.bookingType}</td>
+              <td>${sender}</td>
+              <td>${b.itemSummary}</td>
+              <td>${b.fromLocation} → ${b.toLocation}</td>
+              <td>$${b.totalAmount.toFixed(2)}</td>
+              <td><span class="${b.paymentStatus === "PAID" ? "paid" : "unpaid"}">${b.paymentStatus}</span></td>
+            </tr>`;
+        }).join("")}`;
+    };
+
+    const stopsHtml = stops.map((stop, idx) => {
+      const isFirst = idx === 0;
+      const isLast = idx === stops.length - 1;
+      const label = isFirst ? "DEPARTURE" : isLast ? "FINAL STOP" : `Stop ${stop.stopOrder}`;
+      const hasActivity = stop.load.length + stop.unload.length + stop.staysOnBoard.length > 0;
+      return `
+        <h2>${label}: ${stop.location.code} — ${stop.location.name}
+          ${stop.arrivalTime ? `<span style="font-size:12px;font-weight:normal"> | Arrive: ${stop.arrivalTime}</span>` : ""}
+          ${stop.departureTime ? `<span style="font-size:12px;font-weight:normal"> | Depart: ${stop.departureTime}</span>` : ""}
+        </h2>
+        ${!hasActivity ? `<p style="color:#999;font-style:italic;margin-bottom:12px;">No activity at this stop</p>` : `
+        <table>
+          <thead>
+            <tr>
+              <th>Invoice</th><th>Type</th><th>Sender</th><th>Details</th><th>Route</th><th>Amount</th><th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${buildStopRows(stop.load, "load")}
+            ${buildStopRows(stop.unload, "unload")}
+            ${buildStopRows(stop.staysOnBoard, "stays")}
+          </tbody>
+        </table>`}`;
+    }).join("");
+
+    const html = `<!DOCTYPE html>
+<html>
+<head>
+  <title>Manifest — Voyage #${voyage.voyageNo}</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; color: #333; font-size: 13px; }
+    h1 { font-size: 22px; margin-bottom: 2px; color: #296341; }
+    h2 { font-size: 15px; margin: 18px 0 6px; color: #296341; border-bottom: 2px solid #296341; padding-bottom: 4px; }
+    .meta { color: #666; font-size: 12px; margin-bottom: 16px; }
+    .summary { display: flex; gap: 32px; background: #f0f7f3; border: 1px solid #296341; padding: 12px 16px; margin-bottom: 20px; flex-wrap: wrap; }
+    .summary-item { text-align: center; }
+    .summary-label { font-size: 10px; color: #666; text-transform: uppercase; letter-spacing: 1px; }
+    .summary-value { font-size: 20px; font-weight: bold; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 16px; font-size: 11px; }
+    th, td { border: 1px solid #ccc; padding: 5px 7px; text-align: left; }
+    th { background: #e8f4ee; font-weight: bold; color: #296341; }
+    tr:nth-child(even) td { background: #fafafa; }
+    .paid { background: #d4edda; color: #155724; padding: 1px 6px; border-radius: 3px; font-weight: bold; font-size: 10px; }
+    .unpaid { background: #f8d7da; color: #721c24; padding: 1px 6px; border-radius: 3px; font-weight: bold; font-size: 10px; }
+    @media print { body { margin: 10px; } }
+  </style>
+</head>
+<body>
+  <h1>FREIGHT MANIFEST — Voyage #${voyage.voyageNo}</h1>
+  <div class="meta">${voyage.shipName} &nbsp;|&nbsp; ${formattedDate} &nbsp;|&nbsp; Route: ${routeStr}</div>
+  <div class="summary">
+    <div class="summary-item"><div class="summary-label">Total Bookings</div><div class="summary-value">${summary.totalBookings}</div></div>
+    <div class="summary-item"><div class="summary-label">Cargo</div><div class="summary-value">${summary.totalCargo}</div></div>
+    <div class="summary-item"><div class="summary-label">Passengers</div><div class="summary-value">${summary.totalPassengers}</div></div>
+    <div class="summary-item"><div class="summary-label">Total Revenue</div><div class="summary-value">$${summary.totalAmount.toFixed(2)}</div></div>
+    <div class="summary-item"><div class="summary-label" style="color:green;">Paid</div><div class="summary-value" style="color:green;">$${summary.paidAmount.toFixed(2)}</div></div>
+    <div class="summary-item"><div class="summary-label" style="color:red;">Unpaid</div><div class="summary-value" style="color:red;">$${summary.unpaidAmount.toFixed(2)}</div></div>
+  </div>
+  ${stopsHtml}
+  <div style="margin-top:32px;font-size:10px;color:#999;text-align:right;">Dean's Shipping Ltd — Confidential — Printed ${new Date().toLocaleString()}</div>
+  <script>window.onload = function(){ window.print(); }<\/script>
+</body>
+</html>`;
+
     const printWindow = window.open("", "_blank");
-    if (!printWindow) return;
-    printWindow.document.write(`
-      <html>
-        <head>
-          <title>Manifest - Voyage #${detail?.voyage.voyageNo}</title>
-          <style>
-            body { font-family: Arial, sans-serif; margin: 20px; color: #333; }
-            h1 { font-size: 24px; margin-bottom: 4px; }
-            h2 { font-size: 18px; margin: 16px 0 8px; color: #296341; border-bottom: 2px solid #296341; padding-bottom: 4px; }
-            h3 { font-size: 14px; margin: 12px 0 6px; color: #555; }
-            table { width: 100%; border-collapse: collapse; margin-bottom: 12px; font-size: 12px; }
-            th, td { border: 1px solid #ccc; padding: 6px 8px; text-align: left; }
-            th { background: #f5f5f5; font-weight: bold; }
-            .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; }
-            .paid { background: #d4edda; color: #155724; }
-            .unpaid { background: #f8d7da; color: #721c24; }
-            .summary { display: flex; gap: 24px; margin: 12px 0; }
-            .summary-item { text-align: center; }
-            .summary-label { font-size: 11px; color: #666; }
-            .summary-value { font-size: 20px; font-weight: bold; }
-            @media print { body { margin: 0; } }
-          </style>
-        </head>
-        <body>${printContent}</body>
-      </html>
-    `);
+    if (!printWindow) { toast.error("Allow popups to print"); return; }
+    printWindow.document.write(html);
     printWindow.document.close();
-    printWindow.print();
   };
 
   if (isLoading) {
@@ -632,7 +696,7 @@ function VoyageDetailView({
         </div>
 
         {/* Stop-by-Stop Manifest */}
-        <div ref={printRef} className="px-4 sm:px-8 py-6 space-y-2">
+        <div className="px-4 sm:px-8 py-6 space-y-2">
           {/* Print-only header (hidden on screen) */}
           <div className="hidden print:block mb-6">
             <h1 className="text-xl font-bold">MANIFEST — Voyage #{voyage.voyageNo}</h1>

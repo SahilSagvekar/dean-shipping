@@ -175,7 +175,7 @@ export default function UserManagement() {
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("en-US", {
       style: "currency",
-      currency: "BSD",
+      currency: "USD",
     }).format(amount);
   };
 

@@ -21,7 +21,7 @@ import {
   Search
 } from "lucide-react";
 import image from "@/app/assets/e6c79afe715811b9fb95363def64518d57e9451c.png";
-import { DashboardBanner } from "@/components/ui/DashboardBanner";
+import DashboardBanner from "@/components/ui/DashboardBanner";
 
 // Types
 interface Location {

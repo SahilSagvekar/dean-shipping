@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { MapPin, Plus, Trash2, Edit2, Loader2, X, Check, Save, AlertCircle, Search } from 'lucide-react';
-import { DashboardBanner } from "@/components/ui/DashboardBanner";
+import DashboardBanner from "@/components/ui/DashboardBanner";
 import imgLogo from "@/app/assets/0630bc807bbd9122cb449e66c33d18d13536d121.png";
 import imgHero from "@/app/assets/b493fe526d34a8d0e654480300ff88ab45d2dde1.png";
 import { useAuth } from "@/lib/auth-context";

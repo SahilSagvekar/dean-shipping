@@ -19,7 +19,7 @@ import {
   Anchor
 } from "lucide-react";
 import imgPngClipartOccupationalSafetyRemovebgPreview1 from "@/app/assets/b44f74b3456b5fbbf83fdac0d10a96c2051e7d69.png";
-import { DashboardBanner } from "@/components/ui/DashboardBanner";
+import  DashboardBanner from "@/components/ui/DashboardBanner";
 
 export default function IncidentReport() {
   const { apiFetch, user } = useAuth();

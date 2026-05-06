@@ -28,7 +28,7 @@ import {
   CreditCard,
   Search
 } from "lucide-react";
-import { DashboardBanner } from "@/components/ui/DashboardBanner";
+import  DashboardBanner from "@/components/ui/DashboardBanner";
 import image2 from "@/app/assets/cc1821c6ea8a81adb203fcf9b1bb2ee371bbcbed.png";
 import imgLogo from "@/app/assets/0630bc807bbd9122cb449e66c33d18d13536d121.png";
 

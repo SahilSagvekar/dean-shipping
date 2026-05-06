@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Trash2, Edit2, ChevronDown, Plus, Loader2, ArrowRight, X, Package, Snowflake, Thermometer, Mail, Container, Briefcase, LayoutGrid, Car, Layers, Users } from "lucide-react";
-import { DashboardBanner } from "@/components/ui/DashboardBanner";
+import DashboardBanner from "@/components/ui/DashboardBanner";
 import imgDesk from "@/app/assets/ab576223d2665babdbfbcf0c2c488ca622b1efd4.png";
 import imgLogo from "@/app/assets/0630bc807bbd9122cb449e66c33d18d13536d121.png";
 import { useAuth } from "@/lib/auth-context";
@@ -580,7 +580,7 @@ function PriceManagementContent() {
       </main>
 
       {/* Brand Footer */}
-      <footer className="bg-[#296341] py-6 lg:py-8 mt-auto">
+      {/* <footer className="bg-[#296341] py-6 lg:py-8 mt-auto">
         <div className="max-w-[1400px] mx-auto px-4 lg:px-8 flex flex-col lg:flex-row items-center justify-between gap-4 lg:gap-0">
           <div className="flex items-center gap-4">
             <img src={imgLogo.src} alt="Dean's Shipping Ltd" className="h-[50px] lg:h-[70px]" />
@@ -589,7 +589,7 @@ function PriceManagementContent() {
             {user?.role || "Administration"} | <span className="font-normal">{user ? `${user.firstName} ${user.lastName}` : "Guest"}</span>
           </div>
         </div>
-      </footer>
+      </footer> */}
     </div>
   );
 }

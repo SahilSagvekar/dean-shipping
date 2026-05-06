@@ -20,22 +20,26 @@ export async function GET(request: NextRequest) {
     tomorrow.setDate(tomorrow.getDate() + 1);
 
     // Calculate start date based on range
-    let startDate = new Date(today);
-    let prevStartDate = new Date(today);
+    let startDate: Date;
+    let prevStartDate: Date;
     const isAllTime = range === "all";
-    
+
     if (isAllTime) {
-        startDate = new Date(0); // epoch
+        startDate = new Date(0);
         prevStartDate = new Date(0);
     } else if (range === "7d") {
+        startDate = new Date(today);
         startDate.setDate(startDate.getDate() - 7);
+        prevStartDate = new Date(today);
         prevStartDate.setDate(prevStartDate.getDate() - 14);
     } else if (range === "30d") {
+        startDate = new Date(today);
         startDate.setDate(startDate.getDate() - 30);
+        prevStartDate = new Date(today);
         prevStartDate.setDate(prevStartDate.getDate() - 60);
     } else {
         // Default: today
-        startDate = today;
+        startDate = new Date(today);
         prevStartDate = new Date(today);
         prevStartDate.setDate(prevStartDate.getDate() - 1);
     }
@@ -256,6 +260,8 @@ export async function GET(request: NextRequest) {
                 return buckets;
             })(),
         ]);
+
+        console.log('[Dashboard] revenueChartData sample:', revenueChartData?.slice?.(0,3));
 
         // Calculate percentage changes
         const calcChange = (current: number, previous: number) => {

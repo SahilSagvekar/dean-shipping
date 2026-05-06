@@ -1236,7 +1236,7 @@ function PassengerBookingContent() {
       </main>
 
       {/* Brand Footer */}
-      <footer className="bg-[#296341] py-8 md:py-10 mt-12">
+      {/* <footer className="bg-[#296341] py-8 md:py-10 mt-12">
         <div className="max-w-[1400px] mx-auto px-4 md:px-8 flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-4">
             <img src={imgLogo.src} alt="Dean's Shipping Ltd." className="h-12 md:h-[80px]" />
@@ -1245,7 +1245,7 @@ function PassengerBookingContent() {
             Freight Agent | <span className="font-normal">Smith Frank</span>
           </div>
         </div>
-      </footer>
+      </footer> */}
 
       {/* Luggage Modal */}
       {showLuggageModal && (

@@ -385,7 +385,7 @@ function AdminManagementContent() {
       </main>
 
       {/* Footer */}
-      <footer className="bg-[#296341] py-8 mt-auto">
+      {/* <footer className="bg-[#296341] py-8 mt-auto">
         <div className="max-w-[1400px] mx-auto px-4 lg:px-8 flex flex-col lg:flex-row items-center justify-between gap-6 lg:gap-4">
           <div className="flex items-center gap-4">
             <img src={imgLogo.src} alt="Dean's Shipping Ltd" className="h-[50px] lg:h-[70px]" />
@@ -394,7 +394,7 @@ function AdminManagementContent() {
             Administration | <span className="font-normal">Cicily Dean</span>
           </div>
         </div>
-      </footer>
+      </footer> */}
     </div>
   );
 }
